@@ -1,0 +1,1196 @@
+/* ============================================================================
+   admin.css — coquille de l'espace d'administration.
+
+   Les valeurs viennent d'une capture mesurée d'un tableau de bord existant
+   (largeurs, couleurs, rayons, graisses). Les noms de classes et de variables
+   sont les nôtres : la capture ne portait aucun nom d'origine.
+
+   Le reste du site est clair ; l'admin est sombre et vit dans son propre
+   univers, d'où un fichier séparé plutôt que des jetons ajoutés au thème.
+   ========================================================================== */
+
+.admin-shell {
+  /* Palette relevée. Ces noms sont les miens. */
+  --admin-canvas: rgb(3, 9, 1);
+  --admin-sidebar: rgb(0, 0, 0);
+  --admin-item: rgb(226, 226, 227);
+  --admin-item-active-bg: rgb(42, 42, 43);
+  --admin-item-hover-bg: rgb(31, 31, 32);
+  --admin-label: rgb(200, 200, 202);
+  --admin-muted: rgb(165, 165, 167);
+  --admin-rule: rgb(44, 44, 46);
+  --admin-accent: rgb(138, 253, 58);
+  --admin-accent-ink: rgb(24, 24, 24);
+
+  --admin-sidebar-width: 256px;
+
+  display: flex;
+  width: 100%;
+  /* Hauteur fixe, pas seulement maximale : la coquille occupe l'écran et rien
+     d'autre ne défile. Sans cela le document défile derrière la carte, et le
+     contenu passe visuellement par-dessus les coins arrondis. */
+  height: 100svh;
+  /* Positionné pour être un vrai bloc conteneur : un descendant en absolu
+     échapperait sinon à ce `overflow: hidden` et rallongerait le document. */
+  position: relative;
+  overflow: hidden;
+  background-color: var(--admin-canvas);
+  color: rgb(255, 255, 255);
+  font-size: 13px;
+  line-height: 19.5px;
+  letter-spacing: -0.4px;
+}
+
+/* Remise à zéro locale. Elle est portée par `:where()` — spécificité nulle —
+   et limitée à la coquille : les styles du site ne doivent pas bouger, et les
+   valeurs mesurées ci-dessous supposent l'absence des marges par défaut du
+   navigateur. */
+.admin-shell :where(h1, h2, h3, h4, p, ul, ol, li, figure) {
+  margin: 0;
+  padding: 0;
+}
+.admin-shell :where(ul, ol) {
+  list-style: none;
+}
+.admin-shell :where(button) {
+  background: none;
+  border: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.admin-shell :where(a) {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* ---- barre latérale ---------------------------------------------------- */
+
+.admin-sidebar {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  width: var(--admin-sidebar-width);
+  height: 100svh;
+  padding: 20px 16px;
+  background-color: var(--admin-sidebar);
+}
+
+.admin-sidebar__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+  padding-bottom: 32px;
+}
+
+.admin-sidebar__logo {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+/* Le corps défile seul : l'en-tête et le pied restent en place. */
+.admin-sidebar__body {
+  display: flex;
+  flex: 1 1 0;
+  min-height: 0;
+  flex-direction: column;
+  gap: 8px;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.admin-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-nav__label {
+  display: flex;
+  align-items: center;
+  height: 20px;
+  font-size: 12px;
+  line-height: 17.1429px;
+  color: var(--admin-label);
+}
+
+.admin-nav__list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-nav__link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 16px;
+  letter-spacing: 0.025em;
+  color: var(--admin-item);
+  overflow: hidden;
+  transition:
+    background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.admin-nav__link:hover {
+  background-color: var(--admin-item-hover-bg);
+}
+
+/* L'état actif était mesuré comme un fond plein, sans bordure ni accent. */
+.admin-nav__link[aria-current="page"] {
+  background-color: var(--admin-item-active-bg);
+}
+
+.admin-nav__link svg {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+}
+
+/* ---- pied de la barre --------------------------------------------------- */
+
+.admin-sidebar__footer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-top: 12px;
+}
+
+.admin-sidebar__links {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 12px;
+  border-top: 1px solid var(--admin-rule);
+}
+
+.admin-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  margin-bottom: 8px;
+  padding: 0 16px;
+  border-radius: 12px;
+  background-color: var(--admin-accent);
+  color: var(--admin-accent-ink);
+  font-weight: 500;
+  transition: background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.admin-cta:hover {
+  background-color: rgb(122, 230, 47);
+}
+
+.admin-sidebar__link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-weight: 500;
+  letter-spacing: 0.025em;
+  color: var(--admin-muted);
+  transition:
+    background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.admin-sidebar__link:hover {
+  background-color: var(--admin-item-hover-bg);
+  color: var(--admin-item);
+}
+
+.admin-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px;
+  border-radius: 8px;
+  width: 100%;
+  text-align: left;
+  transition: background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.admin-user:hover {
+  background-color: var(--admin-item-hover-bg);
+}
+
+.admin-user__avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background-color: var(--admin-item-active-bg);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.admin-user__name {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgb(255, 255, 255);
+}
+
+.admin-user__mail {
+  display: block;
+  font-size: 14px;
+  color: rgb(255 255 255 / 70%);
+}
+
+/* ---- zone de contenu ----------------------------------------------------
+   Les pages sont claires : seule la barre latérale est sombre. C'est le
+   contraste habituel des tableaux de bord — on lit des tableaux et des
+   formulaires toute la journée dans cette zone. */
+
+.admin-main {
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+  /* `min-height: auto` est la valeur par défaut d'un enfant flex : sans ce 0,
+     la colonne refuse de rétrécir sous la hauteur de son contenu et déborde
+     au lieu de faire défiler. */
+  min-height: 0;
+  flex-direction: column;
+  /* La zone claire flotte sur la toile sombre : d'où la marge tout autour et
+     les angles arrondis. Le défilement vit à l'intérieur de la carte, pas sur
+     la toile — sinon le coin arrondi remonterait hors de l'écran. */
+  margin: 8px 8px 8px 0;
+  border-radius: 12px;
+  background-color: rgb(255, 255, 255);
+  color: rgb(24, 24, 24);
+  overflow-y: auto;
+}
+
+/* ---- pages de l'admin --------------------------------------------------- */
+
+.admin-page {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  padding: 32px;
+}
+
+.admin-page__header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-page__title {
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.5px;
+}
+
+.admin-page__lead {
+  font-size: 14px;
+  color: rgb(105, 105, 105);
+}
+
+/* État vide : même traitement partout dans l'admin, pour qu'une section sans
+   données se reconnaisse au premier coup d'œil. */
+.admin-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 280px;
+  padding: 32px;
+  border: 1px dashed rgb(216, 216, 216);
+  border-radius: 12px;
+  text-align: center;
+}
+
+.admin-empty__title {
+  font-size: 16px;
+  font-weight: 500;
+  color: rgb(24, 24, 24);
+}
+
+.admin-empty__text {
+  font-size: 14px;
+  color: rgb(105, 105, 105);
+}
+
+/* ---- en-tête de page ---------------------------------------------------- */
+
+.admin-page__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.admin-page__heading {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ---- boutons de l'admin -------------------------------------------------
+   Deux niveaux seulement : l'action principale d'une page, et le reste. */
+
+.admin-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 8px;
+  background-color: rgb(24, 24, 24);
+  color: rgb(255, 255, 255);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: opacity 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.admin-button:hover {
+  opacity: 0.85;
+}
+
+.admin-button--ghost {
+  background-color: transparent;
+  border: 1px solid rgb(216, 216, 216);
+  color: rgb(24, 24, 24);
+}
+
+.admin-button--ghost:hover {
+  background-color: rgb(248, 248, 248);
+  opacity: 1;
+}
+
+.admin-empty .admin-button {
+  margin-top: 8px;
+}
+
+/* ---- formulaires -------------------------------------------------------- */
+
+.admin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 560px;
+}
+
+.admin-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-field__label {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgb(24, 24, 24);
+}
+
+.admin-field__input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid rgb(216, 216, 216);
+  border-radius: 8px;
+  background-color: rgb(255, 255, 255);
+  font: inherit;
+  font-size: 14px;
+  color: rgb(24, 24, 24);
+  transition: border-color 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.admin-field__input:focus {
+  border-color: rgb(24, 24, 24);
+  outline: none;
+}
+
+.admin-form__actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* Un bouton désactivé doit se voir désactivé : sinon on clique dix fois. */
+.admin-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.admin-form__note {
+  font-size: 13px;
+  color: rgb(105, 105, 105);
+}
+
+/* ---- formulaire long ----------------------------------------------------- */
+
+.admin-form--wide {
+  max-width: 880px;
+  gap: 32px;
+}
+
+.admin-fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid rgb(232, 232, 232);
+  border-radius: 12px;
+}
+
+.admin-fieldset__legend {
+  padding: 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: rgb(105, 105, 105);
+}
+
+.admin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.admin-field__hint {
+  font-size: 12px;
+  color: rgb(105, 105, 105);
+}
+
+/* ---- tailles ------------------------------------------------------------- */
+
+.admin-sizes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+.admin-size {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid rgb(232, 232, 232);
+  border-radius: 8px;
+}
+
+.admin-size__label {
+  font-size: 13px;
+}
+
+.admin-size__input {
+  width: 64px;
+  padding: 4px 8px;
+  border: 1px solid rgb(216, 216, 216);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 13px;
+  text-align: right;
+}
+
+/* ---- mesures ------------------------------------------------------------- */
+
+.admin-measures {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-measure {
+  display: grid;
+  grid-template-columns: 1fr 160px 32px;
+  gap: 8px;
+  align-items: center;
+}
+
+/* ---- dépôt d'images ------------------------------------------------------ */
+
+.admin-uploader {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.admin-uploader__drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 32px;
+  border: 1px dashed rgb(216, 216, 216);
+  border-radius: 12px;
+  text-align: center;
+}
+
+.admin-uploader__text {
+  font-size: 14px;
+}
+
+.admin-uploader__pick {
+  margin-left: 4px;
+  font: inherit;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.admin-uploader__note,
+.admin-uploader__error {
+  font-size: 12px;
+  color: rgb(105, 105, 105);
+}
+
+.admin-uploader__error {
+  color: rgb(180, 40, 40);
+}
+
+/* Les photos s'affichent en grille et en grand : une fiche produit se juge
+   sur ses images, une vignette de 56 px ne permet de juger de rien. */
+.admin-uploader__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.admin-thumb {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid rgb(232, 232, 232);
+  border-radius: 12px;
+}
+
+.admin-thumb__image {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.admin-thumb__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.admin-thumb__name {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.admin-thumb__size {
+  font-size: 12px;
+  color: rgb(105, 105, 105);
+}
+
+.admin-thumb__actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.admin-thumb__pick {
+  display: block;
+  width: 100%;
+  padding: 0;
+  line-height: 0;
+}
+
+.admin-thumb__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgb(232, 232, 232);
+  border-radius: 8px;
+  font-size: 15px;
+  line-height: 1;
+}
+
+.admin-thumb__icon:hover {
+  background-color: rgb(248, 248, 248);
+}
+
+.admin-button--small {
+  height: 32px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+/* ---- prompts ------------------------------------------------------------- */
+
+.admin-prompt {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 12px;
+  background-color: rgb(248, 248, 248);
+}
+
+.admin-prompt__head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-prompt__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Le prompt se lit et se copie : on garde les retours à la ligne et on laisse
+   le bloc défiler plutôt que d'étirer la page. */
+.admin-prompt__text {
+  max-height: 260px;
+  padding: 12px;
+  border-radius: 8px;
+  background-color: rgb(255, 255, 255);
+  border: 1px solid rgb(232, 232, 232);
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-y: auto;
+}
+
+.admin-size-add {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.admin-size-add .admin-field__input {
+  flex: 1;
+}
+
+/* Le nom d'une taille est un champ, pas une étiquette : il se réécrit. */
+.admin-size__name {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 6px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+}
+
+.admin-size__name:hover {
+  border-color: rgb(232, 232, 232);
+}
+
+.admin-size__name:focus {
+  border-color: rgb(24, 24, 24);
+  outline: none;
+}
+
+/* ---- choix des tailles --------------------------------------------------- */
+
+.admin-sizes-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.admin-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid rgb(232, 232, 232);
+  border-radius: 12px;
+  background-color: rgb(250, 250, 250);
+}
+
+.admin-picker__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-picker__tab {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+  border: 1px solid rgb(232, 232, 232);
+  border-radius: 8px;
+  background-color: rgb(255, 255, 255);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+}
+
+/* L'onglet courant est plein : sur un fond clair, une simple bordure ne se
+   distingue pas assez d'un onglet au repos. */
+.admin-picker__tab[aria-pressed="true"] {
+  background-color: rgb(24, 24, 24);
+  border-color: rgb(24, 24, 24);
+  color: rgb(255, 255, 255);
+}
+
+.admin-picker__hint {
+  font-size: 11px;
+  font-weight: 400;
+  opacity: 0.7;
+}
+
+.admin-picker__grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-chip {
+  min-width: 56px;
+  padding: 8px 12px;
+  border: 1px solid rgb(216, 216, 216);
+  border-radius: 8px;
+  background-color: rgb(255, 255, 255);
+  font-size: 13px;
+  text-align: center;
+}
+
+.admin-chip[aria-pressed="true"] {
+  background-color: rgb(24, 24, 24);
+  border-color: rgb(24, 24, 24);
+  color: rgb(255, 255, 255);
+}
+
+/* ---- tableau de stock ---------------------------------------------------- */
+
+.admin-stock {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-stock th {
+  padding: 6px 8px;
+  border-bottom: 1px solid rgb(232, 232, 232);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  text-align: left;
+  color: rgb(105, 105, 105);
+}
+
+.admin-stock td {
+  padding: 8px;
+  border-bottom: 1px solid rgb(240, 240, 240);
+  font-size: 14px;
+}
+
+.admin-stock th:last-child,
+.admin-stock td:last-child {
+  width: 40px;
+}
+
+.admin-stock__size {
+  font-weight: 500;
+}
+
+.admin-stock__cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-stock__state {
+  font-size: 12px;
+  color: rgb(105, 105, 105);
+}
+
+/* La rupture se voit : c'est l'information qu'on cherche en balayant la
+   colonne, pas la quantité exacte. */
+.admin-stock__state--out {
+  color: rgb(180, 40, 40);
+}
+
+/* ---- génération de photos ------------------------------------------------ */
+
+.admin-generate {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 12px;
+  background-color: rgb(248, 248, 248);
+}
+
+.admin-generate__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Chaque bouton porte son intitulé et ce qu'il produit : « Chaussures » seul
+   ne dit pas qu'on obtiendra la paire sans modèle. */
+.admin-generate__actions .admin-button {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  height: auto;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.admin-generate__hint {
+  font-size: 11px;
+  font-weight: 400;
+  opacity: 0.7;
+}
+
+/* La photo servant de référence se distingue nettement. */
+.admin-thumb[aria-current="true"] {
+  border-color: rgb(24, 24, 24);
+}
+
+.admin-thumb__pick {
+  display: block;
+  padding: 0;
+  border-radius: 8px;
+  line-height: 0;
+}
+
+/* Étiquette d'étape : elle dit si le bloc doit être rempli ou non. */
+.admin-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background-color: rgb(240, 240, 240);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  text-transform: uppercase;
+  color: rgb(105, 105, 105);
+}
+
+.admin-badge--required {
+  background-color: rgb(24, 24, 24);
+  color: rgb(255, 255, 255);
+}
+
+/* ---- tri du catalogue ---------------------------------------------------- */
+
+.admin-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.admin-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.admin-filter__label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: rgb(105, 105, 105);
+}
+
+.admin-filter__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-filters .admin-empty {
+  width: 100%;
+}
+
+/* Un champ qui traverse toute la grille, quel que soit le nombre de colonnes. */
+.admin-field--full {
+  grid-column: 1 / -1;
+}
+
+/* ---- fenêtre modale de l'admin ------------------------------------------- */
+
+.admin-field__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.admin-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background-color: rgb(0 0 0 / 45%);
+}
+
+.admin-modal__panel {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 720px;
+  /* La fenêtre ne dépasse jamais l'écran : sinon le bouton « Terminé » sort
+     du champ et il n'y a plus de sortie visible. */
+  max-height: 86vh;
+  border-radius: 12px;
+  background-color: rgb(255, 255, 255);
+  color: rgb(24, 24, 24);
+  overflow: hidden;
+}
+
+.admin-modal__head,
+.admin-modal__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+}
+
+.admin-modal__head {
+  border-bottom: 1px solid rgb(232, 232, 232);
+}
+
+.admin-modal__foot {
+  border-top: 1px solid rgb(232, 232, 232);
+}
+
+.admin-modal__title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.admin-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.admin-care__group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-care__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Une consigne est une phrase, pas un chiffre : la pastille s'élargit. */
+.admin-care__line {
+  min-width: 0;
+  text-align: left;
+}
+
+/* ---- recherche ----------------------------------------------------------- */
+
+.admin-search {
+  display: flex;
+  position: relative;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 480px;
+}
+
+.admin-search__icon {
+  position: absolute;
+  left: 12px;
+  display: flex;
+  color: rgb(105, 105, 105);
+  pointer-events: none;
+}
+
+/* Le texte laisse la place à la loupe. */
+.admin-search__input {
+  padding-left: 38px;
+}
+
+.admin-search .admin-field__input {
+  flex: 1;
+}
+
+/* Lien de retour, au-dessus du titre d'une page de formulaire. */
+.admin-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  margin-bottom: -16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgb(105, 105, 105);
+  transition: color 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.admin-back:hover {
+  color: rgb(24, 24, 24);
+}
+
+/* ---- fiche commande ------------------------------------------------------ */
+
+.admin-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .admin-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+.admin-column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.admin-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  border: 1px solid rgb(232, 232, 232);
+  border-radius: 12px;
+}
+
+.admin-card__title {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: rgb(105, 105, 105);
+}
+
+.admin-address {
+  display: flex;
+  flex-direction: column;
+  font-style: normal;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ---- liste de lignes (marques) ------------------------------------------- */
+
+.admin-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-rows__list {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgb(232, 232, 232);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.admin-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  min-height: 56px;
+}
+
+/* Le filet sépare, il n'encadre pas : pas de trait sous la dernière ligne. */
+.admin-row + .admin-row {
+  border-top: 1px solid rgb(240, 240, 240);
+}
+
+.admin-row:hover {
+  background-color: rgb(250, 250, 250);
+}
+
+.admin-row__main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.admin-row__name {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.admin-row__link {
+  font-size: 12px;
+  color: rgb(105, 105, 105);
+  transition: color 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.admin-row__link:hover {
+  color: rgb(24, 24, 24);
+}
+
+.admin-row__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.admin-row__ask {
+  font-size: 13px;
+  color: rgb(180, 40, 40);
+}
+
+.admin-row__delete {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgb(232, 232, 232);
+  border-radius: 8px;
+  color: rgb(105, 105, 105);
+  transition:
+    color 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.admin-row__delete:hover {
+  border-color: rgb(180, 40, 40);
+  color: rgb(180, 40, 40);
+}

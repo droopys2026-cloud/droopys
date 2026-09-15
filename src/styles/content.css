@@ -1,0 +1,523 @@
+/* ============================================================================
+   content.css — pages de contenu (aide, à propos, services, légal).
+
+   Aucune de ces mises en page n'était dans la capture du design de référence :
+   elle ne couvrait que l'accueil. Tout ce qui suit est donc construit avec les
+   jetons déjà relevés — espacements, couleurs, durées — sans en introduire un
+   seul de plus. C'est la contrainte qui garde ces pages dans le même site.
+   ========================================================================== */
+
+@layer components {
+  /* Colonne de lecture. La largeur n'est pas un jeton mais une mesure de
+     confort : au-delà d'environ 70 signes, l'œil perd le début de la ligne. */
+  .content-page {
+    width: 100%;
+    max-width: 760px;
+    margin-inline: auto;
+    padding-inline: var(--spacing-9);
+    padding-block: var(--spacing-14) var(--spacing-17);
+  }
+
+  /* Variante large : les pages qui portent une grille (boutiques, cartes). */
+  .content-page--wide {
+    max-width: 1080px;
+  }
+
+  /* ---- en-tête de page --------------------------------------------------
+     Sur les pages sans photo, le titre a besoin d'un fond à lui, sinon il
+     flotte entre la barre de navigation blanche et le texte blanc. */
+  .content-header {
+    background-color: var(--color-surface-alt);
+    border-bottom: 1px solid var(--color-border-muted);
+  }
+
+  .content-header__inner {
+    width: 100%;
+    max-width: 1440px;
+    margin-inline: auto;
+    padding: var(--spacing-14) var(--spacing-9);
+  }
+
+  .content-header__eyebrow {
+    font-family: var(--font-medium);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    line-height: 15px;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--color-ink-secondary);
+  }
+
+  .content-header__title {
+    font-family: var(--font-semibold);
+    font-size: clamp(30px, 4.5vw, 48px);
+    font-weight: 600;
+    line-height: 1.08;
+    letter-spacing: -0.5px;
+    color: var(--color-ink);
+    margin-top: var(--spacing-2);
+  }
+
+  .content-header__lead {
+    font-family: var(--font-light);
+    font-size: 17px;
+    font-weight: 300;
+    line-height: 1.7;
+    color: var(--color-ink-secondary);
+    max-width: 62ch;
+    margin-top: var(--spacing-7);
+  }
+
+  .content-header__date {
+    font-size: var(--text-base);
+    color: var(--color-ink-secondary);
+    margin-top: var(--spacing-6);
+  }
+
+  /* ---- fil d'Ariane ----------------------------------------------------- */
+
+  .content-breadcrumb {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--spacing-2);
+    font-size: var(--text-base);
+    color: var(--color-ink-secondary);
+    margin-bottom: var(--spacing-6);
+  }
+
+  .content-breadcrumb a:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .content-breadcrumb__sep {
+    color: var(--color-ink-muted);
+  }
+
+  /* ---- sommaire ---------------------------------------------------------
+     Réservé aux pages longues (CGV, confidentialité) : sur une page de cinq
+     paragraphes, un sommaire coûte plus de lecture qu'il n'en fait gagner. */
+  .content-toc {
+    border-left: 2px solid var(--color-border-muted);
+    padding: var(--spacing-2) 0 var(--spacing-2) var(--spacing-9);
+    margin-bottom: var(--spacing-13);
+  }
+
+  .content-toc__label {
+    font-family: var(--font-semibold);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--color-ink-secondary);
+    display: block;
+    margin-bottom: var(--spacing-6);
+  }
+
+  .content-toc__list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+    counter-reset: toc;
+  }
+
+  .content-toc__link {
+    font-size: var(--text-md-alt);
+    line-height: 1.6;
+    color: var(--color-ink);
+    transition: opacity var(--duration-medium) var(--ease-in-out);
+  }
+
+  .content-toc__link::before {
+    counter-increment: toc;
+    content: counter(toc) ". ";
+    color: var(--color-ink-secondary);
+  }
+
+  .content-toc__link:hover {
+    opacity: 0.6;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  /* ---- corps ------------------------------------------------------------ */
+
+  /* Le pas vertical vit sur le conteneur, pas sur chaque bloc : c'est lui qui
+     garantit qu'un titre suivi d'un tableau respire comme un titre suivi d'un
+     paragraphe, sans une règle par combinaison. */
+  .content-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-10);
+  }
+
+  /* Un intertitre ouvre une section : il s'écarte de ce qui précède, pas de
+     ce qui suit. `:first-child` évite un trou en haut de page. */
+  .content-h2 {
+    font-family: var(--font-semibold);
+    font-size: 22px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--color-ink);
+    margin-top: var(--spacing-11);
+    /* Un titre visé par une ancre doit s'arrêter sous l'en-tête collant. */
+    scroll-margin-top: 90px;
+  }
+
+  .content-h2:first-child {
+    margin-top: 0;
+  }
+
+  .content-p {
+    font-family: var(--font-body);
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.75;
+    color: var(--color-ink);
+  }
+
+  /* Les liens dans le corps de texte sont soulignés : dans un pavé de prose,
+     le seul changement de couleur ne suffit pas à les distinguer. */
+  .content-p a,
+  .content-list a {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+  }
+
+  .content-p a:hover,
+  .content-list a:hover {
+    opacity: 0.6;
+  }
+
+  .content-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+    padding-left: var(--spacing-9);
+    list-style: disc;
+    font-size: 16px;
+    line-height: 1.75;
+  }
+
+  .content-list li::marker {
+    color: var(--color-ink-muted);
+  }
+
+  /* ---- tableau ----------------------------------------------------------
+     Il déborde par la droite sur un téléphone plutôt que de comprimer ses
+     colonnes : un tableau de délais illisible ne sert à rien. */
+  .content-table-wrap {
+    overflow-x: auto;
+  }
+
+  .content-table {
+    width: 100%;
+    min-width: 420px;
+    border-collapse: collapse;
+    font-size: var(--text-lg);
+    line-height: 1.6;
+    text-align: left;
+  }
+
+  .content-table caption {
+    font-size: var(--text-base);
+    color: var(--color-ink-secondary);
+    text-align: left;
+    padding-bottom: var(--spacing-2);
+  }
+
+  .content-table th {
+    font-family: var(--font-semibold);
+    font-weight: 600;
+    font-size: var(--text-md);
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--color-ink-secondary);
+    border-bottom: 1px solid var(--color-border);
+    padding: var(--spacing-5) var(--spacing-7) var(--spacing-5) 0;
+  }
+
+  .content-table td {
+    border-bottom: 1px solid var(--color-border-muted);
+    padding: var(--spacing-6) var(--spacing-7) var(--spacing-6) 0;
+    vertical-align: top;
+  }
+
+  .content-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  /* ---- questions fréquentes --------------------------------------------
+     `<details>` plutôt qu'un accordéon en JavaScript : le navigateur gère
+     déjà le clavier, le rôle ARIA et la recherche dans la page. */
+  .content-faq {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid var(--color-border-muted);
+  }
+
+  .content-faq__item {
+    border-bottom: 1px solid var(--color-border-muted);
+  }
+
+  .content-faq__question {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--spacing-9);
+    padding: var(--spacing-9) 0;
+    font-family: var(--font-medium);
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.5;
+    color: var(--color-ink);
+    cursor: pointer;
+    list-style: none;
+  }
+
+  /* Le triangle par défaut de Safari ne se retire que par ce sélecteur. */
+  .content-faq__question::-webkit-details-marker {
+    display: none;
+  }
+
+  /* Le signe se retourne à l'ouverture : il indique l'état, pas l'action. */
+  .content-faq__question::after {
+    content: "+";
+    font-size: 20px;
+    line-height: 1;
+    color: var(--color-ink-secondary);
+    transition: transform var(--duration-medium) var(--ease-in-out);
+  }
+
+  .content-faq__item[open] .content-faq__question::after {
+    transform: rotate(45deg);
+  }
+
+  .content-faq__answer {
+    font-size: 16px;
+    line-height: 1.75;
+    color: var(--color-ink-secondary);
+    padding-bottom: var(--spacing-9);
+    max-width: 66ch;
+  }
+
+  /* ---- cartes et étapes ------------------------------------------------- */
+
+  .content-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--spacing-7);
+  }
+
+  .content-card {
+    border: 1px solid var(--color-border-muted);
+    padding: var(--spacing-10);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-5);
+    transition: border-color var(--duration-medium) var(--ease-in-out);
+  }
+
+  .content-card:hover {
+    border-color: var(--color-ink);
+  }
+
+  .content-card__title {
+    font-family: var(--font-semibold);
+    font-size: var(--text-lg);
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--color-ink);
+  }
+
+  .content-card__text {
+    font-size: var(--text-md-alt);
+    line-height: 1.7;
+    color: var(--color-ink-secondary);
+  }
+
+  /* Les étapes sont numérotées par le CSS : la numérotation suit l'ordre réel
+     du DOM, on ne peut pas intervertir deux étapes et garder « 1, 2 ». */
+  .content-steps {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-10);
+    counter-reset: step;
+  }
+
+  .content-step {
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    gap: var(--spacing-7);
+    align-items: start;
+  }
+
+  .content-step::before {
+    counter-increment: step;
+    content: counter(step);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-circle);
+    font-family: var(--font-semibold);
+    font-size: var(--text-lg);
+    font-weight: 600;
+    line-height: 1;
+  }
+
+  .content-step__title {
+    font-family: var(--font-semibold);
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1.4;
+    margin-bottom: var(--spacing-2);
+  }
+
+  .content-step__text {
+    font-size: var(--text-md-alt);
+    line-height: 1.7;
+    color: var(--color-ink-secondary);
+  }
+
+  /* ---- encadré ---------------------------------------------------------- */
+
+  .content-note {
+    background-color: var(--color-surface-alt);
+    border-left: 2px solid var(--color-ink);
+    padding: var(--spacing-9);
+    font-size: var(--text-lg);
+    line-height: 1.7;
+    color: var(--color-ink);
+  }
+
+  /* ---- formulaires de page ---------------------------------------------- */
+
+  .content-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-9);
+    border: 1px solid var(--color-border-muted);
+    padding: var(--spacing-10);
+  }
+
+  .content-form__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--spacing-9);
+  }
+
+  .content-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+  }
+
+  .content-field--full {
+    grid-column: 1 / -1;
+  }
+
+  .content-field__label {
+    font-family: var(--font-medium);
+    font-size: var(--text-base);
+    font-weight: 500;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--color-ink-secondary);
+  }
+
+  .content-field__input {
+    font-family: var(--font-body);
+    font-size: var(--text-lg);
+    color: var(--color-ink);
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border-input);
+    padding: var(--spacing-5) var(--spacing-7);
+    transition: border-color var(--duration-short) var(--ease-in-out);
+  }
+
+  .content-field__input:focus {
+    outline: none;
+    border-color: var(--color-ink);
+  }
+
+  .content-field__input:focus-visible {
+    outline: 3px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+
+  .content-field__hint {
+    font-size: var(--text-base);
+    color: var(--color-ink-secondary);
+  }
+
+  /* ---- boutique --------------------------------------------------------- */
+
+  .content-shop {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-7);
+    border: 1px solid var(--color-border-muted);
+    padding: var(--spacing-10);
+  }
+
+  .content-shop__name {
+    font-family: var(--font-semibold);
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+
+  .content-shop__address {
+    font-size: var(--text-lg);
+    line-height: 1.7;
+    color: var(--color-ink-secondary);
+    font-style: normal;
+  }
+
+  /* ---- table d'identité (mentions légales) ------------------------------
+     Une valeur manquante se voit : elle n'est pas masquée, elle est marquée. */
+  .content-definitions {
+    display: grid;
+    grid-template-columns: minmax(160px, 220px) 1fr;
+    gap: var(--spacing-5) var(--spacing-9);
+    font-size: var(--text-lg);
+    line-height: 1.7;
+  }
+
+  .content-definitions dt {
+    font-family: var(--font-medium);
+    font-weight: 500;
+    color: var(--color-ink-secondary);
+  }
+
+  .content-missing {
+    font-style: italic;
+    color: var(--color-ink-secondary);
+    border-bottom: 1px dotted var(--color-ink-muted);
+  }
+}
+
+@media (max-width: 768px) {
+  .content-page {
+    padding-block: var(--spacing-11) var(--spacing-14);
+  }
+
+  .content-header__inner {
+    padding-block: var(--spacing-11);
+  }
+
+  .content-definitions {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-1) 0;
+  }
+
+  /* Sans cette marge, l'intitulé et la valeur suivante se collent. */
+  .content-definitions dd {
+    margin-bottom: var(--spacing-6);
+  }
+}

@@ -1,0 +1,324 @@
+/* ============================================================================
+   primitives.css — une classe par variante visuelle relevée (20 variantes,
+   7 familles). Aucune variante n'est fusionnée avec une autre, même quand
+   elles se ressemblent : le design les distingue, on les distingue aussi.
+   ========================================================================== */
+
+@layer components {
+  /* ---- box (4 variantes) ------------------------------------------------ */
+
+  /* Pastille contour clair sur fond noir — 21 occurrences (promos, labels). */
+  .box-badge-outline {
+    color: var(--color-ink-inverse);
+    background-color: var(--color-surface-inverse);
+    font-family: var(--font-medium);
+    font-weight: 500;
+    font-size: var(--text-xs);
+    line-height: 17px;
+    letter-spacing: 0.7px;
+    text-transform: uppercase;
+    text-align: center;
+    padding: 5px 8px 2px 8px;
+    margin-right: var(--spacing-6);
+    border: 1px solid var(--color-ink-inverse);
+    display: inline-block;
+  }
+
+  /* Compteur rond (nombre d'articles au panier). */
+  .box-badge-round {
+    color: var(--color-ink-inverse);
+    background-color: var(--color-surface-inverse);
+    font-size: var(--text-2xs);
+    line-height: 13px;
+    padding: 0 2px;
+    border-radius: var(--radius-badge);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Cadre d'image — 126 occurrences. Sert aussi de placeholder gris. */
+  .box-image-frame {
+    background-color: var(--color-surface-muted);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Barre d'annonce pleine largeur. */
+  .box-announcement-wrapper {
+    background-color: var(--color-surface-inverse);
+    z-index: 1;
+    display: flex;
+    position: relative;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  /* ---- link (4 variantes) ---------------------------------------------- */
+
+  /* CTA plein, noir cassé — 1 occurrence (bloc éditorial). */
+  .link-cta-block {
+    color: var(--color-ink-inverse);
+    background-color: var(--color-surface-inverse-alt);
+    border: 1px solid var(--color-surface-inverse-alt);
+    font-size: 12px;
+    line-height: 20.4px;
+    text-transform: uppercase;
+    padding: 10px 45px;
+    margin-top: var(--spacing-9);
+    display: inline-block;
+    cursor: pointer;
+    transition: all var(--duration-medium) var(--ease-in-out);
+  }
+  .link-cta-block:focus-visible {
+    outline: auto;
+    outline-offset: 0.5rem;
+  }
+  .link-cta-block:hover,
+  .link-cta-block:focus,
+  .link-cta-block:active {
+    text-decoration: none;
+  }
+
+  /* Trois niveaux de lien souligné : seule la marge haute les distingue. */
+  .link-underline-lg,
+  .link-underline-md,
+  .link-underline-sm {
+    font-family: var(--font-medium);
+    font-weight: 500;
+    font-size: var(--text-sm);
+    line-height: 15px;
+    letter-spacing: 0.5px;
+    padding-bottom: 2px;
+    display: inline-block;
+    cursor: pointer;
+  }
+  .link-underline-lg {
+    color: var(--color-ink-inverse);
+    border-bottom: 2px solid var(--color-ink-inverse);
+    margin-top: var(--spacing-13);
+  }
+  .link-underline-md {
+    border-bottom: 2px solid var(--color-ink-inverse);
+    margin-top: var(--spacing-9);
+  }
+  .link-underline-sm {
+    border-bottom: 2px solid transparent;
+    margin-top: var(--spacing-6);
+  }
+  .link-underline-lg:focus-visible,
+  .link-underline-md:focus-visible,
+  .link-underline-sm:focus-visible {
+    outline: auto;
+    outline-offset: 0.5rem;
+  }
+  .link-underline-lg:hover,
+  .link-underline-md:hover,
+  .link-underline-sm:hover {
+    text-decoration: none;
+  }
+  /* Sur fond clair, le soulignement blanc serait invisible : on l'encre. */
+  .section-main .link-underline-lg,
+  .section-main .link-underline-md,
+  .section-footer .link-underline-lg,
+  .section-footer .link-underline-md {
+    color: var(--color-ink);
+    border-bottom-color: var(--color-ink);
+  }
+  .link-underline-sm:hover {
+    border-bottom-color: currentColor;
+  }
+
+  /* ---- button (3 variantes) -------------------------------------------- */
+
+  /* Bouton de bascule de la barre d'annonce. */
+  .button-toggler {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-surface);
+    font-family: var(--font-medium);
+    font-weight: 500;
+    font-size: var(--text-base);
+    line-height: 14.4px;
+    padding: 5px 16px;
+    display: block;
+  }
+
+  /* Flèche ronde du carrousel en flux (fond blanc semi-opaque). */
+  .button-arrow-round {
+    background-color: var(--color-surface);
+    opacity: 0.7;
+    border-radius: var(--radius-circle);
+    z-index: 1;
+    display: flex;
+    position: absolute;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transform: translateY(-22.5px);
+  }
+  .button-arrow-round:hover {
+    opacity: 0.9;
+  }
+  .button-arrow-round:disabled {
+    opacity: 0.3;
+  }
+
+  /* Flèche plate du carrousel pleine page (pas de pastille de fond). */
+  .button-arrow-flat {
+    opacity: 0.25;
+    border-radius: var(--radius-circle);
+    z-index: 2;
+    display: block;
+    position: absolute;
+    cursor: pointer;
+    transform: translateY(-15px);
+    transition: opacity var(--duration-medium) var(--ease-in-out);
+  }
+  .button-arrow-flat:hover {
+    opacity: 1;
+  }
+  .button-arrow-flat:disabled {
+    opacity: 0.3;
+  }
+
+  .button-arrow-round:focus-visible,
+  .button-arrow-flat:focus-visible {
+    outline: 3px solid var(--color-focus);
+    outline-offset: 3px;
+  }
+
+  /* ---- icon (4 variantes) ---------------------------------------------- */
+
+  /* Bouton-icône standard — 150 occurrences. La marge négative compense le
+     padding pour que la cible tactile déborde sans décaler la mise en page. */
+  .icon-button-default {
+    font-family: var(--font-medium);
+    font-weight: 500;
+    font-size: var(--text-base);
+    line-height: 17px;
+    text-transform: uppercase;
+    padding: 6.8px;
+    margin: -6.8px;
+    display: block;
+    position: relative;
+    cursor: pointer;
+    transition:
+      background-color var(--duration-short) var(--ease-in-out),
+      border-color var(--duration-short) var(--ease-in-out);
+  }
+  .icon-button-default:hover {
+    border-color: var(--color-ink);
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+    text-decoration: none;
+  }
+  .icon-button-default:focus-visible {
+    outline: auto;
+  }
+
+  /* Bouton-icône encadré (recherche). */
+  .icon-button-muted-border {
+    font-family: var(--font-medium);
+    font-weight: 500;
+    font-size: var(--text-base);
+    line-height: 17px;
+    text-transform: uppercase;
+    padding: 6.8px 7px;
+    display: block;
+    position: relative;
+    cursor: pointer;
+    transition:
+      background-color var(--duration-short) var(--ease-in-out),
+      border-color var(--duration-short) var(--ease-in-out);
+  }
+  .icon-button-muted-border:hover {
+    color: var(--color-ink-secondary);
+  }
+
+  /* Lien-icône de navigation (compte, favoris). */
+  .icon-link-nav {
+    font-family: var(--font-medium);
+    font-weight: 500;
+    font-size: var(--text-base);
+    line-height: 17px;
+    text-transform: uppercase;
+    text-align: center;
+    padding: 6.8px 7px;
+    display: block;
+    position: relative;
+    cursor: pointer;
+    transition: color var(--duration-medium) var(--ease-in-out);
+  }
+  .icon-link-nav:focus-visible {
+    outline: auto;
+    outline-offset: 0.5rem;
+  }
+  .icon-link-nav:hover {
+    color: var(--color-ink-secondary);
+    text-decoration: none;
+  }
+
+  /* Emplacement d'icône générique — 152 occurrences. */
+  .icon-wrapper {
+    display: block;
+  }
+
+  .icon-account {
+    font-family: var(--font-icon);
+    font-size: var(--text-icon);
+    line-height: 24px;
+    display: block;
+  }
+  .icon-wishlist {
+    font-family: var(--font-icon);
+    font-size: var(--text-icon-sm);
+    line-height: 20px;
+    display: block;
+  }
+
+  /* ---- text (4 variantes) ---------------------------------------------- */
+
+  /* Nom de marque au-dessus du titre produit. */
+  .text-brand-label {
+    font-family: var(--font-semibold);
+    font-weight: 600;
+    font-size: var(--text-md);
+    line-height: 17px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin: 2px 0;
+    display: block;
+  }
+
+  /* Sur-titre atténué (« nouveauté », « tendance »). */
+  .text-caption-muted {
+    color: var(--color-ink-muted);
+    font-size: var(--text-xs);
+    line-height: 12px;
+    text-transform: uppercase;
+    display: block;
+  }
+
+  /* ---- divers ----------------------------------------------------------- */
+
+  .nav-list-item {
+    font-size: var(--text-base);
+    line-height: 20.4px;
+    letter-spacing: 0.24px;
+    padding: 5px 3px 7px 3px;
+    display: flex;
+    align-items: center;
+  }
+
+  /* Titre de carte produit. */
+  .card-title {
+    font-family: var(--font-semibold);
+    font-weight: 600;
+    font-size: var(--text-md);
+    line-height: 17px;
+    text-align: center;
+    margin: 15px 0 24px 0;
+    position: relative;
+  }
+}

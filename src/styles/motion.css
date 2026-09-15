@@ -1,0 +1,118 @@
+/* ============================================================================
+   motion.css — vocabulaire de mouvement relevé. Rien n'est inventé :
+   durées et courbes proviennent toutes de l'ensemble mesuré.
+   Propriétés animées relevées : background-color ×2, color ×2, opacity ×2,
+   border-color ×1, box-shadow ×1 (destination inconnue), transform ×1,
+   width ×1. Le survol est LA convention du design (33 éléments) — ne pas
+   en ajouter au-delà de ce que primitives.css porte déjà.
+   ========================================================================== */
+
+@layer components {
+  .instance-list-panel {
+    transition: width var(--duration-short) var(--ease-default);
+  }
+
+  .instance-slider-dot {
+    transition: all var(--duration-short) var(--ease-default);
+  }
+
+  .instance-boutique-link {
+    transition: color var(--duration-medium) var(--ease-in-out);
+  }
+
+  .instance-menu-shadow,
+  .instance-image-fade {
+    transition: opacity var(--duration-medium) var(--ease-in-out);
+  }
+
+  /* Zoom d'image au survol — seule destination de transform mesurée.
+     Réservé au pointeur fin : pas de survol pertinent au tactile. */
+  .instance-style-image-zoom {
+    transition: transform var(--duration-medium) var(--ease-in-out);
+  }
+  @media screen and (min-width: 1024px) {
+    .instance-style-image-zoom:hover {
+      transform: scale(1.05);
+    }
+  }
+
+  .instance-toggle-nob {
+    transition: all var(--duration-short) var(--ease-in);
+  }
+
+  /* Chatoiement de chargement d'image. C'est un état de chargement, pas une
+     entrée au défilement : aucune animation déclenchée par le scroll n'a été
+     relevée dans le design. */
+  .page-fade {
+    animation: page-fade-in var(--duration-slower) var(--ease-out) both;
+  }
+
+  .modal-backdrop {
+    animation: modal-backdrop-in var(--duration-medium) var(--ease-out) both;
+  }
+
+  .modal-panel {
+    animation: modal-panel-in var(--duration-slow) var(--ease-out) both;
+  }
+
+  .image-loading-skeleton {
+    animation: skeleton-shimmer 2000ms infinite;
+    background-position-y: 0;
+  }
+}
+
+/* Entrée de la fenêtre modale : le fond se voile, la fenêtre monte de
+   quelques pixels en grandissant à peine. Durée et courbe prises dans le
+   vocabulaire mesuré du design (0,3 s / 0,4 s, ease-out). */
+@keyframes modal-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modal-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Entrée d'une page : l'opacité seule, aucun déplacement. Un mouvement, même
+   discret, se remarque dès la troisième navigation et finit par agacer ;
+   le fondu nu, lui, se laisse oublier. */
+@keyframes page-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position-x: -200px;
+  }
+  100% {
+    background-position-x: calc(100% + 200px);
+  }
+}
+
+/* Aucune règle prefers-reduced-motion n'était dans la capture ; celle-ci est
+   un ajout d'accessibilité de notre part. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

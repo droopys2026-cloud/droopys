@@ -1,0 +1,704 @@
+/* ============================================================================
+   sections.css — bandes de page et sous-surfaces.
+   Ordre relevé : barre d'annonce → header → contenu → footer.
+   ========================================================================== */
+
+@layer components {
+  /* Barre d'annonce, pleine largeur, noire. */
+  .section-announcement {
+    background-color: var(--color-surface-inverse);
+    color: var(--color-ink-inverse);
+    display: flex;
+    position: relative;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+  }
+
+  .section-header {
+    background-color: var(--color-surface);
+    position: relative;
+    width: 100%;
+    z-index: 3;
+  }
+
+  /* Le contenu principal n'a pas de fond propre : la toile blanche traverse. */
+  .section-main {
+    position: relative;
+    width: 100%;
+  }
+
+  /* Bandeau newsletter — fond noir, seul endroit avec l'encre inversée. */
+  .section-newsletter {
+    background-color: var(--color-surface-inverse);
+    color: var(--color-ink-inverse);
+    /* Décollé de la bande qui précède, comme `.brand-wall` : un aplat noir
+       posé contre du contenu se lit comme la bordure de ce contenu. Rien en
+       dessous : le pied de page enchaîne directement. */
+    margin-top: var(--spacing-17);
+  }
+
+  .section-footer {
+    width: 100%;
+  }
+
+  /* ---- sous-surfaces à l'intérieur du contenu (3 variantes relevées) ---- */
+
+  .subsection-gray {
+    background-color: var(--color-surface-alt);
+    padding-bottom: var(--spacing-14);
+    margin-top: var(--spacing-15);
+    margin-bottom: var(--spacing-17);
+  }
+
+  .subsection-tight {
+    background-color: var(--color-surface);
+    padding-block: var(--spacing-2);
+    margin-top: var(--spacing-2);
+  }
+
+  .subsection-decouvrez {
+    background-color: var(--color-surface-alt);
+    padding-block: var(--spacing-14);
+  }
+
+  /* Mur de logos de marques, sur fond noir.
+
+     Le noir est celui de la barre d'annonce et du bandeau newsletter : c'est
+     la seule surface sombre relevée, on ne s'en invente pas une autre. */
+  .brand-wall {
+    background-color: var(--color-surface-inverse);
+    padding-block: var(--spacing-14);
+    /* Détaché des bandes voisines : un aplat noir collé à la section voisine
+       se lirait comme sa bordure. Même respiration au-dessus qu'en dessous —
+       la section qui précède se termine par du contenu, pas par un fond, et
+       65 px ne suffisaient pas à l'en décoller. */
+    margin-top: var(--spacing-17);
+    margin-bottom: var(--spacing-17);
+  }
+
+  /* Les filets entre les cases viennent du fond de la grille, que les cases
+     recouvrent : l'écart d'un pixel laisse passer la couleur du dessous. C'est
+     ce qui donne une seule ligne entre deux cases, sans bordure en double ni
+     bordure orpheline en bout de rangée, quel que soit le nombre de colonnes.
+     Le gris moyen plutôt que le gris clair : sur du noir, `border-muted`
+     ferait une grille plus voyante que les logos. */
+  .brand-wall-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1px;
+    background-color: var(--color-border-input);
+  }
+
+  .brand-wall-cell {
+    background-color: var(--color-surface-inverse);
+  }
+
+  /* Atténués au repos pour que le mur se lise comme un ensemble, pleins au
+     survol — la convention d'interaction du design. */
+  .brand-wall-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 120px;
+    padding-inline: var(--spacing-9);
+    opacity: 0.6;
+    transition: opacity var(--duration-medium) var(--ease-in-out);
+  }
+
+  .brand-wall-link:hover {
+    opacity: 1;
+  }
+
+  /* Les logotypes récupérés sont des tracés noirs : sur fond noir ils
+     disparaissent. `invert` les repasse en blanc sans maintenir une seconde
+     version de chaque fichier — ils sont monochromes, l'inversion est donc
+     exacte et non une approximation. */
+  .brand-wall-logo {
+    filter: invert(1);
+    /* Les dimensions viennent de `logoBox`, en dur sur la balise. En dessous de
+       quatre colonnes la case devient plus étroite que le plus large des
+       logotypes : `max-width` le laisse rétrécir, `height: auto` lui garde ses
+       proportions. */
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Nom composé des maisons sans logo vectoriel. Deux corrections au rôle
+     `text-brand-label` : l'encre, blanche ici puisqu'on est sur
+     `surface-inverse`, et la taille — 13 px à côté de logotypes de 30 à 60 px
+     de haut, le nom passerait pour une note de bas de page. */
+  .brand-wall-name {
+    color: var(--color-ink-inverse);
+    font-size: var(--text-heading-sm);
+    line-height: 34px;
+    letter-spacing: 1px;
+  }
+
+  /* Barre collante : l'en-tête réduit qui prend le relais au défilement.
+     Elle est toujours rendue, mais rangée au-dessus du champ de vision
+     (`translateY(-100%)`) tant que la classe `is-stuck` n'est pas là — c'est
+     ce qui rend la transition d'entrée possible. Durée et courbe viennent du
+     vocabulaire de mouvement du design (0,3 s ease-in-out).
+     `visibility` accompagne l'opacité pour que la barre repliée n'intercepte
+     aucun clic. */
+  .sticky-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 6;
+    background-color: var(--color-surface);
+    border-bottom: 1px solid var(--color-border-muted);
+    box-shadow: 0 4px 16px rgb(0 0 0 / 6%);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-100%);
+    transition:
+      transform var(--duration-medium) var(--ease-in-out),
+      opacity var(--duration-medium) var(--ease-in-out),
+      visibility var(--duration-medium) var(--ease-in-out);
+  }
+
+  .sticky-header.is-stuck {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  /* Dans la barre réduite, le menu principal perd ses marges de bandeau :
+     il vit sur la même ligne que le logo et les icônes. */
+  .sticky-header .nav-list-item {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
+  .sticky-header > .container-page {
+    padding-inline: var(--spacing-9);
+    padding-block: var(--spacing-4);
+  }
+
+  /* Le menu vit ici dans une rangée : il ne doit ni recentrer ni repadder
+     sa liste, sinon il pousse le logo et les icônes vers les bords. */
+  .sticky-header nav > ul.container-page {
+    max-width: none;
+    padding-inline: 0;
+  }
+
+  .sticky-header .nav-list-item {
+    white-space: nowrap;
+  }
+
+  /* Le panneau déroulant reste pleine largeur : on le positionne par rapport
+     à la barre collante (qui est `fixed`, donc bloc conteneur) et non par
+     rapport au menu (neutralisé côté composant par `[.sticky-header_&]:static`).
+     `100vw` est volontairement évité : cette unité inclut la barre de
+     défilement et ferait dépasser la page horizontalement. */
+  .sticky-header .nav-panel {
+    left: 0;
+    width: 100%;
+    transform: none;
+  }
+
+  /* Légende posée au bas d'une image du hero.
+     Le voile blanc qui monte en dégradé n'est pas décoratif : sur une photo
+     claire, le sur-titre gris disparaissait purement et simplement. Il
+     garantit un fond sous le texte quelle que soit la photo, sans assombrir
+     l'image comme le ferait un voile noir. */
+  .hero-caption {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: var(--spacing-17) var(--spacing-9) var(--spacing-11);
+    background: linear-gradient(
+      to top,
+      rgb(255 255 255 / 92%) 35%,
+      rgb(255 255 255 / 0%)
+    );
+  }
+
+  .hero-caption__eyebrow {
+    font-family: var(--font-medium);
+    font-size: var(--text-base);
+    font-weight: 500;
+    line-height: 15px;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--color-ink-secondary);
+  }
+
+  .hero-caption__title {
+    font-family: var(--font-semibold);
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 28px;
+    color: var(--color-ink);
+    margin-top: var(--spacing-2);
+  }
+
+  /* En-tête posé sur une photo : plus de fond propre, encre blanche, et un
+     contexte d'empilement pour que l'image reste derrière le contenu.
+     La hauteur ne change pas — c'est l'en-tête habituel, seul son fond change. */
+  .section-header--overlay {
+    /* La photo de fond ne doit pas déborder de la bande. */
+    overflow: hidden;
+    background-color: transparent;
+    color: var(--color-ink-inverse);
+    isolation: isolate;
+    /* Sur une page de rayon, l'en-tête est aussi la vitrine du rayon : on lui
+       donne de la hauteur pour que la photo se voie, sans toucher à la
+       disposition de la barre elle-même. */
+    padding-bottom: clamp(var(--spacing-14), 14vw, 220px);
+  }
+
+  /* Quand un titre occupe le bas de l'en-tête, il remplace le vide : la
+     réserve de hauteur n'a plus lieu d'être. */
+  .section-header--overlay:has(.header-title) {
+    padding-bottom: var(--spacing-11);
+  }
+
+  .header-title {
+    padding: clamp(var(--spacing-13), 10vw, 160px)
+      clamp(var(--spacing-9), 4vw, var(--spacing-13)) 0;
+    font-family: var(--font-semibold);
+    font-size: clamp(32px, 5vw, 64px);
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.5px;
+    color: var(--color-ink);
+  }
+
+  /* Sur photo, l'encre s'inverse. */
+  .section-header--overlay .header-title {
+    color: var(--color-ink-inverse);
+  }
+
+  /* L'en-tête est plus haut sur ces pages : son contenu grandit d'autant,
+     sinon la barre flotte au milieu d'un grand vide. */
+  .section-header--overlay .nav-list-item,
+  .section-header--overlay .nav-list-item .link-underline-sm {
+    font-size: var(--text-md);
+    line-height: 20px;
+  }
+
+  .section-header--overlay .nav-list-item {
+    padding-block: var(--spacing-4);
+  }
+
+  /* Les icônes portent leur taille en attribut : le CSS la surclasse. */
+  .section-header--overlay > .container-page svg {
+    width: 26px;
+    height: 26px;
+  }
+
+  .section-header--overlay a,
+  .section-header--overlay button,
+  .section-header--overlay .link-underline-sm,
+  .section-header--overlay .icon-link-nav,
+  .section-header--overlay .icon-button-default,
+  .section-header--overlay .icon-button-muted-border,
+  .section-header--overlay .nav-list-item {
+    color: var(--color-ink-inverse);
+  }
+
+  /* Le panneau déroulant garde son fond blanc : son contenu redevient noir,
+     sinon il disparaît. Même chose pour la barre collante. */
+  .section-header--overlay .nav-panel,
+  .section-header--overlay .nav-panel a,
+  .section-header--overlay .nav-panel .nav-column-title,
+  .section-header--overlay .nav-panel .nav-column-link,
+  .section-header--overlay .nav-panel .text-brand-label,
+  .section-header--overlay .sticky-header,
+  .section-header--overlay .sticky-header a,
+  .section-header--overlay .sticky-header button,
+  .section-header--overlay .sticky-header .nav-list-item {
+    color: var(--color-ink);
+  }
+
+  /* Légende d'un bandeau de rayon : l'image occupe toute la largeur en tête
+     de page, le texte se pose dessus. Ici l'encre est blanche et le voile
+     sombre — l'inverse de la légende du hero, car le texte doit tenir sur
+     n'importe quelle zone de la photo, claire comprise. */
+  .banner-caption {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: var(--spacing-17) var(--spacing-9) var(--spacing-13);
+    background: linear-gradient(to top, rgb(0 0 0 / 55%) 30%, rgb(0 0 0 / 0%));
+  }
+
+  .banner-caption__eyebrow {
+    font-family: var(--font-medium);
+    font-size: var(--text-base);
+    font-weight: 500;
+    line-height: 15px;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--color-ink-inverse);
+  }
+
+  .banner-caption__title {
+    font-family: var(--font-semibold);
+    font-size: clamp(28px, 4vw, 44px);
+    font-weight: 600;
+    line-height: 1.1;
+    color: var(--color-ink-inverse);
+    margin-top: var(--spacing-2);
+  }
+
+  /* Nom du rayon, au bas du panneau déroulant. Volontairement grand : c'est
+     le repère visuel du panneau, pas un lien de plus dans la liste. */
+  .nav-panel__title {
+    display: block;
+    padding: 0 clamp(var(--spacing-9), 4vw, var(--spacing-13)) var(--spacing-11);
+    font-family: var(--font-semibold);
+    font-size: clamp(32px, 5vw, 64px);
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.5px;
+    color: var(--color-ink);
+    transition: opacity var(--duration-medium) var(--ease-in-out);
+  }
+
+  .nav-panel__title:hover {
+    opacity: 0.55;
+  }
+
+  /* Bords fondus d'une bande défilante : le texte s'efface aux extrémités
+     au lieu d'être tranché net. Un masque plutôt que deux dégradés blancs
+     posés par-dessus — ainsi l'effet tient quelle que soit la couleur du
+     fond, y compris sur les bandes grises. */
+  .marquee-fade {
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent 0%,
+      black 12%,
+      black 88%,
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to right,
+      transparent 0%,
+      black 12%,
+      black 88%,
+      transparent 100%
+    );
+  }
+
+  /* Colonnes du panneau : intitulé en capitales, liens aérés en dessous.
+     Le pas vertical entre liens est plus large que dans le reste du site —
+     un panneau de menu se parcourt du regard, il ne se lit pas en continu. */
+  .nav-column-title {
+    font-family: var(--font-semibold);
+    font-size: var(--text-md);
+    font-weight: 600;
+    line-height: 17px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--color-ink);
+    margin-bottom: var(--spacing-10);
+  }
+
+  .nav-column-link {
+    font-family: var(--font-body);
+    font-size: var(--text-md);
+    line-height: 17px;
+    color: var(--color-ink);
+    transition: color var(--duration-medium) var(--ease-in-out);
+  }
+
+  .nav-column-link:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  /* Panneau déroulant du menu principal. Il se pose sous l'en-tête, pleine
+     largeur, et flotte au-dessus du contenu — d'où le z-index supérieur à
+     celui de .section-header. L'ombre est portée par ce panneau seul : le
+     design de référence n'en donnait aucune valeur, celle-ci est un choix
+     minimal pour détacher le panneau du contenu. */
+  .nav-panel {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background-color: var(--color-surface);
+    border-top: 1px solid var(--color-border-muted);
+    box-shadow: 0 12px 24px rgb(0 0 0 / 8%);
+    z-index: 4;
+  }
+
+  /* ---- tiroirs latéraux (panier, recherche) -------------------------------------------------
+     Aucun tiroir n'a été relevé dans le design de référence : la largeur du
+     panneau (420px), l'opacité du voile (35%) et son ombre sont des choix de
+     notre part, tenus au plus près du reste — mêmes jetons de couleur, mêmes
+     durée et courbe (0,3s ease-in-out) que la barre collante.
+
+     Les classes sont génériques : le panier et la recherche sortent du même
+     bord, du même geste, et deux styles jumeaux finiraient par diverger.
+
+     Le panneau reste dans le DOM et se range hors champ par translateX :
+     c'est ce qui rend la transition d'entrée possible. `visibility` accompagne
+     l'opacité du voile pour qu'un voile replié n'intercepte aucun clic. */
+  .drawer-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 8;
+    background-color: rgb(0 0 0 / 35%);
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      opacity var(--duration-medium) var(--ease-in-out),
+      visibility var(--duration-medium) var(--ease-in-out);
+  }
+
+  .drawer-scrim.is-open {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9;
+    display: flex;
+    flex-direction: column;
+    width: min(420px, 100%);
+    background-color: var(--color-surface);
+    border-left: 1px solid var(--color-border-muted);
+    box-shadow: -12px 0 24px rgb(0 0 0 / 8%);
+    transform: translateX(100%);
+    transition: transform var(--duration-medium) var(--ease-in-out);
+  }
+
+  .drawer.is-open {
+    transform: translateX(0);
+  }
+
+  .drawer__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-9);
+    padding: var(--spacing-9);
+    border-bottom: 1px solid var(--color-border-muted);
+  }
+
+  /* Seule la liste des articles défile : l'en-tête et le récapitulatif restent
+     visibles, sinon le sous-total disparaît dès le troisième article. */
+  .drawer__body {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--spacing-9);
+  }
+
+  .drawer__foot {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-7);
+    padding: var(--spacing-9);
+    border-top: 1px solid var(--color-border-muted);
+  }
+
+  /* Le CTA plein du design est un lien de bloc éditorial : inline-block, avec
+     une marge haute à lui. Dans le pied du tiroir, c'est le `gap` qui espace,
+     et le bouton doit tenir toute la largeur — d'où ces trois neutralisations. */
+  .drawer__foot .link-cta-block {
+    display: block;
+    width: 100%;
+    margin-top: 0;
+    text-align: center;
+  }
+
+  /* Pastille de pied de page (moyen de paiement, badge de téléchargement).
+     Dimensions relevées telles quelles : 187,195 × 36 px. */
+  .footer-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 187.195px;
+    max-width: 100%;
+    height: 36px;
+    border: 1px solid var(--color-border-muted);
+    color: var(--color-ink-secondary);
+    font-size: var(--text-xs);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  /* Logotype de moyen de paiement. Hauteur commune et largeur libre : ces
+     marques-là sont universellement reconnues dans leurs proportions, les
+     recadrer dans une case ferait plus de mal que de bien. Le rectangle blanc
+     et le filet reprennent ceux de `.footer-badge`, pour que les logotypes ne
+     flottent pas nus sur le fond du pied de page. */
+  .payment-logo {
+    box-sizing: content-box;
+    height: 22px;
+    width: auto;
+    padding: var(--spacing-4) var(--spacing-6);
+    border: 1px solid var(--color-border-muted);
+    background-color: var(--color-surface);
+  }
+
+  /* ---- fiche produit ---------------------------------------------------- */
+
+  .size-picker {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-7);
+  }
+
+  .size-picker__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--spacing-9);
+  }
+
+  .size-picker__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-5);
+  }
+
+  /* Les pastilles sont larges : on les vise au pouce sur un téléphone, et le
+     mot « épuisé » doit tenir dedans. */
+  .size-chip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-width: 76px;
+    min-height: 56px;
+    padding: var(--spacing-5) var(--spacing-7);
+    border: 1px solid var(--color-border-muted);
+    font-family: var(--font-medium);
+    font-size: var(--text-lg);
+    font-weight: 500;
+    line-height: 1;
+    color: var(--color-ink);
+    cursor: pointer;
+    transition:
+      border-color var(--duration-short) var(--ease-in-out),
+      background-color var(--duration-short) var(--ease-in-out);
+  }
+
+  .size-chip:hover:not(:disabled) {
+    border-color: var(--color-ink);
+  }
+
+  .size-chip[aria-pressed="true"] {
+    border-color: var(--color-ink);
+    background-color: var(--color-ink);
+    color: var(--color-ink-inverse);
+  }
+
+  /* Une taille épuisée reste lisible et reste affichée : la faire disparaître
+     laisserait croire que la boutique ne fait pas cette taille du tout. */
+  .size-chip:disabled {
+    color: var(--color-ink-secondary);
+    border-color: var(--color-border-muted);
+    background-image: linear-gradient(
+      to bottom right,
+      transparent calc(50% - 1px),
+      var(--color-border-muted) 50%,
+      transparent calc(50% + 1px)
+    );
+    cursor: not-allowed;
+  }
+
+  .size-chip__out {
+    font-family: var(--font-body);
+    font-size: var(--text-2xs);
+    font-weight: 400;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+  }
+
+  .size-picker__warning {
+    font-family: var(--font-medium);
+    font-size: var(--text-md);
+    color: rgb(180, 40, 40);
+  }
+
+  .product-reassurance {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+    padding-top: var(--spacing-7);
+    border-top: 1px solid var(--color-border-muted);
+    font-size: var(--text-md);
+    color: var(--color-ink-secondary);
+  }
+
+  .product-block {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-5);
+  }
+
+  .product-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-1);
+    font-size: var(--text-lg);
+    line-height: 1.6;
+  }
+
+  /* Conteneur central. La capture donnait 1324px de largeur utile ; on la
+     traite comme la fenêtre mesurée, pas comme une contrainte du design. */
+  .container-page {
+    width: 100%;
+    max-width: 1440px;
+    margin-inline: auto;
+    padding-inline: var(--spacing-9);
+  }
+}
+
+/* Les points de rupture n'étaient PAS dans la capture (section « Responsive
+   rules » absente). Ceux-ci sont un choix de notre part, minimal et
+   explicite : on réduit les grands titres et on empile les colonnes. */
+@media (max-width: 768px) {
+  .heading-h1 {
+    font-size: 24px;
+    line-height: 28px;
+    margin-inline-start: 0;
+  }
+  .heading-h2,
+  .heading-h2--left,
+  .text-heading-emphasis {
+    font-size: 24px;
+    line-height: 28px;
+    padding-top: var(--spacing-11);
+    padding-bottom: var(--spacing-9);
+    padding-left: 0;
+  }
+  .brand-wall-name {
+    font-size: 20px;
+    line-height: 24px;
+  }
+  .subsection-gray,
+  .brand-wall {
+    margin-top: var(--spacing-11);
+    margin-bottom: var(--spacing-12);
+  }
+  .section-newsletter {
+    margin-top: var(--spacing-11);
+  }
+  /* Deux colonnes plutôt que quatre : en dessous, un logotype large comme
+     « Zadig & Voltaire » tomberait sous la taille lisible. */
+  .brand-wall-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

@@ -1,0 +1,278 @@
+/* ============================================================================
+   type.css — rôles typographiques
+   Chaque classe reprend telle quelle la famille, la graisse, la taille,
+   l'interlignage, la casse et la couleur relevées pour ce rôle.
+   ========================================================================== */
+
+@layer components {
+  .text-body {
+    font-family: var(--font-body);
+    font-size: 13.6px;
+    font-weight: 400;
+    line-height: 23.12px;
+    color: var(--color-ink);
+    background-color: var(--color-surface);
+  }
+
+  .heading-h1 {
+    font-family: var(--font-serif);
+    font-size: 30px;
+    font-weight: 600;
+    line-height: 32px;
+    color: var(--color-ink);
+    padding-inline: 20px;
+    margin-inline-start: 52px;
+  }
+
+  .heading-h2 {
+    font-family: var(--font-semibold);
+    font-size: 35px;
+    font-weight: 600;
+    line-height: 37px;
+    color: var(--color-ink);
+    padding-top: var(--spacing-16);
+    padding-bottom: var(--spacing-13);
+  }
+
+  /* Variante 2/2 : titre de section aligné à gauche (bloc « Découvrez »). */
+  .heading-h2--left {
+    font-family: var(--font-semibold);
+    font-size: 35px;
+    font-weight: 600;
+    line-height: 42px;
+    text-align: left;
+    color: var(--color-ink);
+    padding-left: var(--spacing-13);
+  }
+
+  .heading-h3 {
+    font-family: var(--font-semibold);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 17px;
+    color: var(--color-ink);
+    text-align: center;
+    margin-top: var(--spacing-7);
+    margin-bottom: var(--spacing-10);
+  }
+
+  .heading-h4 {
+    font-family: var(--font-body);
+    font-size: 11.9px;
+    font-weight: 600;
+    line-height: 17.85px;
+    color: var(--color-ink-secondary);
+    margin-inline-start: var(--spacing-3);
+  }
+
+  /* Paragraphe : encre blanche, sans fond propre dans la mesure d'origine.
+     Il n'est donc lisible que sur une bande sombre. La règle ci-dessous
+     limite le blanc aux deux bandes noires ; partout ailleurs on retombe
+     sur l'encre noire (décision de lisibilité, pas une mesure).            */
+  .text-paragraph {
+    font-family: var(--font-light);
+    font-size: 14px;
+    font-weight: 300;
+    line-height: 16.8px;
+    color: var(--color-ink);
+  }
+
+  .section-announcement .text-paragraph,
+  .section-newsletter .text-paragraph,
+  .section-announcement .text-strong,
+  .section-newsletter .text-strong,
+  .section-announcement .text-emphasis,
+  .section-newsletter .text-emphasis {
+    color: var(--color-ink-inverse);
+  }
+
+  /* ---- liens (4 variantes relevées) ------------------------------------ */
+
+  .link--primary-cta {
+    font-family: var(--font-body);
+    font-size: 13.6px;
+    line-height: 23.12px;
+    color: var(--color-ink);
+    border-color: var(--color-ink);
+    background-color: var(--color-surface-muted);
+    cursor: pointer;
+    transition: all var(--duration-medium) var(--ease-default);
+  }
+
+  .link--nav {
+    font-family: var(--font-light);
+    font-weight: 300;
+    font-size: 12px;
+    line-height: 15px;
+    color: var(--color-ink);
+    border-color: var(--color-ink);
+    cursor: pointer;
+    transition: all var(--duration-medium) var(--ease-default);
+  }
+
+  .link--footer {
+    font-family: var(--font-body);
+    font-size: 13.6px;
+    line-height: 23.12px;
+    color: var(--color-ink);
+    border-color: var(--color-ink);
+    cursor: pointer;
+    transition: all var(--duration-medium) var(--ease-default);
+  }
+
+  .link--icon-tab {
+    font-family: var(--font-medium);
+    font-weight: 500;
+    font-size: 12px;
+    line-height: 20.4px;
+    color: var(--color-ink);
+    border-color: var(--color-ink);
+    cursor: pointer;
+    padding: 0 var(--spacing-4) var(--spacing-2);
+    transition: color var(--duration-medium) var(--ease-in-out);
+  }
+
+  /* ---- boutons typés (variantes 1 à 4 sur 13 relevées) ----------------- */
+
+  .button--icon-default {
+    font-family: var(--font-medium);
+    font-weight: 500;
+    font-size: 12px;
+    line-height: 17px;
+    text-transform: uppercase;
+    color: var(--color-ink);
+    border-color: var(--color-ink);
+    cursor: pointer;
+    padding: var(--spacing-3);
+    transition:
+      background-color var(--duration-short) var(--ease-in-out),
+      border-color var(--duration-short) var(--ease-in-out);
+  }
+
+  .button--icon-muted {
+    font-family: var(--font-medium);
+    font-weight: 500;
+    font-size: 12px;
+    line-height: 17px;
+    text-transform: uppercase;
+    color: var(--color-ink);
+    border-color: var(--color-border-muted);
+    cursor: pointer;
+    padding: var(--spacing-3) var(--spacing-3) 5px var(--spacing-3);
+    transition:
+      background-color var(--duration-short) var(--ease-in-out),
+      border-color var(--duration-short) var(--ease-in-out);
+  }
+
+  .button--cta-dark {
+    font-family: var(--font-medium);
+    font-weight: 500;
+    font-size: 10px;
+    line-height: 12px;
+    text-transform: uppercase;
+    color: var(--color-ink-inverse);
+    background-color: var(--color-surface-inverse);
+    border-color: var(--color-ink-inverse);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  /* Puce active du carrousel. */
+  .button--dot-active {
+    font-family: var(--font-light);
+    font-weight: 300;
+    font-size: 13.6px;
+    line-height: 16.32px;
+    color: var(--color-ink);
+    border-color: var(--color-ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  /* ---- champs de formulaire -------------------------------------------- */
+
+  .input--newsletter {
+    font-family: var(--font-medium);
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--color-ink-inverse);
+    background-color: var(--color-surface-inverse);
+    border-bottom: 1px solid var(--color-ink-inverse);
+    padding: var(--spacing-5) 0 var(--spacing-5) var(--spacing-2);
+    cursor: text;
+  }
+
+  .input--search {
+    font-family: var(--font-body);
+    font-size: 10.88px;
+    color: var(--color-ink);
+    background-color: var(--color-surface);
+    border-top: 1px solid var(--color-border-input);
+    border-bottom: 1px solid var(--color-border-input);
+    border-radius: var(--radius-pill);
+    padding: 6px 35px 6px 15px;
+    margin-inline-start: var(--spacing-7);
+    cursor: text;
+  }
+
+  .input--category-switch,
+  .input--category-filter {
+    font-family: var(--font-body);
+    font-size: 13px;
+    color: var(--color-ink);
+    border-color: var(--color-ink);
+    transition: background-color var(--duration-medium) var(--ease-in-out);
+  }
+
+  .label--toggle {
+    font-family: var(--font-body);
+    font-size: 13.6px;
+    font-weight: 600;
+    color: var(--color-ink);
+    display: inline-block;
+  }
+
+  .text-list-item {
+    font-family: var(--font-body);
+    font-size: 13.6px;
+    line-height: 23.12px;
+    color: var(--color-ink);
+  }
+
+  /* Empattement inséré dans un titre sans empattement (« Découvrez … »). */
+  .text-heading-emphasis {
+    font-family: var(--font-serif);
+    font-weight: 600;
+    font-size: 35px;
+    line-height: 37px;
+    color: var(--color-ink);
+  }
+
+  .text-strong {
+    font-family: var(--font-semibold);
+    font-weight: 600;
+    font-size: 13px;
+    line-height: 15.6px;
+    color: var(--color-ink);
+  }
+
+  .text-emphasis {
+    font-family: var(--font-light);
+    font-weight: 300;
+    font-size: 13px;
+    line-height: 15.6px;
+    color: var(--color-ink);
+  }
+
+  .text-icon {
+    font-family: var(--font-icon);
+    font-size: 24px;
+    line-height: 24px;
+    letter-spacing: 0.5px;
+    color: var(--color-ink);
+  }
+}

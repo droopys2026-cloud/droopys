@@ -1,0 +1,125 @@
+/* ============================================================================
+   theme.css — jetons de design Droopys
+   Les valeurs sont celles relevées sur la capture du design de référence.
+   Déclarées dans @theme : Tailwind v4 génère automatiquement les utilitaires
+   correspondants (bg-surface, text-ink, p-9, rounded-pill, font-medium…).
+   ========================================================================== */
+
+@theme {
+  /* ---- surfaces ---------------------------------------------------------
+     surface        : fond du body, du header, du contenu principal (blanc)
+     surface-alt    : bandeaux gris clair de section
+     surface-muted  : cadre placeholder d'image / fond de lien atténué
+     surface-inverse: barre d'annonce, bandeau newsletter (noir)
+     surface-inverse-alt : noir cassé des CTA pleins                        */
+  --color-surface: rgb(255, 255, 255);
+  --color-surface-alt: rgb(248, 248, 248);
+  --color-surface-muted: rgb(229, 229, 229);
+  --color-surface-inverse: rgb(0, 0, 0);
+  --color-surface-inverse-alt: rgb(18, 13, 14);
+
+  /* ---- encres -----------------------------------------------------------
+     ink-inverse ne doit JAMAIS être posé sur `surface` (blanc sur blanc,
+     contraste 1:1). Il est réservé aux bandes sombres — voir type.css.     */
+  --color-ink: rgb(0, 0, 0);
+  --color-ink-inverse: rgb(255, 255, 255);
+  --color-ink-muted: rgb(191, 191, 191);
+  --color-ink-secondary: rgb(105, 105, 105);
+
+  /* ---- bordures --------------------------------------------------------- */
+  --color-border: rgb(0, 0, 0);
+  --color-border-muted: rgb(216, 216, 216);
+  --color-border-input: rgb(112, 112, 112);
+
+  /* ---- focus (anneau de mise au point clavier) -------------------------- */
+  --color-focus: rgb(0, 187, 255);
+
+  /* ---- familles typographiques -----------------------------------------
+     Une seule famille, Poppins, chargée par next/font dans layout.tsx.
+     Les rôles ne se distinguent plus par la famille mais par la graisse ;
+     les jetons gardent leurs noms d'origine pour que rien d'autre ne bouge.
+     `--font-poppins` est injectée par next/font sur <html> ; le repli sert
+     le temps que le fichier arrive, et si Google Fonts est inaccessible.   */
+  --font-body: var(--font-poppins), "Helvetica Neue", Arial, sans-serif;
+  --font-light: var(--font-body);
+  --font-medium: var(--font-body);
+  --font-semibold: var(--font-body);
+  --font-serif: var(--font-body);
+  --font-sans: var(--font-body);
+  --font-icon: var(--font-body);
+
+  /* Graisses correspondant aux anciens rôles de famille. */
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+  --font-weight-black: 900;
+
+  /* ---- échelle d'espacement (valeurs relevées, dédoublonnées) ------------
+     Ce n'est pas une progression régulière mais l'ensemble des valeurs
+     réellement utilisées par le design.                                     */
+  --spacing-1: 2px;
+  --spacing-2: 5px;
+  --spacing-3: 6.8px;
+  --spacing-4: 7px;
+  --spacing-5: 8px;
+  --spacing-6: 10px;
+  --spacing-7: 15px;
+  --spacing-8: 16px;
+  --spacing-9: 20px;
+  --spacing-10: 24px;
+  --spacing-11: 32px;
+  --spacing-12: 45px;
+  --spacing-13: 50px;
+  --spacing-14: 60px;
+  --spacing-15: 65px;
+  --spacing-16: 71px;
+  --spacing-17: 100px;
+
+  /* ---- rayons (seuls ces trois ont été relevés) ------------------------- */
+  --radius-badge: 15px;
+  --radius-pill: 50px;
+  --radius-circle: 50%;
+
+  /* ---- tailles de texte relevées (un ensemble, pas une échelle dérivée) - */
+  --text-2xs: 9px;
+  --text-xs: 10px;
+  --text-xs-alt: 10.88px;
+  --text-sm: 11px;
+  --text-base: 12px;
+  --text-md: 13px;
+  --text-md-alt: 13.6px;
+  --text-lg: 14px;
+  --text-icon-sm: 20px;
+  --text-icon: 24px;
+  --text-heading-sm: 30px;
+  --text-heading: 35px;
+}
+
+/* Jetons de mouvement — hors @theme : ce sont des variables CSS utilisées
+   telles quelles dans les transitions, pas des utilitaires Tailwind.       */
+:root {
+  --duration-fast: 0.1s;
+  --duration-short: 0.2s; /* durée dominante du design (×8) */
+  --duration-base: 0.25s;
+  --duration-medium: 0.3s; /* seconde convention (×6) */
+  --duration-slow: 0.4s;
+  --duration-slower: 0.5s;
+  --ease-default: ease; /* courbe dominante (×24) */
+  --ease-in-out: ease-in-out;
+  --ease-in: ease-in;
+  --ease-out: ease-out;
+}
+
+/* Toile de la page : couleur plate, comme relevé. */
+html,
+body {
+  background-color: var(--color-surface);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: 13.6px;
+  font-weight: 400;
+  line-height: 23.12px;
+}

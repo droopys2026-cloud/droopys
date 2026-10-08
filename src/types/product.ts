@@ -18,8 +18,12 @@ export type Product = {
    * les veut toutes. Vide, la fiche retombe sur les deux vues de la carte.
    */
   images?: string[];
-  /** Tailles proposées et stock de chacune. */
-  sizes?: { size: string; quantity: number }[];
+  /**
+   * Tailles proposées et stock de chacune. `variantId` est ce que le panier
+   * enregistre : il porte à la fois le produit et la taille, là où le couple
+   * (slug, libellé de taille) demanderait une recherche à chaque geste.
+   */
+  sizes?: { variantId: string; size: string; quantity: number }[];
   /** Descriptif en points, une ligne par point. */
   description?: string[];
   composition?: string;
@@ -29,7 +33,11 @@ export type Product = {
   reference?: string;
   /** Rayon et sous-rayon — fil d'Ariane et collections similaires. */
   categorySlug?: string;
-  subcategory?: string;
+  /**
+   * Slug et titre, et non le seul titre : le fil d'Ariane doit pouvoir mener
+   * à la page du sous-rayon, et un titre ne fait pas une adresse.
+   */
+  subcategory?: { slug: string; title: string };
   /** « Notre mannequin mesure 1 m 75 et porte une taille 36. » */
   modelNote?: string;
   /**

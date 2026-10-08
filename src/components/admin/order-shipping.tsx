@@ -1,42 +1,138 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState } from "react";
+import {
+  createShippingLabel,
+  type LabelState,
+} from "@/app/admin/(back-office)/commandes/actions";
 
 /**
- * Expédition d'une commande.
- *
- * Tant qu'aucun transporteur n'est branché, le numéro de suivi se colle à la
- * main depuis laposte.fr : c'est exactement ce que fera la boutique au
- * démarrage, et le champ ne changera pas quand l'étiquette sera automatique —
- * seule sa façon d'être rempli changera.
+ * Expédition d'une commande : l'étiquette Sendcloud se crée et s'imprime
+ * d'ici, sans ouvrir Sendcloud. Le numéro de suivi remonte tout seul, la
+ * commande passe en « expédiée » et la cliente reçoit le lien de suivi.
  */
-export function OrderShipping({ reference }: { reference: string }) {
-  const [tracking, setTracking] = useState("");
+export function OrderShipping({
+  orderId,
+  deliveryMethod,
+  serviceLabel,
+  label,
+  testMode,
+  homeServices,
+}: {
+  orderId: string;
+  deliveryMethod: "domicile" | "relais" | "retrait";
+  serviceLabel: string;
+  /** L'étiquette déjà créée, s'il y en a une. */
+  label: {
+    trackingNumber: string | null;
+    trackingUrl: string | null;
+    isTest: boolean;
+  } | null;
+  /** Les étiquettes créées maintenant seront des lettres de test gratuites. */
+  testMode: boolean;
+  /**
+   * Services à domicile proposés quand la commande n'a pas de transporteur
+   * (commande passée avant le choix au tunnel). Vide sinon.
+   */
+  homeServices: { key: string; label: string }[];
+}) {
+  const [state, action, pending] = useActionState<LabelState, FormData>(
+    createShippingLabel,
+    { status: "idle" },
+  );
+
+  if (deliveryMethod === "retrait") {
+    return (
+      <section className="admin-card">
+        <h2 className="admin-card__title">Expédition</h2>
+        <p className="admin-field__hint m-0">
+          Retrait en boutique : pas d&apos;étiquette. Prévenez la cliente quand
+          la commande est prête, puis passez-la en « Livrée » au retrait.
+        </p>
+      </section>
+    );
+  }
+
+  if (label) {
+    return (
+      <section className="admin-card">
+        <h2 className="admin-card__title">Expédition</h2>
+        {label.isTest && (
+          <p className="admin-form__error m-0">
+            Étiquette de TEST (lettre non affranchie) : ne pas déposer ce colis.
+          </p>
+        )}
+        <p className="m-0">{serviceLabel}</p>
+        {label.trackingNumber && (
+          <p className="admin-field__hint m-0">
+            Suivi :{" "}
+            {label.trackingUrl ? (
+              <a href={label.trackingUrl} target="_blank" rel="noreferrer noopener" className="admin-row__link">
+                {label.trackingNumber}
+              </a>
+            ) : (
+              label.trackingNumber
+            )}
+          </p>
+        )}
+        <a
+          href={`/admin/commandes/${orderId}/etiquette`}
+          target="_blank"
+          rel="noopener"
+          className="admin-button self-start"
+        >
+          Imprimer l&apos;étiquette
+        </a>
+        <p className="admin-field__hint m-0">
+          Collez-la sur le colis et déposez-le chez le transporteur.
+        </p>
+      </section>
+    );
+  }
 
   return (
-    <section className="admin-card">
+    <form action={action} className="admin-card">
       <h2 className="admin-card__title">Expédition</h2>
+      <input type="hidden" name="orderId" value={orderId} />
+      {homeServices.length > 0 ? (
+        <div className="admin-field">
+          <label className="admin-field__label" htmlFor="transporteur">
+            Transporteur
+          </label>
+          <select id="transporteur" name="service" required className="admin-field__input" defaultValue="">
+            <option value="" disabled>
+              Choisir…
+            </option>
+            {homeServices.map((service) => (
+              <option key={service.key} value={service.key}>
+                {service.label}
+              </option>
+            ))}
+          </select>
+          <p className="admin-field__hint">
+            Cette commande date d&apos;avant le choix du transporteur au paiement.
+          </p>
+        </div>
+      ) : (
+        <p className="m-0">{serviceLabel}</p>
+      )}
 
-      <div className="admin-field">
-        <label className="admin-field__label" htmlFor="suivi">
-          Numéro de suivi Colissimo
-        </label>
-        <input
-          id="suivi"
-          className="admin-field__input"
-          placeholder="6A 12345 6789 1"
-          value={tracking}
-          onChange={(event) => setTracking(event.target.value)}
-        />
-        <p className="admin-field__hint">
-          Collez le numéro donné par La Poste. Le client le recevra par e-mail
-          avec le lien de suivi.
+      {state.status === "error" && (
+        <p role="alert" className="admin-form__error m-0">
+          {state.message}
         </p>
-      </div>
+      )}
 
-      <button type="button" className="admin-button" disabled={!tracking}>
-        Marquer {reference} comme expédiée
+      {testMode && (
+        <p className="admin-field__hint m-0">
+          Mode test : l&apos;étiquette sera une lettre non affranchie, gratuite
+          et sans transporteur. Aucun e-mail n&apos;est envoyé à la cliente.
+        </p>
+      )}
+
+      <button type="submit" className="admin-button self-start" disabled={pending}>
+        {pending ? "Création de l'étiquette…" : "Créer l'étiquette"}
       </button>
-    </section>
+    </form>
   );
 }

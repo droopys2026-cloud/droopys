@@ -1,28 +1,35 @@
 import type { Metadata } from "next";
-import { AnnouncementBar } from "@/components/layout/announcement-bar";
+import { SiteAnnouncement } from "@/components/layout/site-announcement";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
-import { BrandsStrip } from "@/components/sections/brands-strip";
-import { BrandStatement } from "@/components/sections/brand-statement";
-import { DEMO_CART_LINES } from "@/lib/placeholder-data";
+import { BrandIndex } from "@/components/sections/brand-index";
+import { countProductsByBrand, listBrands } from "@/lib/queries/catalog";
 
 export const metadata: Metadata = {
-  title: "Toutes les marques | Droopys",
+  title: "Toutes les marques | Droopy's",
   description:
-    "Les maisons distribuées par Droopys pour les enfants de la naissance à 16 ans.",
+    "Les maisons distribuées par Droopy's pour les enfants de la naissance à 16 ans.",
 };
 
-export default function BrandsIndexPage() {
+export default async function BrandsIndexPage() {
+  const [brands, counts] = await Promise.all([listBrands(), countProductsByBrand()]);
+  const countOf = new Map(counts.map((row) => [row.brandId, row.total]));
+
   return (
     <>
-      <AnnouncementBar>
-        Livraison offerte dès 150 € d&apos;achat · Retours sous 30 jours
-      </AnnouncementBar>
-      <SiteHeader cartLines={DEMO_CART_LINES} />
+      <SiteAnnouncement />
+      <SiteHeader title="Nos marques" />
 
       <main className="section-main">
-        <BrandStatement text="Toutes nos marques" />
-        <BrandsStrip />
+        <BrandIndex
+          brands={brands.map((brand) => ({
+            slug: brand.slug,
+            name: brand.name,
+            logoUrl: brand.logoUrl,
+            logoRatio: brand.logoRatio,
+            productCount: countOf.get(brand.id) ?? 0,
+          }))}
+        />
       </main>
 
       <SiteFooter />

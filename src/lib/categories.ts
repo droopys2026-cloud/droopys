@@ -1,11 +1,9 @@
-import { MAIN_NAV, type NavColumn } from "@/lib/navigation";
-
 /**
- * Les trois rayons mis en avant dans le hero. Chacun a sa page.
+ * Les rayons et leur présentation, versés en base par `scripts/seed.mts`.
  *
- * Les sous-rayons ne sont pas redéclarés ici : ils sont lus dans le menu
- * principal, à partir du `href` du rayon. Une rubrique ajoutée au menu
- * apparaît donc aussi sur la page, sans double saisie.
+ * Le site les lit en base — `listCategories`, `getCategoryBySlug` — et
+ * l'admin les crée et les supprime. Ce fichier n'est plus que la description
+ * de départ, lue par le seul script de peuplement.
  */
 export type Category = {
   slug: string;
@@ -28,7 +26,7 @@ export const CATEGORIES: Category[] = [
     slug: "bebe",
     href: "/bebe",
     title: "Bébé",
-    headline: "Bébé 0 à 24 mois",
+    headline: "Bébé 0-24 mois",
     eyebrow: "0 à 24 mois",
     intro:
       "De la naissance aux premiers pas : matières douces, coupes confortables et grandes maisons. Bodies, robes, ensembles et cadeaux de naissance.",
@@ -40,7 +38,7 @@ export const CATEGORIES: Category[] = [
     slug: "fille",
     href: "/fille",
     title: "Fille",
-    headline: "Fille 2 à 16 ans",
+    headline: "Fille 2-16 ans",
     eyebrow: "2 à 16 ans",
     intro:
       "Robes, mailles, denim et manteaux signés Chloé, Lanvin, Burberry ou Zadig & Voltaire. Des pièces choisies pour durer plus d'une saison.",
@@ -51,7 +49,7 @@ export const CATEGORIES: Category[] = [
     slug: "garcon",
     href: "/garcon",
     title: "Garçon",
-    headline: "Garçon 2 à 16 ans",
+    headline: "Garçon 2-16 ans",
     eyebrow: "2 à 16 ans",
     intro:
       "Doudounes, parkas et sweats des maisons qui ont fait le vestiaire masculin : Stone Island, C.P. Company, Moncler, Paul & Shark.",
@@ -108,7 +106,7 @@ CATEGORIES.push(
     slug: "outlet",
     href: "/outlet",
     title: "Outlet",
-    eyebrow: "Jusqu'à -50 %",
+    eyebrow: "Fins de série",
     intro:
       "Les fins de série et les dernières tailles, aux mêmes exigences de sélection que le reste de la boutique.",
   },
@@ -116,9 +114,4 @@ CATEGORIES.push(
 
 export function getCategory(slug: string): Category | undefined {
   return CATEGORIES.find((category) => category.slug === slug);
-}
-
-/** Les colonnes de sous-rayons que le menu principal déclare pour ce rayon. */
-export function getCategoryColumns(href: string): NavColumn[] {
-  return MAIN_NAV.find((item) => item.href === href)?.columns ?? [];
 }

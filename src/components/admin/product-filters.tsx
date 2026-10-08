@@ -1,164 +1,157 @@
-"use client";
-
-import { useState } from "react";
-import { AdminEmpty } from "@/components/admin/admin-empty";
+import Link from "next/link";
 import { IconSearch } from "@/components/admin/admin-icons";
-import { BRANDS } from "@/lib/brands";
-import { CATEGORIES } from "@/lib/categories";
-import { PHOTO_GARMENTS } from "@/lib/photo-prompts";
+import type { AdminProductFilters } from "@/lib/queries/admin-catalog";
 
 /**
  * Tri du catalogue.
  *
- * Trois familles de filtres, chacune indépendante : on cherche « les Moncler
- * du rayon garçon » aussi souvent que « toutes les chaussures ». Les filtres
- * s'ajoutent, ils ne se remplacent pas.
+ * Les filtres vivent dans l'URL et non dans un état React : la liste qu'on
+ * regarde se partage, se met en favori, et revient intacte avec le bouton
+ * « Précédent ». C'est aussi ce qui permet de la rendre côté serveur, donc de
+ * trier en base plutôt que de charger tout le catalogue pour le filtrer dans
+ * le navigateur.
  *
- * `null` signifie « tous » : c'est l'état de départ de chaque famille.
+ * Trois familles indépendantes : on cherche « les Moncler du rayon garçon »
+ * aussi souvent que « tous les brouillons ».
  */
-type Filters = {
-  brand: string | null;
-  category: string | null;
-  garment: string | null;
-};
+type Option = { id: string; label: string };
 
-const EMPTY: Filters = { brand: null, category: null, garment: null };
+function href(filters: AdminProductFilters, patch: AdminProductFilters): string {
+  const next = { ...filters, ...patch };
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(next)) {
+    if (value) params.set(key, value);
+  }
+  const query = params.toString();
+  return query ? `/admin/produits?${query}` : "/admin/produits";
+}
 
 function FilterRow({
   label,
+  name,
   options,
-  value,
-  onChange,
+  filters,
 }: {
   label: string;
-  options: { id: string; label: string }[];
-  value: string | null;
-  onChange: (id: string | null) => void;
+  name: keyof AdminProductFilters;
+  options: Option[];
+  filters: AdminProductFilters;
 }) {
+  const current = filters[name];
+
   return (
     <div className="admin-filter">
       <span className="admin-filter__label">{label}</span>
       <div className="admin-filter__chips">
-        <button
-          type="button"
+        <Link
+          href={href(filters, { [name]: undefined })}
           className="admin-chip"
-          aria-pressed={value === null}
-          onClick={() => onChange(null)}
+          aria-current={!current ? "true" : undefined}
         >
           Tous
-        </button>
-        {options.map((option) => (
-          <button
-            key={option.id}
-            type="button"
-            className="admin-chip"
-            aria-pressed={value === option.id}
-            onClick={() => onChange(value === option.id ? null : option.id)}
-          >
-            {option.label}
-          </button>
-        ))}
+        </Link>
+        {options.map((option) => {
+          const chosen = current === option.id;
+          return (
+            <Link
+              key={option.id}
+              // Recliquer sur un filtre actif le retire : c'est le geste
+              // qu'on fait spontanément, autant qu'il fasse quelque chose.
+              href={href(filters, { [name]: chosen ? undefined : option.id })}
+              className="admin-chip"
+              aria-current={chosen ? "true" : undefined}
+            >
+              {option.label}
+            </Link>
+          );
+        })}
       </div>
     </div>
   );
 }
 
-export function ProductFilters() {
-  const [filters, setFilters] = useState<Filters>(EMPTY);
-  const [search, setSearch] = useState("");
-  const query = search.trim();
-  const active = Object.values(filters).filter(Boolean).length;
+export function ProductFilters({
+  filters,
+  brands,
+  categories,
+}: {
+  filters: AdminProductFilters;
+  brands: Option[];
+  categories: Option[];
+}) {
+  const active = [filters.brand, filters.category, filters.etat].filter(
+    Boolean,
+  ).length;
   // La recherche compte comme un tri : elle change ce qu'on voit, donc elle
-  // doit être effacée par le même bouton que les filtres.
-  const narrowed = active > 0 || query.length > 0;
+  // est effacée par le même bouton que les filtres.
+  const narrowed = active > 0 || Boolean(filters.q);
 
   return (
     <div className="admin-filters">
-      <div className="admin-search">
-        <label className="sr-only" htmlFor="recherche-produit">
-          Rechercher un produit
-        </label>
-        {/* La loupe est posée dans le champ : elle indique la fonction sans
-            prendre une colonne à elle. */}
-        <span className="admin-search__icon" aria-hidden>
-          <IconSearch />
-        </span>
-        <input
-          id="recherche-produit"
-          type="search"
-          className="admin-field__input admin-search__input"
-          placeholder="Rechercher par nom, marque ou référence…"
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-        />
-        {query.length > 0 && (
-          <button
-            type="button"
-            className="admin-thumb__icon"
-            aria-label="Effacer la recherche"
-            onClick={() => setSearch("")}
-          >
-            ×
-          </button>
+      {/* Formulaire en GET vers sa propre page : la requête part dans l'URL,
+          sans routeur ni état client. Les filtres en cours sont conservés en
+          champs cachés — chercher ne doit pas remettre le tri à zéro. */}
+      <form action="/admin/produits" method="get" role="search">
+        {filters.brand && (
+          <input type="hidden" name="brand" value={filters.brand} />
         )}
-      </div>
+        {filters.category && (
+          <input type="hidden" name="category" value={filters.category} />
+        )}
+        {filters.etat && (
+          <input type="hidden" name="etat" value={filters.etat} />
+        )}
+
+        <div className="admin-search">
+          <label className="sr-only" htmlFor="recherche-produit">
+            Rechercher un produit
+          </label>
+          {/* La loupe est posée dans le champ : elle indique la fonction sans
+              prendre une colonne à elle. */}
+          <span className="admin-search__icon" aria-hidden>
+            <IconSearch />
+          </span>
+          <input
+            id="recherche-produit"
+            name="q"
+            type="search"
+            className="admin-field__input admin-search__input"
+            placeholder="Rechercher par nom, marque ou référence…"
+            defaultValue={filters.q ?? ""}
+          />
+        </div>
+      </form>
 
       <FilterRow
         label="Marque"
-        value={filters.brand}
-        onChange={(brand) => setFilters({ ...filters, brand })}
-        options={BRANDS.map((brand) => ({ id: brand.slug, label: brand.name }))}
+        name="brand"
+        options={brands}
+        filters={filters}
       />
-
       <FilterRow
         label="Rayon"
-        value={filters.category}
-        onChange={(category) => setFilters({ ...filters, category })}
-        options={CATEGORIES.map((category) => ({
-          id: category.slug,
-          label: category.title,
-        }))}
+        name="category"
+        options={categories}
+        filters={filters}
       />
-
       <FilterRow
-        label="Type"
-        value={filters.garment}
-        onChange={(garment) => setFilters({ ...filters, garment })}
-        options={Object.entries(PHOTO_GARMENTS).map(([id, entry]) => ({
-          id,
-          label: entry.label,
-        }))}
+        label="État"
+        name="etat"
+        options={[
+          { id: "publie", label: "Publiés" },
+          { id: "brouillon", label: "Brouillons" },
+        ]}
+        filters={filters}
       />
 
       {narrowed && (
-        <button
-          type="button"
+        <Link
+          href="/admin/produits"
           className="admin-button admin-button--ghost admin-button--small"
-          onClick={() => {
-            setFilters(EMPTY);
-            setSearch("");
-          }}
         >
-          Effacer le tri ({active + (query ? 1 : 0)})
-        </button>
+          Effacer le tri ({active + (filters.q ? 1 : 0)})
+        </Link>
       )}
-
-      {/* Le catalogue est vide : on le dit, et on distingue « rien en
-          boutique » de « rien qui corresponde au tri ». */}
-      <AdminEmpty
-        title={
-          query
-            ? `Aucun résultat pour « ${query} »`
-            : narrowed
-              ? "Aucun produit ne correspond à ce tri"
-              : "Aucun produit enregistré"
-        }
-        text={
-          narrowed
-            ? "Élargissez le tri, ou ajoutez un produit dans ce rayon."
-            : "Ajoutez un premier produit pour le voir apparaître ici."
-        }
-      />
     </div>
   );
 }

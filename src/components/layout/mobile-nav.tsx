@@ -2,14 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { MAIN_NAV } from "@/lib/navigation";
+import type { NavItem } from "@/types/navigation";
 
 /**
  * Menu des petits écrans : un tiroir plein écran, chaque rubrique s'ouvrant
  * en accordéon. Une seule rubrique ouverte à la fois, sinon la liste devient
  * plus longue que l'écran et on perd le fil.
  */
-export function MobileNav() {
+export function MobileNav({ items }: { items: NavItem[] }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
@@ -77,7 +77,7 @@ export function MobileNav() {
           </div>
 
           <ul className="container-page flex flex-col">
-            {MAIN_NAV.map((item, index) => {
+            {items.map((item, index) => {
               const isOpen = openIndex === index;
 
               return (
@@ -98,10 +98,13 @@ export function MobileNav() {
                       </button>
 
                       {isOpen && (
-                        <div className="flex flex-col gap-7 pt-7">
+                        // Deux colonnes côte à côte, comme le panneau du
+                        // grand écran : empilées, les groupes de trois liens
+                        // ne formaient qu'une longue liste.
+                        <div className="grid grid-cols-2 gap-x-6 gap-y-7 pt-7">
                           {item.columns.map((column, columnIndex) => (
                             <div key={`${item.href}-${columnIndex}`}>
-                              <h3 className="heading-h4">{column.title}</h3>
+                              {column.title && <h3 className="heading-h4">{column.title}</h3>}
                               <ul className="flex flex-col gap-2">
                                 {column.links.map((link) => (
                                   <li key={link.href}>

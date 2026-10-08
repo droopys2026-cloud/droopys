@@ -1,0 +1,183 @@
+"use server";
+
+import { getCartForCheckout } from "@/lib/queries/cart";
+import { getShopSettings } from "@/lib/queries/settings";
+import { issueMessages } from "@/lib/account/schema";
+import {
+  addressLines,
+  checkoutDetailsSchema,
+  shippingCentsFor,
+  toSessionMetadata,
+} from "@/lib/checkout/details";
+import { getServicePoint } from "@/lib/shipping/sendcloud";
+import { parcelWeightKg, quoteParcel } from "@/lib/shipping/quote";
+import { SERVICES } from "@/lib/shipping/services";
+import { publicEnv } from "@/lib/env";
+import { CURRENCY, stripe } from "@/lib/stripe";
+import { getCurrentUser } from "@/lib/supabase/server";
+
+/**
+ * Ouvre la session de paiement de l'étape 3 du tunnel.
+ *
+ * **Aucun montant ne vient du navigateur.** Le formulaire n'envoie que des
+ * coordonnées et un mode de livraison ; les prix, le stock et le port sont
+ * relus ici, en base, juste avant de créer la session. C'est la seule façon
+ * de garantir que ce qui est débité est ce que la boutique affiche.
+ *
+ * La session est en `ui_mode: "elements"` : la carte se saisit dans notre
+ * page (Payment Element), mais c'est toujours une Checkout Session — Stripe
+ * calcule les totaux et choisit les moyens de paiement à proposer.
+ *
+ * La commande n'est **pas** créée maintenant : elle le sera par le webhook,
+ * quand Stripe confirmera le paiement. La créer avant, c'est se retrouver avec
+ * une commande fantôme pour chaque tunnel abandonné.
+ */
+export type PaymentSessionResult =
+  | { status: "ready"; clientSecret: string; totalCents: number }
+  | { status: "error"; errors: string[] };
+
+/**
+ * Libellé de suivi des sessions dans le tableau de bord Stripe, avec le
+ * suffixe aléatoire de huit lettres que Stripe demande.
+ */
+const INTEGRATION_ID = "droopys-tunnel-qkzrwmta";
+
+export async function createPaymentSession(
+  input: unknown,
+): Promise<PaymentSessionResult> {
+  const parsed = checkoutDetailsSchema.safeParse(input);
+  if (!parsed.success) {
+    return { status: "error", errors: issueMessages(parsed.error) };
+  }
+  const details = parsed.data;
+
+  const [lines, { livraison }, user] = await Promise.all([
+    getCartForCheckout(),
+    getShopSettings(),
+    getCurrentUser(),
+  ]);
+  if (lines.length === 0) {
+    return { status: "error", errors: ["Votre panier est vide."] };
+  }
+
+  const itemsCents = lines.reduce(
+    (total, line) => total + line.variant.product.priceCents * line.quantity,
+    0,
+  );
+  const weightKg = parcelWeightKg(
+    lines.map(({ variant, quantity }) => ({
+      categorySlug: variant.product.category?.slug ?? null,
+      subcategorySlug: variant.product.subcategory?.slug ?? null,
+      quantity,
+    })),
+    livraison.weights,
+  );
+  const { delivery } = details;
+
+  // Où part le colis, et à quelle adresse — relue chez Sendcloud pour un
+  // relais : le navigateur n'envoie que l'identifiant du point.
+  let country = "FR";
+  let shippingAddress: string[] = [];
+  if (delivery.method === "domicile") {
+    country = delivery.address.country;
+    shippingAddress = addressLines(delivery.address);
+  } else if (delivery.method === "relais") {
+    const service = SERVICES.find((entry) => entry.key === delivery.service);
+    const point = await getServicePoint(delivery.servicePointId).catch(() => null);
+    if (!point || !point.is_active || point.carrier !== service?.carrier) {
+      return {
+        status: "error",
+        errors: ["Ce point relais n'est plus disponible. Choisissez-en un autre."],
+      };
+    }
+    country = point.country;
+    shippingAddress = [
+      point.name,
+      [point.house_number, point.street].filter(Boolean).join(" "),
+      `${point.postal_code} ${point.city}`,
+      point.country,
+    ];
+  }
+
+  const options =
+    delivery.method === "retrait" ? [] : await quoteParcel(country, weightKg);
+  const shippingCents =
+    options === null ? null : shippingCentsFor(delivery, options, itemsCents, livraison.freeFromCents);
+  if (shippingCents === null) {
+    return {
+      status: "error",
+      errors: [
+        "Ce mode de livraison n'est pas disponible pour le moment. Choisissez-en un autre, ou le retrait en boutique.",
+      ],
+    };
+  }
+  const option =
+    delivery.method === "retrait"
+      ? null
+      : (options ?? []).find((entry) => entry.key === delivery.service) ?? null;
+
+  const session = await stripe.checkout.sessions.create({
+    ui_mode: "elements",
+    mode: "payment",
+    integration_identifier: INTEGRATION_ID,
+    customer_email: details.contact.email,
+    line_items: lines.map(({ variant, quantity }) => ({
+      quantity,
+      price_data: {
+        currency: CURRENCY,
+        unit_amount: variant.product.priceCents,
+        product_data: {
+          name: `${variant.product.brand.name} — ${variant.product.name}`,
+          description: `Taille ${variant.size}`,
+          images: variant.product.images
+            .slice(0, 1)
+            .map((image) => image.url)
+            .filter((url) => url.startsWith("https://")),
+        },
+      },
+    })),
+
+    shipping_options: [
+      {
+        shipping_rate_data: {
+          type: "fixed_amount",
+          fixed_amount: { amount: shippingCents, currency: CURRENCY },
+          display_name: option?.label ?? "Retrait en boutique",
+        },
+      },
+    ],
+
+    // Client connecté : son identifiant suit le paiement jusqu'au webhook,
+    // qui rattache la commande au compte.
+    ...(user ? { client_reference_id: user.id } : {}),
+
+    metadata: {
+      // Les variantes voyagent dans les métadonnées : le webhook en a besoin
+      // pour décrémenter le stock, et l'objet de session ne les porte pas.
+      lignes: JSON.stringify(
+        lines.map(({ variant, quantity }) => ({ v: variant.id, q: quantity })),
+      ),
+      ...toSessionMetadata(details, {
+        addressLines: shippingAddress,
+        methodId: option?.methodId ?? null,
+      }),
+    },
+
+    return_url: `${publicEnv.NEXT_PUBLIC_SITE_URL}/commande/merci?session_id={CHECKOUT_SESSION_ID}`,
+    locale: "fr",
+  });
+
+  if (!session.client_secret) {
+    console.error(`Session ${session.id} sans client_secret.`);
+    return {
+      status: "error",
+      errors: ["Le paiement est indisponible pour le moment. Réessayez dans un instant."],
+    };
+  }
+
+  return {
+    status: "ready",
+    clientSecret: session.client_secret,
+    totalCents: itemsCents + shippingCents,
+  };
+}

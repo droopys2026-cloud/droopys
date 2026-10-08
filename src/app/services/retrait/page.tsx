@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { ContentPageView } from "@/components/layout/content-page-view";
-import { contentMetadata, contentPage } from "@/lib/content-pages";
+import { contentMetadata, getContentPage } from "@/lib/queries/content";
 
 const SLUG = "services/retrait";
 
-export const metadata: Metadata = contentMetadata(SLUG);
+export function generateMetadata(): Promise<Metadata> {
+  return contentMetadata(SLUG);
+}
 
-export default function Page() {
-  return <ContentPageView page={contentPage(SLUG)} />;
+export default async function Page() {
+  return <ContentPageView page={await getContentPage(SLUG)} />;
 }

@@ -1,15 +1,17 @@
 import type { Metadata } from "next";
 import { ContentPageView } from "@/components/layout/content-page-view";
 import { LegalIdentity } from "@/components/sections/legal-identity";
-import { contentMetadata, contentPage } from "@/lib/content-pages";
+import { contentMetadata, getContentPage } from "@/lib/queries/content";
 
 const SLUG = "legal/mentions";
 
-export const metadata: Metadata = contentMetadata(SLUG);
+export function generateMetadata(): Promise<Metadata> {
+  return contentMetadata(SLUG);
+}
 
-export default function MentionsLegalesPage() {
+export default async function MentionsLegalesPage() {
   return (
-    <ContentPageView page={contentPage(SLUG)}>
+    <ContentPageView page={await getContentPage(SLUG)}>
       <LegalIdentity />
     </ContentPageView>
   );

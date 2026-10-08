@@ -1,87 +1,150 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useActionState, useState } from "react";
 import Link from "next/link";
 import {
-  ImageUploader,
-  type UploadedImage,
-} from "@/components/admin/image-uploader";
+  saveProduct,
+  type ProductFormState,
+} from "@/app/admin/(back-office)/produits/actions";
 import { CarePicker } from "@/components/admin/care-picker";
-import { BRANDS } from "@/lib/brands";
-import { CATEGORIES } from "@/lib/categories";
-import { SIZE_SCALES, getSizeScale } from "@/lib/sizes";
+import type { UploadedImage } from "@/components/admin/image-uploader";
 import {
-  GENERATION_MODES,
-  PHOTO_GARMENTS,
-  buildAccessoryPackshotPrompt,
-  buildGarmentPackshotPrompt,
-  buildOnModelPrompt,
-  buildOutletPackshotPrompt,
-  buildShoePackshotPrompt,
-  type GenerationMode,
-  type PhotoGarment,
-  type PhotoSubject,
-} from "@/lib/photo-prompts";
+  DEFAULT_MEASUREMENTS,
+  ProductMeasurementsField,
+  type Measurement,
+} from "@/components/admin/product-measurements-field";
+import { ProductPhotosField } from "@/components/admin/product-photos-field";
+import { ProductPlacementsField } from "@/components/admin/product-placements-field";
+import {
+  ProductSizesField,
+  type SizeStock,
+} from "@/components/admin/product-sizes-field";
 
-/** Mesures relevées sur la pièce elle-même, à plat. */
-const DEFAULT_MEASUREMENTS = [
-  "Longueur totale",
-  "Largeur d'épaules",
-  "Longueur de manche",
-  "Demi-tour de taille",
-];
+/** Ce que le formulaire sait déjà en modification. Absent en création. */
+export type ProductFormValues = {
+  id: string;
+  brandSlug: string;
+  name: string;
+  priceCents: number;
+  compareAtPriceCents: number | null;
+  reference: string | null;
+  categorySlug: string | null;
+  subcategoryId: string | null;
+  /** Sous-rayons où l'article apparaît en plus du sien. */
+  placementIds: string[];
+  description: string[];
+  madeIn: string | null;
+  composition: string | null;
+  care: string | null;
+  modelNote: string | null;
+  sizeAdvice: string | null;
+  badge: string | null;
+  published: boolean;
+  sizes: SizeStock[];
+  measurements: Measurement[];
+  images: string[];
+};
+
+type Option = { id: string; label: string };
+
+/** Un sous-rayon n'a de sens que rattaché à son rayon : il voyage avec lui. */
+type SubcategoryOption = Option & { categorySlug: string };
+
+/** Centimes → « 495,00 », la forme attendue par le champ et relue par Zod. */
+function euros(cents: number | null | undefined): string {
+  if (cents === null || cents === undefined) return "";
+  return (cents / 100).toFixed(2).replace(".", ",");
+}
 
 /**
- * Formulaire de fiche produit.
+ * Formulaire de fiche produit, en création comme en modification.
  *
- * Rien n'est encore enregistré : la base n'est pas branchée. Tout l'état vit
- * donc dans le composant, et le bouton d'enregistrement reste inactif — mieux
- * vaut un bouton visiblement mort qu'un bouton qui perd la saisie en silence.
+ * Les champs simples sont **non contrôlés** : leur valeur part dans la
+ * `FormData` à l'envoi, sans état React. Seuls les blocs composés — tailles,
+ * mesures, photos — gardent un état, parce qu'ils n'ont pas de représentation
+ * naturelle en champ HTML ; ils voyagent alors en JSON dans un champ caché.
+ *
+ * L'envoi passe par une Server Action : c'est elle, et non ce composant, qui
+ * valide. Ce qui est vérifié ici l'est pour le confort de saisie, jamais pour
+ * la sécurité — un formulaire peut être appelé sans passer par cette page.
  */
-export function ProductForm() {
-  const [images, setImages] = useState<UploadedImage[]>([]);
+export function ProductForm({
+  brands,
+  categories,
+  subcategories,
+  product,
+}: {
+  brands: Option[];
+  categories: Option[];
+  subcategories: SubcategoryOption[];
+  product?: ProductFormValues;
+}) {
+  const [state, action, pending] = useActionState<ProductFormState, FormData>(
+    saveProduct,
+    {},
+  );
+
+  /**
+   * Le rayon est le seul champ simple sous état : la liste des sous-rayons en
+   * dépend, et une liste qui ne se rafraîchit qu'à l'envoi laisserait choisir
+   * « Robes » pour un article du rayon garçon.
+   */
+  const [categorySlug, setCategorySlug] = useState(product?.categorySlug ?? "");
+  const [subcategoryId, setSubcategoryId] = useState(
+    product?.subcategoryId ?? "",
+  );
+  const available = subcategories.filter(
+    (entry) => entry.categorySlug === categorySlug,
+  );
+
+  const [sizes, setSizes] = useState<SizeStock[]>(product?.sizes ?? []);
+  const [measurements, setMeasurements] = useState<Measurement[]>(
+    product?.measurements?.length ? product.measurements : DEFAULT_MEASUREMENTS,
+  );
+  const [kept, setKept] = useState<string[]>(product?.images ?? []);
+  const [pendingImages, setPendingImages] = useState<UploadedImage[]>([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  // Les tailles se choisissent dans un tableau, elles ne se tapent pas : une
-  // saisie libre finit toujours par produire « 4 », « 4A » et « 4 ANS » côte
-  // à côte, et la recherche par taille ne marche plus.
-  const [picker, setPicker] = useState(false);
-  const [scaleId, setScaleId] = useState("numeros");
-  const [sizes, setSizes] = useState<string[]>([]);
-  const [stock, setStock] = useState<Record<string, number>>({});
-  const [measurements, setMeasurements] = useState(DEFAULT_MEASUREMENTS);
-  const [care, setCare] = useState("");
 
-  const [brandSlug, setBrandSlug] = useState("");
-  const [name, setName] = useState("");
-  const [subject, setSubject] = useState<PhotoSubject>("garcon");
-  const [garment, setGarment] = useState<PhotoGarment>("manteau");
-
-  // Sans marque, les prompts parlent simplement de « la pièce » : écrire
-  // « la marque » produirait une phrase bancale envoyée telle quelle à l'IA.
-  const brandName =
-    BRANDS.find((brand) => brand.slug === brandSlug)?.name ?? "";
-
-  // Chaque mode a son prompt. Ils se recalculent à la frappe et ne sont
-  // jamais affichés : le vendeur remplit une fiche, il ne lit pas des
-  // instructions destinées à une machine.
-  const prompts = useMemo(() => {
-    const input = {
-      subject,
-      garment,
-      brand: brandName,
-      productName: name || "pièce",
-    };
-    return {
-      chaussures: buildShoePackshotPrompt(input),
-      vetement: buildGarmentPackshotPrompt(input),
-      accessoire: buildAccessoryPackshotPrompt(input),
-      outlet: buildOutletPackshotPrompt(input),
-      porte: buildOnModelPrompt(input),
-    } satisfies Record<GenerationMode, string>;
-  }, [subject, garment, brandName, name]);
+  /**
+   * Les fichiers vivent dans l'état React, pas dans un `<input type="file">` :
+   * ils ont été convertis en WebP dans le navigateur. On les rattache donc à
+   * la `FormData` juste avant l'envoi.
+   */
+  function submit(formData: FormData) {
+    for (const image of pendingImages) formData.append("photos", image.file);
+    formData.set("sizes", JSON.stringify(sizes));
+    formData.set(
+      "measurements",
+      JSON.stringify(
+        measurements.filter((entry) => entry.label.trim() && entry.value.trim()),
+      ),
+    );
+    formData.set("keptImages", JSON.stringify(kept));
+    action(formData);
+  }
 
   return (
-    <form className="admin-form admin-form--wide">
+    <form className="admin-form admin-form--wide" action={submit}>
+      {product && <input type="hidden" name="productId" value={product.id} />}
+
+      {state.errors && state.errors.length > 0 && (
+        /* Le récapitulatif est placé avant les champs, pas sous le bouton :
+           un message sous le bouton n'est lu ni par un lecteur d'écran qui
+           vient de remonter, ni par un œil pressé. */
+        <div role="alert" className="admin-form__error">
+          <p>
+            {state.errors.length > 1
+              ? "La fiche n'a pas été enregistrée :"
+              : "La fiche n'a pas été enregistrée."}
+          </p>
+          <ul>
+            {state.errors.map((error) => (
+              <li key={error}>{error}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* ---- identité ---- */}
       <fieldset className="admin-fieldset">
         <legend className="admin-fieldset__legend">
@@ -92,18 +155,19 @@ export function ProductForm() {
         <div className="admin-grid">
           <div className="admin-field">
             <label className="admin-field__label" htmlFor="marque">
-              Marque <span className="admin-badge">facultatif</span>
+              Marque
             </label>
             <select
               id="marque"
+              name="brandSlug"
+              required
               className="admin-field__input"
-              value={brandSlug}
-              onChange={(event) => setBrandSlug(event.target.value)}
+              defaultValue={product?.brandSlug ?? ""}
             >
-              <option value="">Sans marque</option>
-              {BRANDS.map((brand) => (
-                <option key={brand.slug} value={brand.slug}>
-                  {brand.name}
+              <option value="">Choisir une marque</option>
+              {brands.map((brand) => (
+                <option key={brand.id} value={brand.id}>
+                  {brand.label}
                 </option>
               ))}
             </select>
@@ -115,10 +179,11 @@ export function ProductForm() {
             </label>
             <input
               id="nom"
+              name="name"
+              required
               className="admin-field__input"
               placeholder="Pantalon Daya Cropped Vintage Blue"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
+              defaultValue={product?.name ?? ""}
             />
           </div>
 
@@ -128,8 +193,12 @@ export function ProductForm() {
             </label>
             <input
               id="prix"
+              name="priceCents"
+              required
+              inputMode="decimal"
               className="admin-field__input"
               placeholder="495,00"
+              defaultValue={euros(product?.priceCents)}
             />
           </div>
 
@@ -139,8 +208,11 @@ export function ProductForm() {
             </label>
             <input
               id="prix-barre"
+              name="compareAtPriceCents"
+              inputMode="decimal"
               className="admin-field__input"
               placeholder="Laisser vide hors promotion"
+              defaultValue={euros(product?.compareAtPriceCents)}
             />
           </div>
 
@@ -150,9 +222,27 @@ export function ProductForm() {
             </label>
             <input
               id="reference"
+              name="reference"
               className="admin-field__input"
               placeholder="PA0807FAD4H01I30VU"
+              defaultValue={product?.reference ?? ""}
             />
+          </div>
+
+          <div className="admin-field">
+            <label className="admin-field__label" htmlFor="badge">
+              Pastille <span className="admin-badge">facultatif</span>
+            </label>
+            <input
+              id="badge"
+              name="badge"
+              className="admin-field__input"
+              placeholder="Nouveau"
+              defaultValue={product?.badge ?? ""}
+            />
+            <p className="admin-field__hint">
+              Affichée en coin de la photo, sur la carte comme sur la fiche.
+            </p>
           </div>
         </div>
       </fieldset>
@@ -171,15 +261,21 @@ export function ProductForm() {
             </label>
             <select
               id="rayon"
+              name="categorySlug"
+              required
               className="admin-field__input"
-              value={subject}
-              onChange={(event) =>
-                setSubject(event.target.value as PhotoSubject)
-              }
+              value={categorySlug}
+              onChange={(event) => {
+                setCategorySlug(event.target.value);
+                // Sans cette remise à zéro, le sous-rayon du rayon précédent
+                // resterait sélectionné et partirait avec le formulaire.
+                setSubcategoryId("");
+              }}
             >
-              {CATEGORIES.map((category) => (
-                <option key={category.slug} value={category.slug}>
-                  {category.headline ?? category.title}
+              <option value="">Choisir un rayon</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.label}
                 </option>
               ))}
             </select>
@@ -189,180 +285,64 @@ export function ProductForm() {
             <label className="admin-field__label" htmlFor="sous-rayon">
               Sous-rayon <span className="admin-badge">facultatif</span>
             </label>
-            <input
-              id="sous-rayon"
-              className="admin-field__input"
-              placeholder="Pantalons et jeans"
-            />
-          </div>
-
-          <div className="admin-field">
-            <label className="admin-field__label" htmlFor="type">
-              Type de vêtement
-            </label>
             <select
-              id="type"
+              id="sous-rayon"
+              name="subcategoryId"
               className="admin-field__input"
-              value={garment}
-              onChange={(event) =>
-                setGarment(event.target.value as PhotoGarment)
-              }
+              value={subcategoryId}
+              onChange={(event) => setSubcategoryId(event.target.value)}
+              disabled={available.length === 0}
             >
-              {Object.entries(PHOTO_GARMENTS).map(([value, entry]) => (
-                <option key={value} value={value}>
+              <option value="">
+                {categorySlug === ""
+                  ? "Choisir un rayon d'abord"
+                  : available.length === 0
+                    ? "Ce rayon n'a pas encore de sous-rayon"
+                    : "Aucun"}
+              </option>
+              {available.map((entry) => (
+                <option key={entry.id} value={entry.id}>
                   {entry.label}
                 </option>
               ))}
             </select>
             <p className="admin-field__hint">
-              Sert au cadrage des photos générées par l&apos;IA.
+              Les sous-rayons se créent dans{" "}
+              <Link href="/admin/menu">Menu</Link>.
+            </p>
+          </div>
+
+          <ProductPlacementsField
+            groups={categories.map((category) => ({
+              label: category.label,
+              // Le sous-rayon principal est déjà la place de l'article.
+              options: subcategories.filter(
+                (entry) => entry.categorySlug === category.id && entry.id !== subcategoryId,
+              ),
+            }))}
+            selected={product?.placementIds ?? []}
+          />
+
+          <div className="admin-field">
+            <label className="admin-field__label" htmlFor="conseil-taille">
+              Conseil de taille <span className="admin-badge">facultatif</span>
+            </label>
+            <input
+              id="conseil-taille"
+              name="sizeAdvice"
+              className="admin-field__input"
+              placeholder="Prendre votre taille habituelle."
+              defaultValue={product?.sizeAdvice ?? ""}
+            />
+            <p className="admin-field__hint">
+              Affiché sous le sélecteur : c&apos;est le renseignement qui évite
+              le plus de retours.
             </p>
           </div>
         </div>
       </fieldset>
 
-      {/* ---- tailles ---- */}
-      <fieldset className="admin-fieldset">
-        <legend className="admin-fieldset__legend">
-          Tailles et stock{" "}
-          <span className="admin-badge admin-badge--required">obligatoire</span>
-        </legend>
-
-        <div className="admin-sizes-head">
-          <p className="admin-field__label">
-            {sizes.length === 0
-              ? "Aucune taille choisie"
-              : `${sizes.length} taille${sizes.length > 1 ? "s" : ""} proposée${sizes.length > 1 ? "s" : ""}`}
-          </p>
-          <button
-            type="button"
-            className="admin-button admin-button--ghost admin-button--small"
-            aria-expanded={picker}
-            onClick={() => setPicker(!picker)}
-          >
-            {picker ? "Fermer" : "Choisir les tailles"}
-          </button>
-        </div>
-
-        {picker && (
-          <div className="admin-picker">
-            <div className="admin-picker__tabs">
-              {SIZE_SCALES.map((scale) => (
-                <button
-                  key={scale.id}
-                  type="button"
-                  className="admin-picker__tab"
-                  aria-pressed={scaleId === scale.id}
-                  onClick={() => setScaleId(scale.id)}
-                >
-                  {scale.label}
-                </button>
-              ))}
-            </div>
-
-            <ul className="admin-picker__grid">
-              {getSizeScale(scaleId)?.sizes.map((size) => {
-                const chosen = sizes.includes(size);
-                return (
-                  <li key={size}>
-                    <button
-                      type="button"
-                      className="admin-chip"
-                      aria-pressed={chosen}
-                      onClick={() => {
-                        if (chosen) {
-                          setSizes(sizes.filter((item) => item !== size));
-                          const next = { ...stock };
-                          delete next[size];
-                          setStock(next);
-                        } else {
-                          setSizes([...sizes, size]);
-                        }
-                      }}
-                    >
-                      {size}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        )}
-
-        {sizes.length > 0 && (
-          /* Un vrai tableau : deux colonnes titrées valent mieux qu'un champ
-             nu à côté d'une taille — on doit voir d'un coup ce qui est en
-             stock et ce qui ne l'est pas. */
-          <table className="admin-stock">
-            <thead>
-              <tr>
-                <th scope="col">Taille</th>
-                <th scope="col">Stock</th>
-                <th scope="col">
-                  <span className="sr-only">Retirer</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {sizes.map((size) => {
-                const quantity = stock[size] ?? 0;
-                return (
-                  <tr key={size}>
-                    <td className="admin-stock__size">{size}</td>
-                    <td>
-                      <div className="admin-stock__cell">
-                        <input
-                          type="number"
-                          min={0}
-                          className="admin-size__input"
-                          aria-label={`Stock pour la taille ${size}`}
-                          placeholder="0"
-                          value={stock[size] ?? ""}
-                          onChange={(event) =>
-                            setStock({
-                              ...stock,
-                              [size]: Number(event.target.value),
-                            })
-                          }
-                        />
-                        <span
-                          className={
-                            quantity > 0
-                              ? "admin-stock__state"
-                              : "admin-stock__state admin-stock__state--out"
-                          }
-                        >
-                          {quantity > 0 ? "en stock" : "rupture"}
-                        </span>
-                      </div>
-                    </td>
-                    <td>
-                      <button
-                        type="button"
-                        className="admin-thumb__icon"
-                        aria-label={`Retirer la taille ${size}`}
-                        onClick={() => {
-                          setSizes(sizes.filter((item) => item !== size));
-                          const next = { ...stock };
-                          delete next[size];
-                          setStock(next);
-                        }}
-                      >
-                        ×
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
-
-        <p className="admin-field__hint">
-          Une taille à 0 s&apos;affiche en rupture ; une taille non choisie
-          n&apos;est pas proposée du tout.
-        </p>
-      </fieldset>
+      <ProductSizesField value={sizes} onChange={setSizes} />
 
       {/* ---- descriptif ---- */}
       <fieldset className="admin-fieldset">
@@ -377,8 +357,10 @@ export function ProductForm() {
           </label>
           <textarea
             id="description"
+            name="description"
             rows={7}
             className="admin-field__input"
+            defaultValue={product?.description.join("\n") ?? ""}
             placeholder={
               "Une ligne par point :\nJean droit en denim de coton bleu délavé.\nCoupe cropped.\nClassique 5 poches."
             }
@@ -392,150 +374,77 @@ export function ProductForm() {
             </label>
             <input
               id="fabrication"
+              name="madeIn"
               className="admin-field__input"
               placeholder="Maroc"
+              defaultValue={product?.madeIn ?? ""}
             />
           </div>
+
           <div className="admin-field">
             <label className="admin-field__label" htmlFor="composition">
               Composition
             </label>
             <input
               id="composition"
+              name="composition"
               className="admin-field__input"
               placeholder="100 % coton"
+              defaultValue={product?.composition ?? ""}
             />
           </div>
-          <div className="admin-field admin-field--full">
-            <div className="admin-field__head">
-              <label className="admin-field__label" htmlFor="entretien">
-                Conseil d&apos;entretien
-              </label>
-              <CarePicker value={care} onChange={setCare} />
-            </div>
-            <textarea
-              id="entretien"
-              rows={4}
+
+          <div className="admin-field">
+            <label className="admin-field__label" htmlFor="mannequin">
+              Note mannequin <span className="admin-badge">facultatif</span>
+            </label>
+            <input
+              id="mannequin"
+              name="modelNote"
               className="admin-field__input"
-              value={care}
-              onChange={(event) => setCare(event.target.value)}
-              placeholder={
-                "Une consigne par ligne :\nLavage sur cycle délicat en machine à 30°.\nNe pas sécher en machine.\nRepassage doux sur l'envers."
-              }
+              placeholder="Notre mannequin mesure 1 m 40 et porte une taille 10."
+              defaultValue={product?.modelNote ?? ""}
             />
           </div>
+
+          <CareField defaultValue={product?.care ?? ""} />
         </div>
       </fieldset>
 
-      {/* ---- mesures ---- */}
-      <fieldset className="admin-fieldset">
-        <legend className="admin-fieldset__legend">
-          Mesures du vêtement <span className="admin-badge">facultatif</span>
-        </legend>
+      <ProductMeasurementsField
+        value={measurements}
+        onChange={setMeasurements}
+      />
 
-        {/* Facultatif : laissé vide, le bloc ne s'affiche pas du tout sur la
-            fiche. Mieux vaut pas de mesures qu'une mesure inventée — mais
-            quand elles y sont, elles évitent des retours. */}
+      <ProductPhotosField
+        kept={kept}
+        onKeptChange={setKept}
+        pending={pendingImages}
+        onPendingChange={setPendingImages}
+        selectedId={selectedImage}
+        onSelect={setSelectedImage}
+      />
+
+      {/* ---- publication ---- */}
+      <fieldset className="admin-fieldset">
+        <legend className="admin-fieldset__legend">Publication</legend>
+        <label className="admin-toggle">
+          <input
+            type="checkbox"
+            name="published"
+            defaultChecked={product?.published ?? false}
+          />
+          <span>Publier cette fiche en boutique</span>
+        </label>
         <p className="admin-field__hint">
-          Relevées sur la pièce à plat. Laissez vide si vous ne les avez pas :
-          rien ne s&apos;affichera sur la fiche.
+          Décochée, la fiche reste un brouillon : visible ici, introuvable sur
+          le site.
         </p>
-        <ul className="admin-measures">
-          {measurements.map((label, index) => (
-            <li key={label} className="admin-measure">
-              <input
-                className="admin-field__input"
-                aria-label="Intitulé de la mesure"
-                value={label}
-                onChange={(event) => {
-                  const next = [...measurements];
-                  next[index] = event.target.value;
-                  setMeasurements(next);
-                }}
-              />
-              <input
-                className="admin-field__input"
-                aria-label={`Valeur de « ${label} »`}
-                placeholder="48 cm"
-              />
-              <button
-                type="button"
-                className="admin-thumb__icon"
-                aria-label={`Retirer « ${label} »`}
-                onClick={() =>
-                  setMeasurements(measurements.filter((_, i) => i !== index))
-                }
-              >
-                ×
-              </button>
-            </li>
-          ))}
-        </ul>
-
-        <button
-          type="button"
-          className="admin-button admin-button--ghost admin-button--small"
-          onClick={() => setMeasurements([...measurements, "Nouvelle mesure"])}
-        >
-          Ajouter une mesure
-        </button>
-      </fieldset>
-
-      {/* ---- photos ---- */}
-      <fieldset className="admin-fieldset">
-        <legend className="admin-fieldset__legend">
-          Photos{" "}
-          <span className="admin-badge admin-badge--required">obligatoire</span>
-        </legend>
-
-        <ImageUploader
-          images={images}
-          onChange={setImages}
-          selectedId={selectedImage}
-          onSelect={setSelectedImage}
-        />
-
-        {/* Trois boutons, trois IA : un packshot et une photo portée ne
-            demandent pas la même chose, et une seule IA qui ferait les deux
-            les ferait mal toutes les deux. */}
-        <div className="admin-generate">
-          <p className="admin-field__label">
-            Générer une photo{" "}
-            <span className="admin-badge admin-badge--required">
-              obligatoire
-            </span>
-          </p>
-          <div className="admin-generate__actions">
-            {GENERATION_MODES.map((mode) => (
-              <button
-                key={mode.id}
-                type="button"
-                className="admin-button admin-button--ghost admin-button--small"
-                disabled={!selectedImage}
-                onClick={() => {
-                  // Le prompt correspondant est prêt : il partira au
-                  // fournisseur d'images dès qu'on en aura choisi un.
-                  void prompts[mode.id];
-                }}
-              >
-                {mode.label}
-                <span className="admin-generate__hint">{mode.hint}</span>
-              </button>
-            ))}
-          </div>
-          <p className="admin-field__hint">
-            Chaque photo passe par une génération avant publication : c&apos;est
-            ce qui donne à toute la boutique la même lumière et le même décor.{" "}
-            {selectedImage
-              ? "La photo choisie sert de référence : la pièce est reproduite à l'identique, seul le décor change."
-              : "Choisissez d'abord une photo dans la liste."}
-          </p>
-        </div>
       </fieldset>
 
       <div className="admin-form__actions">
-        <button type="submit" className="admin-button" disabled>
-          Enregistrer le produit
+        <button type="submit" className="admin-button" disabled={pending}>
+          {pending ? "Enregistrement…" : "Enregistrer le produit"}
         </button>
         <Link
           href="/admin/produits"
@@ -543,11 +452,40 @@ export function ProductForm() {
         >
           Annuler
         </Link>
-        <p className="admin-form__note">
-          L&apos;enregistrement et l&apos;envoi des photos seront actifs une
-          fois Supabase connecté.
-        </p>
       </div>
     </form>
+  );
+}
+
+/**
+ * Conseil d'entretien.
+ *
+ * Il garde un état, à la différence des autres champs de texte : le sélecteur
+ * de consignes écrit dedans, et un champ non contrôlé ne saurait pas se
+ * mettre à jour depuis un bouton voisin.
+ */
+function CareField({ defaultValue }: { defaultValue: string }) {
+  const [care, setCare] = useState(defaultValue);
+
+  return (
+    <div className="admin-field admin-field--full">
+      <div className="admin-field__head">
+        <label className="admin-field__label" htmlFor="entretien">
+          Conseil d&apos;entretien
+        </label>
+        <CarePicker value={care} onChange={setCare} />
+      </div>
+      <textarea
+        id="entretien"
+        name="care"
+        rows={4}
+        className="admin-field__input"
+        value={care}
+        onChange={(event) => setCare(event.target.value)}
+        placeholder={
+          "Une consigne par ligne :\nLavage sur cycle délicat en machine à 30°.\nNe pas sécher en machine.\nRepassage doux sur l'envers."
+        }
+      />
+    </div>
   );
 }

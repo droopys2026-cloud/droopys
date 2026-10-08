@@ -1,0 +1,370 @@
+"use server";
+
+import { and, eq, inArray, max } from "drizzle-orm";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { redirect } from "next/navigation";
+import { z } from "zod";
+import { db } from "@/db";
+import {
+  brands,
+  categories,
+  productImages,
+  productPlacements,
+  products,
+  productVariants,
+  subcategories,
+} from "@/db/schema";
+import { requireAdmin } from "@/lib/auth";
+import { CACHE_TAGS } from "@/lib/cache";
+import {
+  ImageUploadError,
+  deleteProductImages,
+  uploadProductImages,
+} from "@/lib/products/images";
+import { productInputSchema, productIssues } from "@/lib/products/schema";
+import { slugify, uniqueSlug } from "@/lib/slug";
+
+/**
+ * Écriture du catalogue.
+ *
+ * Chaque action commence par `requireAdmin()` : une Server Action est une
+ * route publique, son identifiant suffit à l'appeler. La vérification de la
+ * mise en page ne la protège pas.
+ */
+
+export type ProductFormState = { errors?: string[] };
+
+/** Les listes JSON viennent du formulaire : elles sont relues, pas crues. */
+const sizesField = z.array(
+  z.object({ size: z.string().trim().min(1), quantity: z.number().int().min(0) }),
+);
+const measurementsField = z.array(
+  z.object({ label: z.string().trim().min(1), value: z.string().trim().min(1) }),
+);
+const keptImagesField = z.array(z.string().url());
+
+function readJson<T>(formData: FormData, key: string, schema: z.ZodType<T>, fallback: T): T {
+  const raw = formData.get(key);
+  if (typeof raw !== "string" || raw === "") return fallback;
+  try {
+    const parsed = schema.safeParse(JSON.parse(raw));
+    return parsed.success ? parsed.data : fallback;
+  } catch {
+    // JSON illisible : on retombe sur le défaut, la validation métier dira
+    // ensuite ce qui manque. Une exception ici ne dirait rien d'utile au vendeur.
+    return fallback;
+  }
+}
+
+/**
+ * Crée ou met à jour une fiche.
+ *
+ * `productId` absent : création. Présent : mise à jour — le slug ne change
+ * alors plus, même si le nom change. Une adresse publique qui bouge casse les
+ * liens partagés et les résultats de recherche ; renommer un produit ne doit
+ * pas coûter ça.
+ */
+export async function saveProduct(
+  _state: ProductFormState,
+  formData: FormData,
+): Promise<ProductFormState> {
+  await requireAdmin();
+
+  const parsed = productInputSchema.safeParse({
+    brandSlug: formData.get("brandSlug") ?? "",
+    name: formData.get("name") ?? "",
+    priceCents: formData.get("priceCents") ?? "",
+    compareAtPriceCents: formData.get("compareAtPriceCents") ?? "",
+    reference: formData.get("reference") ?? "",
+    categorySlug: formData.get("categorySlug") ?? "",
+    subcategoryId: formData.get("subcategoryId") ?? "",
+    description: formData.get("description") ?? "",
+    madeIn: formData.get("madeIn") ?? "",
+    composition: formData.get("composition") ?? "",
+    care: formData.get("care") ?? "",
+    modelNote: formData.get("modelNote") ?? "",
+    sizeAdvice: formData.get("sizeAdvice") ?? "",
+    badge: formData.get("badge") ?? "",
+    sizes: readJson(formData, "sizes", sizesField, []),
+    measurements: readJson(formData, "measurements", measurementsField, []),
+    published: formData.get("published") === "on",
+  });
+
+  if (!parsed.success) {
+    return { errors: parsed.error.issues.map((issue) => issue.message) };
+  }
+
+  const input = parsed.data;
+  const issues = productIssues(input);
+  if (issues.length > 0) return { errors: issues };
+
+  const brand = await db.query.brands.findFirst({
+    where: eq(brands.slug, input.brandSlug),
+    columns: { id: true },
+  });
+  if (!brand) return { errors: ["Marque inconnue."] };
+
+  const category = await db.query.categories.findFirst({
+    where: eq(categories.slug, input.categorySlug),
+    columns: { id: true },
+  });
+  if (!category) return { errors: ["Rayon inconnu."] };
+
+  // Un sous-rayon d'un autre rayon rendrait la fiche introuvable à son adresse
+  // /rayon/sous-rayon : le couple est donc vérifié, pas seulement l'existence.
+  if (input.subcategoryId) {
+    const subcategory = await db.query.subcategories.findFirst({
+      where: and(
+        eq(subcategories.id, input.subcategoryId),
+        eq(subcategories.categoryId, category.id),
+      ),
+      columns: { id: true },
+    });
+    if (!subcategory) {
+      return { errors: ["Ce sous-rayon n'appartient pas au rayon choisi."] };
+    }
+  }
+
+  const productId = formData.get("productId");
+  const isUpdate = typeof productId === "string" && productId !== "";
+
+  const kept = readJson(formData, "keptImages", keptImagesField, []);
+  const files = formData
+    .getAll("photos")
+    .filter((entry): entry is File => entry instanceof File && entry.size > 0);
+
+  if (!isUpdate && kept.length === 0 && files.length === 0) {
+    return { errors: ["Ajoutez au moins une photo : une fiche sans visuel ne se vend pas."] };
+  }
+
+  const values = {
+    brandId: brand.id,
+    name: input.name,
+    priceCents: input.priceCents,
+    compareAtPriceCents: input.compareAtPriceCents ?? null,
+    reference: input.reference ?? null,
+    categoryId: category.id,
+    subcategoryId: input.subcategoryId ?? null,
+    description: input.description,
+    composition: input.composition ?? null,
+    care: input.care ?? null,
+    madeIn: input.madeIn ?? null,
+    modelNote: input.modelNote ?? null,
+    measurements: input.measurements,
+    sizeAdvice: input.sizeAdvice ?? null,
+    badge: input.badge ?? null,
+    published: input.published,
+    updatedAt: new Date(),
+  };
+
+  let id: string;
+  let slug: string;
+
+  if (isUpdate) {
+    const existing = await db.query.products.findFirst({
+      where: eq(products.id, productId),
+      columns: { id: true, slug: true },
+    });
+    if (!existing) return { errors: ["Ce produit n'existe plus."] };
+
+    await db.update(products).set(values).where(eq(products.id, existing.id));
+    id = existing.id;
+    slug = existing.slug;
+  } else {
+    const taken = new Set(
+      (await db.query.products.findMany({ columns: { slug: true } })).map(
+        (row) => row.slug,
+      ),
+    );
+    slug = uniqueSlug(slugify(`${input.brandSlug} ${input.name}`), taken);
+
+    const [row] = await db
+      .insert(products)
+      .values({ ...values, slug })
+      .returning({ id: products.id });
+    id = row.id;
+  }
+
+  // Les photos partent après l'enregistrement : le chemin de stockage porte
+  // le slug, qui n'existe qu'une fois la ligne écrite.
+  let uploaded: string[] = [];
+  try {
+    uploaded = await uploadProductImages(files, slug);
+  } catch (error) {
+    if (error instanceof ImageUploadError) return { errors: [error.message] };
+    throw error;
+  }
+
+  const gallery = [...kept, ...uploaded];
+
+  // Images et tailles sont réécrites en entier : leur seule identité est leur
+  // rang, un rapprochement ligne à ligne coûterait plus à lire qu'à exécuter.
+  await db.delete(productImages).where(eq(productImages.productId, id));
+  if (gallery.length > 0) {
+    await db.insert(productImages).values(
+      gallery.map((url, index) => ({
+        productId: id,
+        url,
+        alt: `${input.name}`,
+        position: index,
+      })),
+    );
+  }
+
+  await db.delete(productVariants).where(eq(productVariants.productId, id));
+  await db.insert(productVariants).values(
+    input.sizes.map((entry, index) => ({
+      productId: id,
+      size: entry.size,
+      quantity: entry.quantity,
+      position: index,
+    })),
+  );
+
+  await savePlacements(id, input.subcategoryId ?? null, formData.getAll("placements"));
+
+  revalidateCatalog(slug);
+  redirect("/admin/produits");
+}
+
+/**
+ * « Aussi visible dans » : rapproche les placements de l'article de ceux
+ * cochés. Contrairement à la sélection d'un sous-rayon, on ne réécrit pas
+ * tout : un placement gardé conserve son rang dans son sous-rayon, et un
+ * nouveau se range en dernier, sans bousculer l'ordre choisi ailleurs.
+ */
+async function savePlacements(
+  productId: string,
+  mainSubcategoryId: string | null,
+  raw: FormDataEntryValue[],
+) {
+  const parsed = z.array(z.string().uuid()).safeParse(raw);
+  // Des cases mal formées ne viennent pas de ce formulaire : on n'y touche pas.
+  if (!parsed.success) return;
+
+  const wanted = new Set(parsed.data.filter((id) => id !== mainSubcategoryId));
+  const known =
+    wanted.size > 0
+      ? new Set(
+          (
+            await db
+              .select({ id: subcategories.id })
+              .from(subcategories)
+              .where(inArray(subcategories.id, [...wanted]))
+          ).map((row) => row.id),
+        )
+      : new Set<string>();
+
+  const current = await db
+    .select({ subcategoryId: productPlacements.subcategoryId })
+    .from(productPlacements)
+    .where(eq(productPlacements.productId, productId));
+  const had = new Set(current.map((row) => row.subcategoryId));
+
+  const removed = [...had].filter((id) => !known.has(id));
+  if (removed.length > 0) {
+    await db
+      .delete(productPlacements)
+      .where(
+        and(
+          eq(productPlacements.productId, productId),
+          inArray(productPlacements.subcategoryId, removed),
+        ),
+      );
+  }
+
+  for (const subcategoryId of known) {
+    if (had.has(subcategoryId)) continue;
+    const [last] = await db
+      .select({ position: max(productPlacements.position) })
+      .from(productPlacements)
+      .where(eq(productPlacements.subcategoryId, subcategoryId));
+    await db.insert(productPlacements).values({
+      productId,
+      subcategoryId,
+      position: (last?.position ?? -1) + 1,
+    });
+  }
+}
+
+/** Publie ou dépublie sans passer par le formulaire complet. */
+export async function togglePublished(formData: FormData) {
+  await requireAdmin();
+
+  const id = z.string().uuid().safeParse(formData.get("productId"));
+  if (!id.success) return;
+
+  const product = await db.query.products.findFirst({
+    where: eq(products.id, id.data),
+    columns: { published: true, slug: true },
+  });
+  if (!product) return;
+
+  await db
+    .update(products)
+    .set({ published: !product.published, updatedAt: new Date() })
+    .where(eq(products.id, id.data));
+
+  revalidateCatalog(product.slug);
+}
+
+export async function deleteProduct(formData: FormData) {
+  await requireAdmin();
+
+  const id = z.string().uuid().safeParse(formData.get("productId"));
+  if (!id.success) return;
+
+  const images = await db.query.productImages.findMany({
+    where: eq(productImages.productId, id.data),
+    columns: { url: true },
+  });
+  const product = await db.query.products.findFirst({
+    where: eq(products.id, id.data),
+    columns: { slug: true },
+  });
+
+  // La fiche part d'abord : images et tailles suivent par `on delete cascade`,
+  // et les lignes de commande gardent leur trace grâce à `on delete set null`.
+  await db.delete(products).where(eq(products.id, id.data));
+  await deleteProductImages(images.map((image) => image.url));
+
+  if (product) revalidateCatalog(product.slug);
+}
+
+/**
+ * Rafraîchit tout ce qui est construit à partir du catalogue.
+ *
+ * L'étiquette vide le cache de données — sans elle, les lectures mémorisées
+ * continueraient de rendre l'ancien catalogue. Les `revalidatePath` vident
+ * ensuite le HTML pré-rendu : les deux caches sont distincts, invalider l'un
+ * ne suffit pas.
+ */
+function revalidateCatalog(slug: string) {
+  revalidateTag(CACHE_TAGS.catalog, "max");
+  revalidatePath("/admin/produits");
+  revalidatePath("/");
+  revalidatePath(`/produits/${slug}`);
+  revalidatePath("/produits/[slug]", "page");
+  revalidatePath("/(rayons)/[categorie]", "page");
+  revalidatePath("/marques/[slug]", "page");
+}
+
+/** Supprime plusieurs fiches d'un coup depuis la liste. */
+export async function deleteProducts(ids: string[]) {
+  await requireAdmin();
+
+  const parsed = z.array(z.string().uuid()).safeParse(ids);
+  if (!parsed.success || parsed.data.length === 0) return;
+
+  const images = await db.query.productImages.findMany({
+    where: inArray(productImages.productId, parsed.data),
+    columns: { url: true },
+  });
+
+  await db.delete(products).where(inArray(products.id, parsed.data));
+  await deleteProductImages(images.map((image) => image.url));
+
+  revalidateTag(CACHE_TAGS.catalog, "max");
+  revalidatePath("/admin/produits");
+  revalidatePath("/");
+}

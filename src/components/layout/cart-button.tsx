@@ -32,7 +32,7 @@ export function CartButton({ count = 0 }: { count?: number }) {
           // La pastille est décorative : le compte est déjà dans l'aria-label
           // du bouton, l'annoncer deux fois alourdirait la lecture.
           aria-hidden
-          className="box-badge-round absolute -top-1 -right-1 min-w-4"
+          className="cart-count"
         >
           {count}
         </span>

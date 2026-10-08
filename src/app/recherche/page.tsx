@@ -1,14 +1,13 @@
 import type { Metadata } from "next";
-import { AnnouncementBar } from "@/components/layout/announcement-bar";
+import { SiteAnnouncement } from "@/components/layout/site-announcement";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SearchPanel } from "@/components/sections/search-panel";
 import { Newsletter } from "@/components/sections/newsletter";
-import { DEMO_CART_LINES } from "@/lib/placeholder-data";
-import { searchProducts } from "@/lib/search";
+import { searchProducts } from "@/lib/queries/catalog";
 
 export const metadata: Metadata = {
-  title: "Recherche | Droopys",
+  title: "Recherche | Droopy's",
   // Une page de résultats n'apporte rien à un index : elle change à chaque
   // requête et duplique le catalogue.
   robots: { index: false, follow: true },
@@ -26,13 +25,11 @@ export default async function SearchPage({ searchParams }: PageProps) {
 
   return (
     <>
-      <AnnouncementBar>
-        Livraison offerte dès 150 € d&apos;achat · Retours sous 30 jours
-      </AnnouncementBar>
-      <SiteHeader cartLines={DEMO_CART_LINES} title="Recherche" />
+      <SiteAnnouncement />
+      <SiteHeader title="Recherche" />
 
       <main className="section-main min-h-[50vh]">
-        <SearchPanel query={query} results={searchProducts(query)} />
+        <SearchPanel query={query} results={await searchProducts(query)} />
         <Newsletter />
       </main>
 

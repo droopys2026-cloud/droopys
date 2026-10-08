@@ -2,12 +2,14 @@
 
 /* Système de design Droopys — ordre d'import volontaire :
    jetons → rôles typo → primitives → bandes de page → pages de
-   contenu → mouvement → admin. */
+   contenu → espace client → tunnel → mouvement → admin. */
 @import "../styles/theme.css";
 @import "../styles/type.css";
 @import "../styles/primitives.css";
 @import "../styles/sections.css";
 @import "../styles/content.css";
+@import "../styles/account.css";
+@import "../styles/checkout.css";
 @import "../styles/product.css";
 @import "../styles/motion.css";
 @import "../styles/admin.css";

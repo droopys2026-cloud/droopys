@@ -1,32 +1,40 @@
 "use client";
 
-import { useState } from "react";
+import { useWishlist } from "@/components/product/wishlist-provider";
 import { IconWishlist } from "@/components/ui/icons";
 
 /**
- * Bouton favori de la fiche produit.
+ * Bouton favori, sur la fiche comme sur les cartes.
  *
- * Frère du bouton d'ajout au panier, jamais enfant : deux actions imbriquées
- * rendent l'une des deux inatteignable au clavier.
+ * Toujours frère du lien ou du bouton voisin, jamais enfant : deux actions
+ * imbriquées rendent l'une des deux inatteignable au clavier.
  *
  * `aria-pressed` porte l'état, et l'intitulé change avec lui — une icône
- * pleine ne dit rien à qui ne voit pas l'écran. Rien n'est encore conservé :
- * la liste d'envies attend la base.
+ * pleine ne dit rien à qui ne voit pas l'écran.
  */
-export function WishlistButton({ productName }: { productName: string }) {
-  const [saved, setSaved] = useState(false);
+export function WishlistButton({
+  productId,
+  productName,
+  className = "product-wishlist",
+}: {
+  productId: string;
+  productName: string;
+  className?: string;
+}) {
+  const { isSaved, toggle } = useWishlist();
+  const saved = isSaved(productId);
 
   return (
     <button
       type="button"
-      className="product-wishlist"
+      className={className}
       aria-pressed={saved}
       aria-label={
         saved
           ? `Retirer ${productName} de mes favoris`
           : `Ajouter ${productName} à mes favoris`
       }
-      onClick={() => setSaved((current) => !current)}
+      onClick={() => toggle(productId)}
     >
       <IconWishlist />
     </button>

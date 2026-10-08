@@ -36,7 +36,11 @@ export function Editorial({
           reverse ? "md:flex-row-reverse" : ""
         }`}
       >
-        <div className="flex-1">
+        {/* `w-full` : en colonne (mobile), `items-center` donne à chaque
+            enfant la largeur de son contenu. Or le cadre n'a pas de largeur
+            propre — l'image y est en `fill` — et retombait à zéro : la photo
+            disparaissait sous 768 px. */}
+        <div className="w-full flex-1">
           {/* `object-cover` : la photo remplit le cadre au format 3/2 quel que
               soit son propre rapport, sans déformation ni bande vide. */}
           <FrameImage

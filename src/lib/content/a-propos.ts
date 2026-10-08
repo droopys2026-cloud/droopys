@@ -12,14 +12,14 @@ export const A_PROPOS_PAGES: ContentPage[] = [
   {
     slug: "a-propos",
     group: "a-propos",
-    title: "L'histoire Droopys",
+    title: "L'histoire Droopy's",
     lead: "Une boutique née à Marseille en 2006, devenue la maison des grandes marques pour enfants, de la naissance à 16 ans.",
     image: "/imgdress/petitmoncler.webp",
     imageClassName: "object-[50%_20%]",
     blocks: [
       {
         kind: "paragraphe",
-        text: "Droopys commence en 2006 dans le quinzième arrondissement de Marseille, au centre commercial Grand Littoral. L'idée tient en une phrase : les marques que les adultes s'offrent existent aussi pour les enfants, et personne ne les réunit sous un même toit.",
+        text: "Droopy's commence en 2006 dans le quinzième arrondissement de Marseille, au centre commercial Grand Littoral. L'idée tient en une phrase : les marques que les adultes s'offrent existent aussi pour les enfants, et personne ne les réunit sous un même toit.",
       },
       {
         kind: "paragraphe",
@@ -122,7 +122,7 @@ export const A_PROPOS_PAGES: ContentPage[] = [
     slug: "boutiques",
     group: "a-propos",
     title: "Nos boutiques",
-    lead: "Droopys se visite à Marseille, au centre commercial Grand Littoral.",
+    lead: "Droopy's se visite à Marseille, au centre commercial Grand Littoral.",
     blocks: [
       {
         kind: "paragraphe",
@@ -139,7 +139,7 @@ export const A_PROPOS_PAGES: ContentPage[] = [
     blocks: [
       {
         kind: "paragraphe",
-        text: "Droopys est une petite équipe. Les postes s'ouvrent au rythme de la boutique, quelques fois par an, et le plus souvent en vente et en conseil. Aucune offre n'est publiée en ce moment.",
+        text: "Droopy's est une petite équipe. Les postes s'ouvrent au rythme de la boutique, quelques fois par an, et le plus souvent en vente et en conseil. Aucune offre n'est publiée en ce moment.",
       },
       {
         kind: "titre",

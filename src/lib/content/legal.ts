@@ -27,7 +27,7 @@ export const LEGAL_PAGES: ContentPage[] = [
     slug: "legal/cgv",
     group: "legal",
     title: "Conditions générales de vente",
-    lead: `Les conditions applicables à toute commande passée sur le site Droopys, exploité par ${LEGAL.companyName}.`,
+    lead: `Les conditions applicables à toute commande passée sur le site Droopy's, exploité par ${LEGAL.companyName}.`,
     updatedAt: REVISION,
     toc: true,
     blocks: [
@@ -170,7 +170,7 @@ export const LEGAL_PAGES: ContentPage[] = [
     slug: "legal/mentions",
     group: "legal",
     title: "Mentions légales",
-    lead: "Éditeur, hébergeur et identité de l'entreprise qui exploite le site Droopys.",
+    lead: "Éditeur, hébergeur et identité de l'entreprise qui exploite le site Droopy's.",
     updatedAt: REVISION,
     blocks: [
       {

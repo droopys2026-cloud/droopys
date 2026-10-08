@@ -23,7 +23,8 @@ export type ProductDraft = {
 
   /** Rayon (bebe, fille, garcon…) et sous-rayon (robes, manteaux…). */
   categorySlug: string;
-  subcategory?: string;
+  /** Identifiant d'une ligne de `subcategories`, jamais une saisie libre. */
+  subcategoryId?: string;
 
   sizeScaleId: string;
   stock: SizeStock[];

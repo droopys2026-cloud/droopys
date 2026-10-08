@@ -1,3 +1,4 @@
+import { ShopPhotos } from "@/components/sections/shop-photos";
 import { SHOPS, mapUrl } from "@/lib/shops";
 
 /**
@@ -10,6 +11,8 @@ export function ShopList() {
       {SHOPS.map((shop) => (
         <section key={shop.id} className="content-shop">
           <h2 className="content-shop__name">{shop.name}</h2>
+
+          <ShopPhotos photos={shop.photos} />
 
           <address className="content-shop__address">
             {shop.address.map((line) => (

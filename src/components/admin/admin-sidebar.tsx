@@ -2,17 +2,21 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut } from "@/app/admin/connexion/actions";
 import {
   IconBolt,
   IconBox,
   IconDashboard,
   IconHelp,
+  IconMenu,
+  IconMail,
   IconOrders,
   IconPages,
   IconSettings,
   IconStorefront,
   IconTag,
   IconUsers,
+  IconWallet,
 } from "@/components/admin/admin-icons";
 
 /**
@@ -28,6 +32,7 @@ const SECTIONS = [
     links: [
       { href: "/admin", label: "Tableau de bord", Icon: IconDashboard },
       { href: "/admin/marques", label: "Marques", Icon: IconTag },
+      { href: "/admin/menu", label: "Menu", Icon: IconMenu },
       { href: "/admin/produits", label: "Produits", Icon: IconBox },
     ],
   },
@@ -35,7 +40,9 @@ const SECTIONS = [
     label: "Ventes",
     links: [
       { href: "/admin/commandes", label: "Commandes", Icon: IconOrders },
+      { href: "/admin/paiements", label: "Paiements", Icon: IconWallet },
       { href: "/admin/clients", label: "Clients", Icon: IconUsers },
+      { href: "/admin/newsletter", label: "Newsletter", Icon: IconMail },
     ],
   },
   {
@@ -47,14 +54,14 @@ const SECTIONS = [
   },
 ];
 
-export function AdminSidebar() {
+export function AdminSidebar({ email }: { email: string }) {
   const pathname = usePathname();
 
   return (
     <aside className="admin-sidebar">
       <div className="admin-sidebar__header">
         <Link href="/admin" className="admin-sidebar__logo">
-          Droopys
+          Droopy&apos;s
         </Link>
       </div>
 
@@ -72,17 +79,7 @@ export function AdminSidebar() {
                   <Link
                     href={href}
                     className="admin-nav__link"
-                    // Comparaison stricte pour l'accueil, préfixe pour le
-                    // reste : sinon /admin resterait actif sur toutes les pages.
-                    aria-current={
-                      (
-                        href === "/admin"
-                          ? pathname === href
-                          : pathname.startsWith(href)
-                      )
-                        ? "page"
-                        : undefined
-                    }
+                    aria-current={isActive(href, pathname) ? "page" : undefined}
                   >
                     <Icon />
                     <span>{label}</span>
@@ -111,20 +108,33 @@ export function AdminSidebar() {
           </Link>
         </div>
 
-        <button
-          type="button"
-          className="admin-user"
-          aria-label="Ouvrir le menu du compte"
-        >
-          <span className="admin-user__avatar" aria-hidden>
-            D
-          </span>
-          <span>
-            <span className="admin-user__name">Droopys</span>
-            <span className="admin-user__mail">admin@droopys.fr</span>
-          </span>
-        </button>
+        {/* Le bouton est un vrai envoi de formulaire et non un lien : une
+            déconnexion modifie l'état du serveur, elle ne se déclenche pas
+            sur un GET qu'un préchargeur pourrait appeler tout seul. */}
+        <form action={signOut}>
+          <button type="submit" className="admin-user" title="Se déconnecter">
+            <span className="admin-user__avatar" aria-hidden>
+              {(email[0] ?? "D").toUpperCase()}
+            </span>
+            <span>
+              <span className="admin-user__name">Se déconnecter</span>
+              <span className="admin-user__mail">{email}</span>
+            </span>
+          </button>
+        </form>
       </div>
     </aside>
   );
+}
+
+/**
+ * Comparaison stricte pour l'accueil, préfixe pour le reste : sinon /admin
+ * resterait actif sur toutes les pages. Les fiches d'onglet vivent encore
+ * sous /admin/rayons/… (leurs adresses n'ont pas bougé) mais s'ouvrent depuis
+ * Menu : c'est lui qui reste allumé.
+ */
+function isActive(href: string, pathname: string): boolean {
+  if (href === "/admin") return pathname === href;
+  if (href === "/admin/menu" && pathname.startsWith("/admin/rayons")) return true;
+  return pathname.startsWith(href);
 }

@@ -1,24 +1,23 @@
 import Link from "next/link";
+import { CartLineControls } from "@/components/sections/cart-line-controls";
+import { CheckoutButton } from "@/components/sections/checkout-button";
 import { FrameImage } from "@/components/ui/frame-image";
 import { formatPrice } from "@/lib/format";
 import {
-  amountToFreeShippingCents,
   cartItemCount,
   cartSubtotalCents,
-} from "@/lib/cart";
+} from "@/lib/cart/totals";
 import type { CartLine } from "@/types/cart";
 
 /**
  * Page panier : la liste des articles à gauche, le récapitulatif à droite.
  *
- * Rien n'est modifiable pour l'instant — pas de quantité, pas de suppression.
- * Ces gestes supposent un panier persistant (session ou API) qui n'existe pas
- * encore ; les afficher inertes tromperait le client. À brancher ici.
+ * Les quantités affichées sont déjà bornées au stock réel par la lecture du
+ * panier : ce qui est montré ici est ce qui peut être commandé.
  */
 export function CartDetail({ lines }: { lines: CartLine[] }) {
   const count = cartItemCount(lines);
   const subtotalCents = cartSubtotalCents(lines);
-  const missingCents = amountToFreeShippingCents(lines);
 
   if (lines.length === 0) {
     return (
@@ -67,9 +66,14 @@ export function CartDetail({ lines }: { lines: CartLine[] }) {
                 >
                   <span className="text-brand-label">{line.product.name}</span>
                 </Link>
-                <span className="text-caption-muted">
-                  Taille {line.size} · Quantité {line.quantity}
-                </span>
+                <span className="text-caption-muted">Taille {line.size}</span>
+
+                <CartLineControls
+                  variantId={line.id}
+                  quantity={line.quantity}
+                  stock={line.stock}
+                  label={`${line.product.name}, taille ${line.size}`}
+                />
               </div>
 
               <span className="text-strong shrink-0">
@@ -92,19 +96,23 @@ export function CartDetail({ lines }: { lines: CartLine[] }) {
           <p className="m-0 flex items-baseline justify-between">
             <span className="text-caption-muted">Livraison</span>
             <span className="text-strong">
-              {missingCents > 0 ? "Calculée à l'étape suivante" : "Offerte"}
+              Calculée à l&apos;étape suivante
             </span>
           </p>
 
-          {missingCents > 0 && (
-            <p className="text-caption-muted m-0">
-              Plus que {formatPrice(missingCents)} pour la livraison offerte.
-            </p>
-          )}
+          {/* Le port est le tarif réel du transporteur choisi au tunnel : il
+              ne peut pas être annoncé avant de savoir comment livrer. */}
+          <p className="text-caption-muted m-0">
+            Colissimo, Mondial Relay ou Chronopost, à domicile ou en point
+            relais — ou retrait gratuit en boutique.
+          </p>
 
-          <Link href="/commande" className="link-cta-block text-center">
-            Passer commande
-          </Link>
+          <CheckoutButton />
+
+          <p className="text-caption-muted m-0">
+            Paiement sécurisé par Stripe. Carte enregistrée chez lui, jamais
+            chez nous.
+          </p>
         </aside>
       </div>
     </section>

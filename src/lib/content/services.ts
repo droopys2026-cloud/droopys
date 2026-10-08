@@ -20,7 +20,7 @@ export const SERVICES_PAGES: ContentPage[] = [
     blocks: [
       {
         kind: "paragraphe",
-        text: "La carte cadeau Droopys laisse choisir celui qui reçoit. C'est souvent le bon réflexe pour un enfant : la taille change deux fois par an, le goût aussi.",
+        text: "La carte cadeau Droopy's laisse choisir celui qui reçoit. C'est souvent le bon réflexe pour un enfant : la taille change deux fois par an, le goût aussi.",
       },
       {
         kind: "titre",
@@ -241,7 +241,7 @@ export const SERVICES_PAGES: ContentPage[] = [
           "Panier compris entre 100 et 2 000 €.",
           "Réservé aux personnes majeures résidant en France.",
           "Carte bancaire française, valable au moins jusqu'à la dernière échéance.",
-          "L'éligibilité est décidée par Klarna, pas par Droopys : nous n'avons ni le motif d'un refus ni le moyen de le lever.",
+          "L'éligibilité est décidée par Klarna, pas par Droopy's : nous n'avons ni le motif d'un refus ni le moyen de le lever.",
           "En cas d'incident de paiement, des frais de retard peuvent être appliqués par Klarna selon ses propres conditions.",
         ],
       },
@@ -289,7 +289,7 @@ export const SERVICES_PAGES: ContentPage[] = [
       {
         kind: "liste",
         items: [
-          "Le parrainage s'adresse à une personne qui n'a jamais commandé chez Droopys.",
+          "Le parrainage s'adresse à une personne qui n'a jamais commandé chez Droopy's.",
           "Cinq filleuls au maximum par an et par parrain.",
           "Les bons de parrainage ne se cumulent pas entre eux sur une même commande.",
           "Un bon est valable six mois et n'est pas remboursable en espèces.",

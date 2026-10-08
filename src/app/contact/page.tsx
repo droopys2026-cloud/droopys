@@ -1,15 +1,17 @@
 import type { Metadata } from "next";
 import { ContentPageView } from "@/components/layout/content-page-view";
 import { ContactForm } from "@/components/sections/contact-form";
-import { contentMetadata, contentPage } from "@/lib/content-pages";
+import { contentMetadata, getContentPage } from "@/lib/queries/content";
 
 const SLUG = "contact";
 
-export const metadata: Metadata = contentMetadata(SLUG);
+export function generateMetadata(): Promise<Metadata> {
+  return contentMetadata(SLUG);
+}
 
-export default function ContactPage() {
+export default async function ContactPage() {
   return (
-    <ContentPageView page={contentPage(SLUG)}>
+    <ContentPageView page={await getContentPage(SLUG)}>
       <ContactForm />
     </ContentPageView>
   );

@@ -1,27 +1,29 @@
 import Link from "next/link";
 
 /**
- * État de la page des favoris.
- *
- * Elle est toujours vide, et ce n'est pas un oubli : le cœur des cartes
- * produit est un état local (`WishlistButton`), il disparaît au changement de
- * page. Tant qu'il n'y a ni compte ni stockage, afficher une liste ici
- * reviendrait à inventer des favoris que l'utilisateur n'a pas.
+ * Page des favoris sans favori. Un visiteur non connecté apprend que sa
+ * liste ne tient qu'à cet appareil, et comment la garder.
  */
-export function WishlistEmpty() {
+export function WishlistEmpty({ signedIn }: { signedIn: boolean }) {
   return (
     <section className="container-page flex flex-col items-center gap-9 py-17 text-center">
       <p className="text-paragraph m-0">
         Votre liste de favoris est vide pour le moment.
       </p>
       <p className="text-caption-muted m-0 max-w-[48ch]">
-        Touchez le cœur d&apos;un article pour le mettre de côté. La
-        conservation d&apos;une liste d&apos;une visite à l&apos;autre arrivera
-        avec les comptes client.
+        Touchez le cœur d&apos;un article pour le mettre de côté.
+        {!signedIn &&
+          " Sans compte, vos favoris restent sur cet appareil ; connectez-vous pour les retrouver partout."}
       </p>
-      <Link href="/" className="link-cta-block">
-        Découvrir les nouveautés
-      </Link>
+      {signedIn ? (
+        <Link href="/nouveautes" className="link-cta-block">
+          Découvrir les nouveautés
+        </Link>
+      ) : (
+        <Link href="/compte/connexion?suite=%2Ffavoris" className="link-cta-block">
+          Me connecter
+        </Link>
+      )}
     </section>
   );
 }

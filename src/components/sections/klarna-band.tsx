@@ -25,7 +25,7 @@ export function KlarnaBand() {
               pas décoratif : l'image est claire, le blanc y disparaîtrait. */}
           <div className="absolute inset-0 flex items-center justify-center bg-black/25 p-9">
             <span className="text-center text-[clamp(26px,3vw,44px)] leading-none font-bold tracking-[2px] text-white uppercase">
-              Droopys
+              Droopy&apos;s
             </span>
           </div>
         </div>

@@ -22,7 +22,7 @@ export type NewsletterContent = {
 
 export const NEWSLETTER: NewsletterContent = {
   title: "Restons en contact",
-  text: "Nouveautés, ventes privées et sélections Droopys, une fois par semaine.",
+  text: "Nouveautés, ventes privées et sélections Droopy's, une fois par semaine.",
   placeholder: "Votre adresse e-mail",
   buttonLabel: "Je m'inscris",
   provider: null,

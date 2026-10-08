@@ -13,7 +13,7 @@ export const AIDE_PAGES: ContentPage[] = [
     slug: "aide/livraison",
     group: "aide",
     title: "Livraison et délais",
-    lead: "Modes d'expédition, frais, délais et suivi. La livraison est offerte dès 150 € d'achat, partout en France métropolitaine.",
+    lead: "Modes d'expédition, frais, délais et suivi. Le port est le tarif réel du transporteur, affiché au moment du paiement selon le poids du colis.",
     toc: true,
     blocks: [
       {
@@ -26,28 +26,29 @@ export const AIDE_PAGES: ContentPage[] = [
       },
       {
         kind: "tableau",
-        caption: "France métropolitaine, à partir de l'expédition.",
-        head: ["Mode", "Délai", "Frais", "Offert dès"],
+        caption: "France métropolitaine, à partir de l'expédition. Le tarif exact s'affiche au paiement : il dépend du poids du colis.",
+        head: ["Mode", "Transporteur", "Délai"],
         rows: [
-          ["Point relais", "2 à 4 jours ouvrés", "4,90 €", "150 €"],
-          ["Domicile standard", "2 à 4 jours ouvrés", "6,90 €", "150 €"],
-          ["Domicile express", "24 à 48 h", "12,90 €", "—"],
-          ["Retrait en boutique", "Dès 2 h, selon le stock", "Gratuit", "—"],
+          ["Point relais", "Mondial Relay", "3 à 5 jours ouvrés"],
+          ["Point relais", "Colissimo (bureau de poste, relais Pickup)", "2 jours ouvrés"],
+          ["Point relais", "Chronopost (relais Pickup)", "Le lendemain"],
+          ["Domicile", "Mondial Relay", "3 à 5 jours ouvrés"],
+          ["Domicile", "Colissimo", "2 jours ouvrés"],
+          ["Domicile express", "Chronopost", "Le lendemain avant 18 h"],
+          ["Retrait en boutique", "Grand Littoral, Marseille", "Gratuit, dès que la commande est prête"],
         ],
       },
       {
         kind: "tableau",
-        caption: "Corse, outre-mer et Union européenne.",
-        head: ["Destination", "Délai", "Frais", "Offert dès"],
+        caption: "Hors France métropolitaine.",
+        head: ["Destination", "Livraison", "Frais"],
         rows: [
-          ["Corse", "3 à 6 jours ouvrés", "9,90 €", "150 €"],
-          ["Outre-mer", "5 à 10 jours ouvrés", "19,90 €", "250 €"],
-          ["Union européenne", "3 à 7 jours ouvrés", "12,90 €", "250 €"],
+          ["Belgique, Luxembourg, Suisse, Monaco", "À domicile", "Tarif du transporteur, affiché au paiement"],
         ],
       },
       {
         kind: "note",
-        text: "Hors Union européenne, des droits de douane et taxes locales peuvent s'ajouter à l'arrivée. Ils restent à la charge du destinataire et ne sont ni perçus ni remboursés par Droopys.",
+        text: "Hors Union européenne, des droits de douane et taxes locales peuvent s'ajouter à l'arrivée. Ils restent à la charge du destinataire et ne sont ni perçus ni remboursés par Droopy's.",
       },
       {
         kind: "titre",
@@ -85,7 +86,7 @@ export const AIDE_PAGES: ContentPage[] = [
       {
         kind: "appel",
         label: "Suivre ma commande",
-        href: "/compte/commandes",
+        href: "/suivi-commande",
       },
       {
         kind: "titre",
@@ -128,7 +129,7 @@ export const AIDE_PAGES: ContentPage[] = [
       },
       {
         kind: "paragraphe",
-        text: "Vous disposez de trente jours à compter de la réception pour nous retourner un article. C'est plus que les quatorze jours du droit de rétractation légal : ce délai supplémentaire est un engagement commercial de Droopys, il ne remplace pas vos droits, il s'y ajoute.",
+        text: "Vous disposez de trente jours à compter de la réception pour nous retourner un article. C'est plus que les quatorze jours du droit de rétractation légal : ce délai supplémentaire est un engagement commercial de Droopy's, il ne remplace pas vos droits, il s'y ajoute.",
       },
       {
         kind: "titre",

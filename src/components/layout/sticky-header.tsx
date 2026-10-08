@@ -5,6 +5,7 @@ import Link from "next/link";
 import { MainNav } from "@/components/layout/main-nav";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { HeaderActions } from "@/components/layout/header-actions";
+import type { NavItem } from "@/types/navigation";
 
 /**
  * Barre collante qui prend le relais de l'en-tête au défilement.
@@ -17,7 +18,14 @@ import { HeaderActions } from "@/components/layout/header-actions";
  * La barre est toujours dans le DOM ; seule sa position change. Un montage
  * conditionnel empêcherait toute transition d'entrée.
  */
-export function StickyHeader({ cartCount = 0 }: { cartCount?: number }) {
+export function StickyHeader({
+  nav,
+  cartCount = 0,
+}: {
+  /** Menu lu en base par l'en-tête : la barre collante affiche le même. */
+  nav: NavItem[];
+  cartCount?: number;
+}) {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const [stuck, setStuck] = useState(false);
 
@@ -47,16 +55,16 @@ export function StickyHeader({ cartCount = 0 }: { cartCount?: number }) {
       >
         <div className="container-page flex items-center justify-between gap-4 md:gap-9">
           <div className="flex items-center gap-6">
-            <MobileNav />
+            <MobileNav items={nav} />
             <Link
               href="/"
               className="text-[clamp(18px,5vw,22px)] leading-none font-black tracking-[1px] uppercase"
             >
-              Droopys
+              Droopy&apos;s
             </Link>
           </div>
 
-          <MainNav />
+          <MainNav items={nav} />
 
           <HeaderActions cartCount={cartCount} />
         </div>

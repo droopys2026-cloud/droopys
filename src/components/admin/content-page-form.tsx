@@ -1,7 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState, useState } from "react";
 import Link from "next/link";
+import {
+  saveContentPage,
+  type ContentPageState,
+} from "@/app/admin/(back-office)/pages/actions";
 import type { ContentBlock, ContentPage } from "@/types/content-page";
 
 /**
@@ -13,10 +17,9 @@ import type { ContentBlock, ContentPage } from "@/types/content-page";
  * rendu impossible de changer la mise en page du site sans repasser sur
  * chaque page — c'est exactement ce que le découpage en blocs évite.
  *
- * Rien n'est enregistré : la base n'est pas branchée. L'état vit dans le
- * composant et le bouton d'enregistrement reste inactif, comme partout
- * ailleurs dans l'admin — un bouton visiblement mort vaut mieux qu'un bouton
- * qui perd la saisie en silence.
+ * Les blocs vivent dans l'état du composant — ils n'ont pas de représentation
+ * naturelle en champ HTML — et voyagent en JSON dans un champ caché à l'envoi.
+ * Le reste est en champs non contrôlés : leur valeur part dans la `FormData`.
  */
 const BLOCK_LABELS: Record<ContentBlock["kind"], string> = {
   titre: "Intertitre",
@@ -32,6 +35,15 @@ const BLOCK_LABELS: Record<ContentBlock["kind"], string> = {
 
 export function ContentPageForm({ page }: { page: ContentPage }) {
   const [blocks, setBlocks] = useState<ContentBlock[]>(page.blocks);
+  const [state, action, pending] = useActionState<ContentPageState, FormData>(
+    saveContentPage,
+    {},
+  );
+
+  function submit(formData: FormData) {
+    formData.set("blocks", JSON.stringify(blocks));
+    action(formData);
+  }
 
   /** Remplace un bloc par sa version modifiée, sans toucher aux autres. */
   function update(index: number, next: ContentBlock) {
@@ -52,7 +64,23 @@ export function ContentPageForm({ page }: { page: ContentPage }) {
   }
 
   return (
-    <form className="admin-form admin-form--wide">
+    <form className="admin-form admin-form--wide" action={submit}>
+      <input type="hidden" name="slug" value={page.slug} />
+
+      {state.errors && state.errors.length > 0 && (
+        <div role="alert" className="admin-form__error">
+          <ul>
+            {state.errors.map((error) => (
+              <li key={error}>{error}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {state.saved && (
+        <p role="status" className="admin-form__saved">
+          Page enregistrée. Elle est à jour en boutique.
+        </p>
+      )}
       <fieldset className="admin-fieldset">
         <legend className="admin-fieldset__legend">Page</legend>
         <div className="admin-grid">
@@ -62,6 +90,8 @@ export function ContentPageForm({ page }: { page: ContentPage }) {
             </label>
             <input
               id="page-titre"
+              name="title"
+              required
               className="admin-field__input"
               defaultValue={page.title}
             />
@@ -89,6 +119,8 @@ export function ContentPageForm({ page }: { page: ContentPage }) {
             </label>
             <textarea
               id="page-lead"
+              name="lead"
+              required
               rows={3}
               className="admin-field__input"
               defaultValue={page.lead}
@@ -105,6 +137,7 @@ export function ContentPageForm({ page }: { page: ContentPage }) {
             </label>
             <input
               id="page-image"
+              name="imageUrl"
               className="admin-field__input"
               placeholder="/imgdress/…"
               defaultValue={page.image ?? ""}
@@ -115,18 +148,19 @@ export function ContentPageForm({ page }: { page: ContentPage }) {
           </div>
 
           <div className="admin-field">
-            <label className="admin-field__label" htmlFor="page-date">
-              Dernière mise à jour
+            <span className="admin-field__label">Pied de page</span>
+            <label className="admin-chip" htmlFor="page-footer">
+              <input
+                id="page-footer"
+                name="footer"
+                type="checkbox"
+                defaultChecked={page.footer !== false}
+              />
+              Lister dans les colonnes du pied de page
             </label>
-            <input
-              id="page-date"
-              type="date"
-              className="admin-field__input"
-              defaultValue={page.updatedAt ?? ""}
-            />
             <span className="admin-field__hint">
-              Obligatoire sur une page légale : un texte sans date n&apos;est
-              pas opposable.
+              Décochée, la page reste publiée et atteignable par son lien : ce
+              n&apos;est pas une dépublication.
             </span>
           </div>
 
@@ -135,6 +169,7 @@ export function ContentPageForm({ page }: { page: ContentPage }) {
             <label className="admin-chip" htmlFor="page-toc">
               <input
                 id="page-toc"
+                name="toc"
                 type="checkbox"
                 defaultChecked={page.toc ?? false}
               />
@@ -185,8 +220,8 @@ export function ContentPageForm({ page }: { page: ContentPage }) {
       </fieldset>
 
       <div className="admin-form__actions">
-        <button type="submit" className="admin-button" disabled>
-          Enregistrer
+        <button type="submit" className="admin-button" disabled={pending}>
+          {pending ? "Enregistrement…" : "Enregistrer"}
         </button>
         <Link
           href={`/${page.slug}`}
@@ -197,8 +232,9 @@ export function ContentPageForm({ page }: { page: ContentPage }) {
       </div>
 
       <p className="admin-form__note">
-        Rien n&apos;est enregistré tant que la base n&apos;est pas branchée :
-        les pages sont servies depuis <code>src/lib/content/</code>.
+        La date de dernière mise à jour est posée à l&apos;enregistrement :
+        c&apos;est elle qui rend une page légale opposable, elle ne se saisit
+        donc pas à la main.
       </p>
     </form>
   );

@@ -12,13 +12,20 @@ import Link from "next/link";
  * donne l'impression d'une publicité, et le visiteur ferme avant d'avoir lu.
  * Elle réapparaît à chaque chargement de page : rien n'est mémorisé.
  */
+/** Pages où la cliente remplit un formulaire : pas de fenêtre par-dessus. */
+const BUSY_PATHS = ["/admin", "/commande", "/panier", "/compte", "/suivi-commande", "/retractation"];
+
 export function KlarnaModal() {
   const [open, setOpen] = useState(false);
   const closeRef = useRef<HTMLButtonElement>(null);
   const pathname = usePathname();
 
   // L'admin n'est pas la boutique : aucune offre commerciale n'y a sa place.
-  const inStorefront = !pathname.startsWith("/admin");
+  // Ni le tunnel, le panier ou le compte : la fenêtre prend le focus, et une
+  // cliente qui tapait son adresse ou son mot de passe perdait sa saisie.
+  const inStorefront = !BUSY_PATHS.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
 
   useEffect(() => {
     if (!inStorefront) return;
@@ -79,7 +86,7 @@ export function KlarnaModal() {
               pas décoratif : l'image est claire, le blanc y disparaîtrait. */}
           <div className="absolute inset-0 flex items-center justify-center bg-black/25 p-11">
             <span className="text-center text-[clamp(32px,4.5vw,64px)] leading-none font-bold tracking-[2px] text-white uppercase">
-              Droopys
+              Droopy&apos;s
             </span>
           </div>
         </div>

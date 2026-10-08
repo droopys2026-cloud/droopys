@@ -472,6 +472,14 @@
     line-height: 1.3;
   }
 
+  /* Deux photos côte à côte, même sur mobile : en 3:4 elles restent lisibles
+     à demi-largeur, et empilées elles repousseraient l'adresse hors écran. */
+  .content-shop__photos {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-7);
+  }
+
   .content-shop__address {
     font-size: var(--text-lg);
     line-height: 1.7;

@@ -31,6 +31,12 @@
   --color-border-muted: rgb(216, 216, 216);
   --color-border-input: rgb(112, 112, 112);
 
+  /* ---- alerte ----------------------------------------------------------
+     Rouge déjà employé en dur par l'avertissement de stock
+     (`.size-picker__warning`, `.product-card__scarce`) : relevé là, pas
+     inventé. Sert aux erreurs de formulaire de l'espace client. */
+  --color-alert: rgb(180, 40, 40);
+
   /* ---- focus (anneau de mise au point clavier) -------------------------- */
   --color-focus: rgb(0, 187, 255);
 
@@ -107,6 +113,10 @@
   --duration-medium: 0.3s; /* seconde convention (×6) */
   --duration-slow: 0.4s;
   --duration-slower: 0.5s;
+  /* Tour complet du bandeau des marques. Non relevé : le design de référence
+     n'a pas de défilement continu, ajouté à la demande de la boutique. Lent
+     exprès, pour qu'on puisse lire chaque logotype au passage. */
+  --duration-marquee: 45s;
   --ease-default: ease; /* courbe dominante (×24) */
   --ease-in-out: ease-in-out;
   --ease-in: ease-in;

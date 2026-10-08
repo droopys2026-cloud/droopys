@@ -130,3 +130,44 @@ export function IconTrash() {
     </svg>
   );
 }
+
+/** Rayons et sous-rayons : des plans empilés, comme les niveaux du menu. */
+export function IconLayers() {
+  return (
+    <svg {...base}>
+      <path d="M12 3.5 3.5 8l8.5 4.5L20.5 8 12 3.5Z" />
+      <path d="M3.5 12.5 12 17l8.5-4.5" />
+      <path d="M3.5 17 12 21.5l8.5-4.5" />
+    </svg>
+  );
+}
+
+/** Menu principal : trois traits, comme la barre de navigation elle-même. */
+export function IconMenu() {
+  return (
+    <svg {...base}>
+      <path d="M4 7h16" />
+      <path d="M4 12h16" />
+      <path d="M4 17h16" />
+    </svg>
+  );
+}
+
+export function IconMail() {
+  return (
+    <svg {...base}>
+      <rect x="3.5" y="5.5" width="17" height="13" rx="2" />
+      <path d="m4.5 7 7.5 6 7.5-6" />
+    </svg>
+  );
+}
+
+export function IconWallet() {
+  return (
+    <svg {...base}>
+      <rect x="3.5" y="6" width="17" height="13" rx="2" />
+      <path d="M3.5 9.5h17" />
+      <path d="M16 14.5h1.5" />
+    </svg>
+  );
+}

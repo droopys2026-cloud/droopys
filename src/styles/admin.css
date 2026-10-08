@@ -279,6 +279,26 @@
 
 /* ---- pages de l'admin --------------------------------------------------- */
 
+/* Entrée d'une page : fondu et légère montée. Le seul fondu (`page-fade`)
+   passait inaperçu sur un fond blanc qui remplace un autre fond blanc ; c'est
+   la montée qui se voit. Montée et courbe reprises de `modal-panel-in`, déjà
+   dans le vocabulaire du design.
+
+   `backwards` et non `both` : un `transform` laissé en place après
+   l'animation ferait de ce bloc le repère des éléments `position: fixed`
+   de la page, qui se décaleraient avec lui. */
+.admin-page-enter {
+  animation: admin-page-in var(--duration-slow) var(--ease-out) backwards;
+}
+
+@keyframes admin-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+
+
 .admin-page {
   display: flex;
   flex-direction: column;
@@ -686,8 +706,10 @@
   flex: 1;
 }
 
-/* Le nom d'une taille est un champ, pas une étiquette : il se réécrit. */
-.admin-size__name {
+/* Le nom d'une taille, le libellé d'une rubrique de menu : des champs, pas
+   des étiquettes — ils se réécrivent sur place. */
+.admin-size__name,
+.admin-table__rename {
   flex: 1;
   min-width: 0;
   padding: 4px 6px;
@@ -698,11 +720,19 @@
   font-size: 13px;
 }
 
-.admin-size__name:hover {
+.admin-table__rename {
+  width: 100%;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.admin-size__name:hover,
+.admin-table__rename:hover {
   border-color: rgb(232, 232, 232);
 }
 
-.admin-size__name:focus {
+.admin-size__name:focus,
+.admin-table__rename:focus {
   border-color: rgb(24, 24, 24);
   outline: none;
 }
@@ -775,7 +805,8 @@
   text-align: center;
 }
 
-.admin-chip[aria-pressed="true"] {
+.admin-chip[aria-pressed="true"],
+.admin-chip[aria-current="true"] {
   background-color: rgb(24, 24, 24);
   border-color: rgb(24, 24, 24);
   color: rgb(255, 255, 255);
@@ -1193,4 +1224,532 @@
 .admin-row__delete:hover {
   border-color: rgb(180, 40, 40);
   color: rgb(180, 40, 40);
+}
+
+/* ---- connexion -----------------------------------------------------------
+   La page vit hors de la coquille : pas de barre latérale tant que personne
+   n'est identifié. Elle reprend le fond sombre de l'admin et pose dessus la
+   même carte blanche que les pages de formulaire. */
+
+.admin-login {
+  display: grid;
+  place-items: center;
+  min-height: 100svh;
+  padding: 24px;
+  background-color: rgb(3, 9, 1);
+}
+
+.admin-login__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  max-width: 400px;
+  padding: 32px;
+  border-radius: 16px;
+  background-color: rgb(255, 255, 255);
+  color: rgb(24, 24, 24);
+  font-size: 13px;
+  line-height: 19.5px;
+  letter-spacing: -0.4px;
+}
+
+.admin-login__panel :where(h1, p) {
+  margin: 0;
+}
+
+.admin-login__brand {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: rgb(105, 105, 105);
+}
+
+.admin-login__title {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.6px;
+}
+
+/* ---- erreur de formulaire ------------------------------------------------
+   Rouge sur fond rosé plutôt que rouge seul : la couleur ne doit pas être le
+   seul porteur de l'information, le cadre la double pour qui ne la voit pas. */
+
+.admin-form__error {
+  padding: 10px 12px;
+  border: 1px solid rgb(220, 178, 178);
+  border-radius: 8px;
+  background-color: rgb(253, 242, 242);
+  font-size: 13px;
+  color: rgb(158, 34, 34);
+}
+
+/* ---- vignette de ligne ---------------------------------------------------
+   Le format suit celui d'une carte produit (3/4) : on reconnaît la pièce du
+   premier coup d'œil, sans avoir à ouvrir la fiche. */
+
+.admin-row__vignette {
+  flex-shrink: 0;
+}
+
+.admin-row__image {
+  display: block;
+  width: 40px;
+  height: 52px;
+  border-radius: 6px;
+  object-fit: cover;
+  background-color: rgb(244, 244, 244);
+}
+
+.admin-row__image--empty {
+  border: 1px dashed rgb(216, 216, 216);
+}
+
+.admin-row__state {
+  flex-shrink: 0;
+}
+
+/* ---- interrupteur de publication ---------------------------------------- */
+
+.admin-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.admin-toggle input {
+  width: 16px;
+  height: 16px;
+  accent-color: rgb(24, 24, 24);
+}
+
+/* La liste d'erreurs hérite du cadre rosé : un point par problème, parce
+   qu'un formulaire long en cumule souvent plusieurs. */
+.admin-form__error ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  list-style: disc;
+}
+
+/* ---- tableau du catalogue ------------------------------------------------
+   Les colonnes de nombres sont alignées à droite et en chiffres tabulaires :
+   sans cela, « 1 299,00 € » et « 99,00 € » ne se comparent pas d'un coup
+   d'œil, il faut lire les chiffres. */
+
+.admin-table-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  /* Le tableau est large : il défile dans son cadre plutôt que d'élargir la
+     page, sinon la barre latérale se décale à chaque colonne ajoutée. */
+  overflow-x: auto;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid rgb(232, 232, 232);
+  border-radius: 12px;
+  /* `separate` serait nécessaire pour arrondir les coins, mais casse les
+     filets internes : on garde `collapse` et le cadre porte le rayon. */
+  overflow: hidden;
+  font-size: 13px;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.admin-table thead th {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgb(105, 105, 105);
+  background-color: rgb(250, 250, 250);
+  border-bottom: 1px solid rgb(232, 232, 232);
+  white-space: nowrap;
+}
+
+.admin-table tbody tr + tr {
+  border-top: 1px solid rgb(240, 240, 240);
+}
+
+.admin-table tbody tr:hover {
+  background-color: rgb(250, 250, 250);
+}
+
+.admin-table__name {
+  font-weight: 500;
+  color: rgb(24, 24, 24);
+}
+
+.admin-table__name a:hover {
+  text-decoration: underline;
+}
+
+.admin-table__muted {
+  color: rgb(105, 105, 105);
+}
+
+.admin-table__num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.admin-table__was {
+  display: block;
+  color: rgb(105, 105, 105);
+  text-decoration: line-through;
+}
+
+.admin-table__thumb {
+  width: 48px;
+  padding-right: 0;
+}
+
+.admin-table__actions {
+  text-align: right;
+}
+
+/* Publié : la pastille se distingue du brouillon autrement que par son seul
+   texte, pour qui balaie la colonne sans la lire. */
+/* États de commande. Teintes propres à l'admin, comme le reste de cette
+   feuille : orange pour ce qui attend une action, puis bleu (en route), vert
+   (livrée), violet (retour), rouge (annulée). */
+.admin-status {
+  margin-left: 0;
+  white-space: nowrap;
+}
+
+.admin-status--a-preparer {
+  background-color: rgb(255, 243, 220);
+  color: rgb(150, 88, 0);
+}
+
+.admin-status--expediee {
+  background-color: rgb(230, 239, 255);
+  color: rgb(30, 80, 170);
+}
+
+.admin-status--livree {
+  background-color: rgb(240, 249, 240);
+  color: rgb(38, 105, 48);
+}
+
+.admin-status--retour {
+  background-color: rgb(243, 235, 255);
+  color: rgb(105, 60, 170);
+}
+
+.admin-status--annulee {
+  background-color: rgb(253, 236, 236);
+  color: rgb(180, 40, 40);
+}
+
+.admin-badge--live {
+  border-color: rgb(196, 224, 196);
+  background-color: rgb(240, 249, 240);
+  color: rgb(38, 105, 48);
+}
+
+/* Seconde ligne d'une cellule — l'e-mail sous le nom : présent pour qui le
+   cherche, effacé pour qui balaie la colonne des noms. */
+.admin-table__sub {
+  display: block;
+  font-size: 12px;
+  color: rgb(105, 105, 105);
+}
+
+/* ---- tuiles du tableau de bord -------------------------------------------
+   Le chiffre domine, l'intitulé le nomme, la note le qualifie. Trois niveaux
+   de taille, pas trois couleurs : un tableau de bord qui clignote se lit moins
+   vite qu'un tableau de bord sobre. */
+
+.admin-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.admin-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  height: 100%;
+  padding: 16px;
+  border: 1px solid rgb(232, 232, 232);
+  border-radius: 12px;
+  transition: border-color 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.admin-tile:hover {
+  border-color: rgb(24, 24, 24);
+}
+
+.admin-tile__label {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgb(105, 105, 105);
+}
+
+.admin-tile__value {
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-tile__hint {
+  font-size: 12px;
+  color: rgb(140, 140, 140);
+}
+
+/* Confirmation d'enregistrement. Vert encadré, pendant du cadre rosé des
+   erreurs : la couleur n'est pas le seul porteur de l'information. */
+.admin-form__saved {
+  padding: 10px 12px;
+  border: 1px solid rgb(196, 224, 196);
+  border-radius: 8px;
+  background-color: rgb(240, 249, 240);
+  font-size: 13px;
+  color: rgb(38, 105, 48);
+}
+
+/* ---- aperçu d'une photo de rayon -----------------------------------------
+   Format 3/2, celui des visuels du menu : on voit ici le cadrage qu'aura
+   l'image à l'endroit où elle sera vue. */
+
+.admin-preview {
+  display: block;
+  width: 240px;
+  height: 160px;
+  border-radius: 8px;
+  object-fit: cover;
+  background-color: rgb(244, 244, 244);
+}
+
+/* ---- choix d'articles pour une sélection ---------------------------------
+   Une colonne de cases à cocher, bornée en hauteur : la liste peut compter
+   plusieurs centaines d'articles, elle ne doit pas repousser le bouton
+   d'enregistrement hors de l'écran. */
+
+.admin-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 420px;
+  margin: 0;
+  padding: 10px 12px;
+  overflow-y: auto;
+  list-style: none;
+  border: 1px solid rgb(232, 232, 232);
+  border-radius: 10px;
+}
+
+/* ---- section secondaire d'une page d'admin -------------------------------
+   Séparée du formulaire principal par un filet : deux blocs qui s'enregistrent
+   séparément ne doivent pas se lire comme un seul long formulaire. */
+
+.admin-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 28px;
+  border-top: 1px solid rgb(232, 232, 232);
+}
+
+.admin-section__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.admin-section__lead {
+  margin: 0;
+  font-size: 13px;
+  color: rgb(105, 105, 105);
+}
+
+/* ---- carte d'édition (colonne de menu) -----------------------------------
+   `.admin-card` existe déjà plus haut : on n'ajoute ici que ce qui manque à
+   l'édition d'une colonne de menu — un en-tête avec ses boutons d'ordre, et
+   des lignes de liens. */
+
+.admin-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-card__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.admin-card__muted {
+  font-size: 13px;
+  color: rgb(105, 105, 105);
+}
+
+/* ---- menu ----------------------------------------------------------------
+   Une ligne par onglet, dans l'ordre du site ; au-dessus, la barre telle
+   qu'elle s'affiche, pour qu'on reconnaisse tout de suite de quoi il s'agit. */
+
+.admin-menu-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin: 0;
+  padding: 14px 18px;
+  border-radius: 10px;
+  background-color: rgb(20, 20, 20);
+  color: rgb(255, 255, 255);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.admin-menu-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-menu-tab {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  border: 1px solid rgb(232, 232, 232);
+  border-radius: 10px;
+  background-color: rgb(255, 255, 255);
+}
+
+.admin-menu-tab__order {
+  display: flex;
+  flex-shrink: 0;
+  width: 70px;
+  gap: 6px;
+}
+
+.admin-menu-tab__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-menu-tab__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.admin-menu-tab__rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background-color: rgb(242, 242, 242);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.admin-menu-tab__links {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: rgb(105, 105, 105);
+}
+
+.admin-menu-tab__edit {
+  flex-shrink: 0;
+  padding: 7px 14px;
+  border: 1px solid rgb(232, 232, 232);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: border-color 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.admin-menu-tab__edit:hover {
+  border-color: rgb(20, 20, 20);
+}
+
+/* Même largeur que le bouton de suppression : les « Modifier » s'alignent. */
+.admin-menu-tab__spacer {
+  flex-shrink: 0;
+  width: 32px;
+}
+
+/* ---- fiche produit : autres rayons ---------------------------------------- */
+
+.admin-placements {
+  grid-column: 1 / -1;
+  padding: 14px 16px;
+  border: 1px solid rgb(232, 232, 232);
+  border-radius: 10px;
+}
+
+.admin-placements__summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-placements__count {
+  font-size: 13px;
+  font-weight: 400;
+  color: rgb(105, 105, 105);
+}
+
+.admin-placements__groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.admin-placements__group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.admin-placements__legend {
+  margin-bottom: 4px;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.admin-placements__option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  cursor: pointer;
 }

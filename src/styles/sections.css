@@ -66,8 +66,10 @@
 
      Le noir est celui de la barre d'annonce et du bandeau newsletter : c'est
      la seule surface sombre relevée, on ne s'en invente pas une autre. */
+  /* Mur des marques sur fond blanc, à la demande de la boutique : les
+     logotypes, noirs à la source, s'affichent tels quels. */
   .brand-wall {
-    background-color: var(--color-surface-inverse);
+    background-color: var(--color-surface);
     padding-block: var(--spacing-14);
     /* Détaché des bandes voisines : un aplat noir collé à la section voisine
        se lirait comme sa bordure. Même respiration au-dessus qu'en dessous —
@@ -83,24 +85,50 @@
      bordure orpheline en bout de rangée, quel que soit le nombre de colonnes.
      Le gris moyen plutôt que le gris clair : sur du noir, `border-muted`
      ferait une grille plus voyante que les logos. */
-  .brand-wall-grid {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 1px;
-    background-color: var(--color-border-input);
+  /* Deux bandeaux en sens contraire. Le masque estompe les bords pour que
+     les logotypes entrent et sortent sans être coupés net. */
+  .brand-marquee {
+    overflow: hidden;
+    border-block: 1px solid var(--color-border-muted);
+    mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
   }
 
-  .brand-wall-cell {
-    background-color: var(--color-surface-inverse);
+  .brand-marquee + .brand-marquee {
+    border-top: 0;
   }
 
-  /* Atténués au repos pour que le mur se lise comme un ensemble, pleins au
-     survol — la convention d'interaction du design. */
+  .brand-marquee-track {
+    display: flex;
+    width: max-content;
+    animation: brand-marquee var(--duration-marquee) linear infinite;
+  }
+
+  .brand-marquee-track--reverse {
+    animation-direction: reverse;
+  }
+
+  /* On s'arrête pour lire ou cliquer : au survol, et quand le clavier
+     atteint un logotype. */
+  .brand-marquee:hover .brand-marquee-track,
+  .brand-marquee:focus-within .brand-marquee-track {
+    animation-play-state: paused;
+  }
+
+  /* Largeur minimale commune, mais une case s'élargit pour un nom composé
+     long (« Karl Lagerfeld ») plutôt que de le couper sur deux lignes. */
+  .brand-marquee-cell {
+    flex: 0 0 auto;
+    min-width: 240px;
+    border-inline-end: 1px solid var(--color-border-muted);
+  }
+
   .brand-wall-link {
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 120px;
+    /* Haut : le bandeau doit se voir comme une section à part entière, pas
+       comme un filet entre deux blocs. */
+    height: 180px;
     padding-inline: var(--spacing-9);
     opacity: 0.6;
     transition: opacity var(--duration-medium) var(--ease-in-out);
@@ -110,14 +138,11 @@
     opacity: 1;
   }
 
-  /* Les logotypes récupérés sont des tracés noirs : sur fond noir ils
-     disparaissent. `invert` les repasse en blanc sans maintenir une seconde
-     version de chaque fichier — ils sont monochromes, l'inversion est donc
-     exacte et non une approximation. */
+  /* Les logotypes récupérés sont des tracés noirs, affichés tels quels sur
+     le fond blanc du bandeau. */
   .brand-wall-logo {
-    filter: invert(1);
-    /* Les dimensions viennent de `logoBox`, en dur sur la balise. En dessous de
-       quatre colonnes la case devient plus étroite que le plus large des
+    /* Les dimensions viennent de `logoBox`, en dur sur la balise. Sur
+       téléphone la case devient plus étroite que le plus large des
        logotypes : `max-width` le laisse rétrécir, `height: auto` lui garde ses
        proportions. */
     max-width: 100%;
@@ -129,10 +154,57 @@
      `surface-inverse`, et la taille — 13 px à côté de logotypes de 30 à 60 px
      de haut, le nom passerait pour une note de bas de page. */
   .brand-wall-name {
-    color: var(--color-ink-inverse);
+    color: var(--color-ink);
     font-size: var(--text-heading-sm);
     line-height: 34px;
     letter-spacing: 1px;
+    white-space: nowrap;
+  }
+
+  /* Page « Nos marques » : toutes les maisons dans un seul cadre immobile.
+     Les filets viennent du fond de la grille vu à travers l'espace de 1 px
+     entre les cases — un seul trait partout, jamais doublé. */
+  .brand-index {
+    padding-block: var(--spacing-14);
+  }
+
+  .brand-index-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1px;
+    border: 1px solid var(--color-border-muted);
+    background-color: var(--color-border-muted);
+  }
+
+  .brand-index-cell {
+    background-color: var(--color-surface);
+  }
+
+  .brand-index-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-5);
+    height: 200px;
+    padding-inline: var(--spacing-9);
+    transition: background-color var(--duration-medium) var(--ease-in-out);
+  }
+
+  .brand-index-link:hover {
+    background-color: var(--color-surface-alt);
+  }
+
+  .brand-index-mark {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    max-width: 100%;
+  }
+
+  .brand-index-count {
+    font-size: var(--text-md);
+    color: var(--color-ink-secondary);
   }
 
   /* Barre collante : l'en-tête réduit qui prend le relais au défilement.
@@ -244,8 +316,6 @@
      contexte d'empilement pour que l'image reste derrière le contenu.
      La hauteur ne change pas — c'est l'en-tête habituel, seul son fond change. */
   .section-header--overlay {
-    /* La photo de fond ne doit pas déborder de la bande. */
-    overflow: hidden;
     background-color: transparent;
     color: var(--color-ink-inverse);
     isolation: isolate;
@@ -253,6 +323,15 @@
        donne de la hauteur pour que la photo se voie, sans toucher à la
        disposition de la barre elle-même. */
     padding-bottom: clamp(var(--spacing-14), 14vw, 220px);
+  }
+
+  /* La photo de fond, rognée à la bande par son propre cadre — et non par
+     l'en-tête, dont le menu déroulant doit pouvoir déborder. */
+  .header-backdrop {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
   }
 
   /* Quand un titre occupe le bas de l'en-tête, il remplace le vide : la
@@ -354,25 +433,7 @@
     margin-top: var(--spacing-2);
   }
 
-  /* Nom du rayon, au bas du panneau déroulant. Volontairement grand : c'est
-     le repère visuel du panneau, pas un lien de plus dans la liste. */
-  .nav-panel__title {
-    display: block;
-    padding: 0 clamp(var(--spacing-9), 4vw, var(--spacing-13)) var(--spacing-11);
-    font-family: var(--font-semibold);
-    font-size: clamp(32px, 5vw, 64px);
-    font-weight: 600;
-    line-height: 1;
-    letter-spacing: -0.5px;
-    color: var(--color-ink);
-    transition: opacity var(--duration-medium) var(--ease-in-out);
-  }
-
-  .nav-panel__title:hover {
-    opacity: 0.55;
-  }
-
-  /* Bords fondus d'une bande défilante : le texte s'efface aux extrémités
+  /* Bords fondus d’une bande défilante : le texte s'efface aux extrémités
      au lieu d'être tranché net. Un masque plutôt que deux dégradés blancs
      posés par-dessus — ainsi l'effet tient quelle que soit la couleur du
      fond, y compris sur les bandes grises. */
@@ -632,6 +693,14 @@
     color: rgb(180, 40, 40);
   }
 
+  /* Confirmation d'ajout. Même taille que l'avertissement, encre courante :
+     une bonne nouvelle n'a pas à crier. */
+  .size-picker__added {
+    font-family: var(--font-medium);
+    font-size: var(--text-md);
+    color: var(--color-ink-secondary);
+  }
+
   .product-reassurance {
     display: flex;
     flex-direction: column;
@@ -696,9 +765,146 @@
   .section-newsletter {
     margin-top: var(--spacing-11);
   }
-  /* Deux colonnes plutôt que quatre : en dessous, un logotype large comme
-     « Zadig & Voltaire » tomberait sous la taille lisible. */
-  .brand-wall-grid {
+  .brand-index-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .brand-index-link {
+    height: 150px;
+  }
+  /* Cases plus étroites : deux logotypes et demi visibles sur un téléphone. */
+  .brand-marquee-cell {
+    min-width: 160px;
+  }
+  .brand-wall-link {
+    height: 130px;
+  }
+}
+
+@layer components {
+  /* Pastille du nombre d'articles sur l'icône du panier.
+     `.box-badge-round` (relevée, 9 px de texte, 13 px de haut) donnait un
+     ovale à peine lisible sur l'icône. Ici : un vrai rond, chiffre en gras,
+     et un liseré clair qui la détache de l'icône comme des photos d'en-tête.
+     À deux chiffres, `min-width` laisse le rond s'allonger en gélule. */
+  .cart-count {
+    position: absolute;
+    top: calc(var(--spacing-3) * -1);
+    right: calc(var(--spacing-3) * -1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: var(--spacing-9);
+    height: var(--spacing-9);
+    padding: 0 var(--spacing-2);
+    border-radius: var(--radius-pill);
+    background-color: var(--color-surface-inverse);
+    color: var(--color-ink-inverse);
+    box-shadow: 0 0 0 2px var(--color-surface);
+    font-family: var(--font-semibold);
+    font-weight: 600;
+    font-size: var(--text-sm);
+    line-height: 1;
+    pointer-events: none;
+  }
+}
+
+@layer components {
+  /* Carte « Suivez-nous » fixée en bas à droite de l'accueil, en longueur :
+     la photo à gauche, le texte et les réseaux à droite. Au-dessus du
+     contenu, sous les tiroirs et la fenêtre modale. Pas d'animation. */
+  .social-card {
+    position: fixed;
+    right: var(--spacing-8);
+    bottom: var(--spacing-8);
+    z-index: 30;
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    width: min(460px, calc(100vw - 2 * var(--spacing-8)));
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border-muted);
+    box-shadow: 0 12px 24px rgb(0 0 0 / 8%);
+  }
+
+  /* Le tiroir du menu mobile vit dans l'en-tête, qui forme son propre
+     contexte d'empilement : son z-index ne peut donc pas passer au-dessus de
+     la carte. On masque la carte tant que le menu est ouvert. */
+  body:has(#menu-mobile) .social-card {
+    display: none;
+  }
+
+  .social-card__image {
+    position: relative;
+    min-height: 100%;
+    background-color: var(--color-surface-muted);
+  }
+
+  @media (max-width: 480px) {
+    .social-card {
+      grid-template-columns: 110px 1fr;
+    }
+  }
+
+  .social-card__close {
+    position: absolute;
+    top: var(--spacing-5);
+    right: var(--spacing-5);
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-circle);
+    background-color: var(--color-surface);
+    font-size: var(--text-icon-sm);
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .social-card__close:focus-visible {
+    outline: 3px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+
+  .social-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-4);
+    padding: var(--spacing-9) var(--spacing-12) var(--spacing-9) var(--spacing-9);
+  }
+
+  .social-card__title {
+    margin: 0;
+    font-family: var(--font-semibold);
+    font-weight: 600;
+    font-size: var(--text-lg);
+  }
+
+  .social-card__text {
+    margin: 0;
+    font-size: var(--text-md);
+    line-height: 1.5;
+    color: var(--color-ink-secondary);
+  }
+
+  .social-card__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-5) var(--spacing-8);
+    padding-top: var(--spacing-4);
+  }
+
+  .social-card__link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-4);
+    font-family: var(--font-medium);
+    font-weight: 500;
+    font-size: var(--text-md);
+  }
+
+  .social-card__link:hover span {
+    text-decoration: underline;
+    text-underline-offset: 3px;
   }
 }

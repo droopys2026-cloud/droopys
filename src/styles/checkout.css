@@ -1,0 +1,318 @@
+/* ============================================================================
+   checkout.css — tunnel de commande (/commande).
+   Jetons de theme.css uniquement. Formulaire à gauche, récapitulatif collant
+   à droite ; sous 1024 px le récapitulatif passe sous le formulaire.
+   ========================================================================== */
+
+@layer components {
+  .checkout {
+    display: grid;
+    gap: var(--spacing-12);
+    align-items: start;
+  }
+
+  @media (min-width: 1024px) {
+    .checkout {
+      grid-template-columns: minmax(0, 1fr) 380px;
+      gap: var(--spacing-16);
+    }
+  }
+
+  .checkout__main {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-11);
+    min-width: 0;
+  }
+
+  /* ---- barre d'étapes --------------------------------------------------- */
+
+  .checkout-steps {
+    display: flex;
+    gap: var(--spacing-9);
+    border-bottom: 1px solid var(--color-border-muted);
+    padding-bottom: var(--spacing-7);
+    overflow-x: auto;
+  }
+
+  .checkout-steps__item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-5);
+    white-space: nowrap;
+    font-family: var(--font-medium);
+    font-weight: 500;
+    font-size: var(--text-lg);
+    color: var(--color-ink-muted);
+    background: none;
+    border: 0;
+    padding: 0;
+  }
+
+  .checkout-steps__item[aria-current="step"] {
+    color: var(--color-ink);
+    font-family: var(--font-semibold);
+    font-weight: 600;
+  }
+
+  /* Étape déjà franchie : un bouton pour y revenir. */
+  button.checkout-steps__item {
+    color: var(--color-ink-secondary);
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+
+  .checkout-steps__number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border: 1px solid currentColor;
+    border-radius: 50%;
+    font-size: var(--text-base);
+  }
+
+  .checkout-steps__item[aria-current="step"] .checkout-steps__number {
+    background-color: var(--color-surface-inverse);
+    border-color: var(--color-surface-inverse);
+    color: var(--color-ink-inverse);
+  }
+
+  /* ---- étapes ----------------------------------------------------------- */
+
+  .checkout-step {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-9);
+  }
+
+  .checkout-field-error {
+    font-size: var(--text-base);
+    color: var(--color-alert);
+  }
+
+  /* Choix du mode de livraison : radio natif sous une carte cliquable. */
+  .checkout-options {
+    display: grid;
+    gap: var(--spacing-7);
+  }
+
+  .checkout-option {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-7);
+    border: 1px solid var(--color-border-muted);
+    padding: var(--spacing-9) var(--spacing-10);
+    cursor: pointer;
+    font-size: var(--text-lg);
+    transition: border-color var(--duration-medium) var(--ease-in-out);
+  }
+
+  .checkout-option:hover,
+  .checkout-option:has(input:checked) {
+    border-color: var(--color-ink);
+  }
+
+  .checkout-option input {
+    margin-top: 4px;
+    accent-color: var(--color-ink);
+  }
+
+  /* Logo du transporteur : un gabarit fixe, pour que les libellés restent
+     alignés quelle que soit la forme du logo. */
+  .checkout-option__logo {
+    flex-shrink: 0;
+    width: 64px;
+    height: 32px;
+    object-fit: contain;
+  }
+
+  .checkout-option__body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--spacing-2);
+  }
+
+  .checkout-option__head {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--spacing-7);
+    font-family: var(--font-semibold);
+    font-weight: 600;
+  }
+
+  /* Option et son panneau (adresse, carte) : le panneau s'accroche sous
+     l'option cliquée, sans bordure entre les deux, pour qu'ils se lisent
+     comme un seul bloc. */
+  .checkout-choice {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .checkout-choice > .content-form {
+    border-color: var(--color-ink);
+    border-top: 0;
+  }
+
+  .checkout-choice:has(.content-form) > .checkout-option {
+    border-bottom-color: transparent;
+  }
+
+  /* ---- adresse avec suggestions --------------------------------------- */
+
+  .address-autocomplete {
+    position: relative;
+  }
+
+  .address-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    margin-top: var(--spacing-1);
+    border: 1px solid var(--color-ink);
+    background-color: var(--color-surface);
+    box-shadow: 0 12px 24px rgb(0 0 0 / 8%);
+  }
+
+  .address-suggestions__item {
+    padding: var(--spacing-6) var(--spacing-7);
+    font-size: var(--text-lg);
+    cursor: pointer;
+  }
+
+  .address-suggestions__item[aria-selected="true"],
+  .address-suggestions__item:hover {
+    background-color: var(--color-surface-alt);
+  }
+
+  .checkout-saved {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-5);
+  }
+
+  .checkout-saved__chip {
+    border: 1px solid var(--color-border-muted);
+    background: var(--color-surface);
+    padding: var(--spacing-5) var(--spacing-7);
+    font-size: var(--text-md);
+    cursor: pointer;
+    transition: border-color var(--duration-medium) var(--ease-in-out);
+  }
+
+  .checkout-saved__chip:hover {
+    border-color: var(--color-ink);
+  }
+
+  /* Mini-carte des points relais (carte Sendcloud intégrée). Assez haute
+     pour la liste et la carte côte à côte sur grand écran. */
+  .checkout-map {
+    width: 100%;
+    height: 460px;
+    border: 1px solid var(--color-border-muted);
+  }
+
+  /* Rappel des étapes franchies, à l'étape du paiement. */
+  .checkout-recap {
+    display: grid;
+    gap: var(--spacing-7);
+  }
+
+  @media (min-width: 768px) {
+    .checkout-recap {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .checkout-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--spacing-9);
+  }
+
+  /* Bouton de retour : même hauteur que « Continuer », en creux, à gauche —
+     visible sans voler la vedette au bouton qui fait avancer. */
+  .checkout-back {
+    width: auto;
+    margin-top: 0;
+    padding-inline: var(--spacing-9);
+  }
+
+  .checkout-pay {
+    width: 100%;
+    margin-top: 0;
+    text-align: center;
+    font-size: var(--text-lg);
+    padding-block: var(--spacing-7);
+  }
+
+  .checkout-pay:disabled,
+  .checkout-actions .link-cta-block:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .checkout-secure {
+    font-size: var(--text-base);
+    color: var(--color-ink-secondary);
+  }
+
+  /* ---- récapitulatif ---------------------------------------------------- */
+
+  .checkout-summary {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-9);
+    background-color: var(--color-surface-alt);
+    padding: var(--spacing-10);
+  }
+
+  @media (min-width: 1024px) {
+    .checkout-summary {
+      position: sticky;
+      top: var(--spacing-17);
+    }
+  }
+
+  .checkout-summary__lines {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-7);
+  }
+
+  .checkout-summary__line {
+    display: grid;
+    grid-template-columns: 56px 1fr auto;
+    gap: var(--spacing-7);
+    align-items: start;
+    font-size: var(--text-md);
+  }
+
+  .checkout-summary__totals {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-5);
+    border-top: 1px solid var(--color-border-muted);
+    padding-top: var(--spacing-9);
+    font-size: var(--text-lg);
+  }
+
+  .checkout-summary__row {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--spacing-7);
+  }
+
+  .checkout-summary__total {
+    font-family: var(--font-semibold);
+    font-weight: 600;
+    font-size: var(--text-heading-sm);
+    line-height: 1.2;
+  }
+}

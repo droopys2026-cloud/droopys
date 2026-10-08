@@ -26,7 +26,7 @@ export const LEGAL = {
   /** Enseigne commerciale déposée, celle que porte la devanture. */
   tradeName: "DROOPY'S",
   /** Nom d'usage du site. */
-  brand: "Droopys",
+  brand: "Droopy's",
 
   /** Catégorie juridique INSEE 5499. */
   legalForm: "Société à responsabilité limitée (SARL)",

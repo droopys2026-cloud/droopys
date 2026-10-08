@@ -64,6 +64,17 @@
 /* Entrée de la fenêtre modale : le fond se voile, la fenêtre monte de
    quelques pixels en grandissant à peine. Durée et courbe prises dans le
    vocabulaire mesuré du design (0,3 s / 0,4 s, ease-out). */
+/* Bandeau des marques : la piste porte sa série deux fois, −50 % ramène
+   donc exactement au point de départ. */
+@keyframes brand-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
 @keyframes modal-backdrop-in {
   from {
     opacity: 0;
@@ -108,6 +119,12 @@
 /* Aucune règle prefers-reduced-motion n'était dans la capture ; celle-ci est
    un ajout d'accessibilité de notre part. */
 @media (prefers-reduced-motion: reduce) {
+  /* Le bandeau s'arrête net, sur sa première série, plutôt que de sauter à
+     la fin comme le ferait la règle générale ci-dessous. */
+  .brand-marquee-track {
+    animation: none;
+  }
+
   *,
   *::before,
   *::after {

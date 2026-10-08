@@ -1,0 +1,303 @@
+/* ============================================================================
+   account.css — connexion, inscription et espace client.
+   Aucune valeur nouvelle : jetons de theme.css uniquement. La coquille de
+   l'espace reprend la colonne + contenu des pages de contenu, en plus étroit.
+   ========================================================================== */
+
+@layer components {
+  /* ---- titres ----------------------------------------------------------
+     Mêmes valeurs que `.heading-h2` et `.heading-h3` de type.css, alignées
+     à gauche et sans les grandes marges pensées pour les bandes de page :
+     ici le titre ouvre une colonne étroite, pas une section pleine largeur. */
+
+  .account-title {
+    font-family: var(--font-semibold);
+    font-size: 35px;
+    font-weight: 600;
+    line-height: 37px;
+    color: var(--color-ink);
+  }
+
+  .account-subtitle {
+    font-family: var(--font-semibold);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 17px;
+    color: var(--color-ink);
+  }
+
+  /* ---- pages de connexion : photo à gauche, formulaire à droite --------- */
+
+  .account-auth {
+    display: grid;
+    gap: var(--spacing-13);
+    align-items: start;
+  }
+
+  @media (min-width: 1024px) {
+    .account-auth {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .account-auth__panel {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-9);
+  }
+
+  .account-auth__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-5) var(--spacing-9);
+  }
+
+  /* Séparateur « ou » entre e-mail et Google : deux chemins, pas deux étapes. */
+  .account-divider {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-7);
+    font-size: var(--text-base);
+    text-transform: uppercase;
+    color: var(--color-ink-secondary);
+  }
+
+  .account-divider::before,
+  .account-divider::after {
+    content: "";
+    flex: 1;
+    border-top: 1px solid var(--color-border-muted);
+  }
+
+  /* Bouton secondaire : même gabarit que `.link-cta-block`, en creux. */
+  .account-button-outline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-6);
+    width: 100%;
+    padding: 10px 45px;
+    border: 1px solid var(--color-border);
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+    font-size: 12px;
+    line-height: 20.4px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all var(--duration-medium) var(--ease-in-out);
+  }
+
+  .account-button-outline:hover {
+    background-color: var(--color-surface-alt);
+  }
+
+  .account-button-outline:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .account-button-outline:focus-visible {
+    outline: 3px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+
+  /* ---- messages --------------------------------------------------------- */
+
+  .account-alert {
+    border-left: 3px solid var(--color-alert);
+    padding: var(--spacing-5) var(--spacing-7);
+    font-size: var(--text-lg);
+    color: var(--color-alert);
+  }
+
+  .account-notice {
+    border-left: 3px solid var(--color-ink);
+    padding: var(--spacing-5) var(--spacing-7);
+    font-size: var(--text-lg);
+    color: var(--color-ink);
+  }
+
+  /* ---- espace client : menu à gauche, contenu à droite ------------------ */
+
+  .account-shell {
+    display: grid;
+    gap: var(--spacing-12);
+    align-items: start;
+  }
+
+  @media (min-width: 1024px) {
+    .account-shell {
+      grid-template-columns: 220px 1fr;
+    }
+  }
+
+  /* Menu de l'espace : une liste de lignes séparées, chacune terminée par
+     un chevron. Un texte gris sans séparateur ne se lit pas comme un menu —
+     on ne devinait pas qu'on pouvait cliquer. */
+  .account-nav {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid var(--color-border-muted);
+  }
+
+  .account-nav__link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-7);
+    width: 100%;
+    padding: var(--spacing-7) 0;
+    border-bottom: 1px solid var(--color-border-muted);
+    font-family: var(--font-medium);
+    font-weight: 500;
+    font-size: var(--text-lg);
+    color: var(--color-ink);
+    transition: color var(--duration-medium) var(--ease-in-out);
+  }
+
+  .account-nav__link::after {
+    content: "›";
+    font-size: var(--text-icon-sm);
+    line-height: 1;
+    color: var(--color-ink-secondary);
+    transition: transform var(--duration-medium) var(--ease-in-out);
+  }
+
+  .account-nav__link:hover::after,
+  .account-nav__link[aria-current="page"]::after {
+    color: var(--color-ink);
+  }
+
+  .account-nav__link[aria-current="page"] {
+    font-family: var(--font-semibold);
+    font-weight: 600;
+  }
+
+  .account-nav__link:focus-visible {
+    outline: 3px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+
+  /* Bouton de déconnexion habillé en lien du menu : c'est un formulaire,
+     parce qu'une déconnexion ne doit pas se déclencher par un simple GET. */
+  .account-nav__button {
+    background: none;
+    border-width: 0 0 1px;
+    border-style: solid;
+    border-color: var(--color-border-muted);
+    text-align: left;
+    cursor: pointer;
+    color: var(--color-ink-secondary);
+  }
+
+  .account-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-11);
+    min-width: 0;
+  }
+
+  .account-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-9);
+  }
+
+  /* Cartes : commande, adresse, raccourci. */
+  .account-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: var(--spacing-7);
+  }
+
+  .account-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-5);
+    border: 1px solid var(--color-border-muted);
+    padding: var(--spacing-10);
+    font-size: var(--text-lg);
+    line-height: 1.7;
+  }
+
+  .account-card__title {
+    font-family: var(--font-semibold);
+    font-weight: 600;
+    font-size: var(--text-lg);
+  }
+
+  /* Carte entièrement cliquable : la bordure fonce au survol, et un lien
+     d'action souligné dit en toutes lettres où elle mène. */
+  .account-card--link {
+    transition: border-color var(--duration-medium) var(--ease-in-out);
+  }
+
+  .account-card--link:hover {
+    border-color: var(--color-ink);
+  }
+
+  .account-card--link:focus-visible {
+    outline: 3px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+
+  .account-card__cta {
+    margin-top: auto;
+    padding-top: var(--spacing-5);
+    font-family: var(--font-medium);
+    font-weight: 500;
+    font-size: var(--text-md);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+
+  .account-card__muted {
+    color: var(--color-ink-secondary);
+  }
+
+  .account-card__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-9);
+    margin-top: auto;
+    padding-top: var(--spacing-5);
+  }
+
+  /* Ligne de commande : référence, date, état, total. */
+  .account-orders {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid var(--color-border-muted);
+  }
+
+  .account-order {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: var(--spacing-2) var(--spacing-9);
+    padding: var(--spacing-9) 0;
+    border-bottom: 1px solid var(--color-border-muted);
+    font-size: var(--text-lg);
+  }
+
+  .account-order__lines {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid var(--color-border-muted);
+  }
+
+  .account-order__line {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--spacing-9);
+    padding: var(--spacing-7) 0;
+    border-bottom: 1px solid var(--color-border-muted);
+    font-size: var(--text-lg);
+  }
+
+  .account-checkbox {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-5);
+    font-size: var(--text-lg);
+  }
+}

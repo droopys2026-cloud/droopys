@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useOptimistic, useRef } from "react";
 import Link from "next/link";
 import { FrameImage } from "@/components/ui/frame-image";
+import { CartLineControls } from "@/components/sections/cart-line-controls";
 import { useCartDrawer } from "@/components/layout/cart-drawer-context";
 import { formatPrice } from "@/lib/format";
 import {
-  amountToFreeShippingCents,
   cartItemCount,
   cartSubtotalCents,
-} from "@/lib/cart";
+} from "@/lib/cart/totals";
 import type { CartLine } from "@/types/cart";
 
 /**
@@ -24,14 +24,29 @@ import type { CartLine } from "@/types/cart";
  * mis hors circuit par `inert` — sinon ses liens resteraient atteignables à
  * la tabulation alors qu'ils sont invisibles.
  */
-export function CartDrawer({ lines }: { lines: CartLine[] }) {
+type LineChange =
+  | { kind: "retrait"; id: string }
+  | { kind: "quantite"; id: string; quantity: number };
+
+export function CartDrawer({ lines: serverLines }: { lines: CartLine[] }) {
   const { isOpen, close } = useCartDrawer();
+  // Affichage optimiste : la ligne disparaît (ou change de quantité) dès le
+  // clic, sans attendre que le serveur ait réaffiché la page. Si l'action
+  // échoue, React revient de lui-même à la liste du serveur.
+  const [lines, applyChange] = useOptimistic(
+    serverLines,
+    (current: CartLine[], change: LineChange) =>
+      change.kind === "retrait"
+        ? current.filter((line) => line.id !== change.id)
+        : current.map((line) =>
+            line.id === change.id ? { ...line, quantity: change.quantity } : line,
+          ),
+  );
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
 
   const count = cartItemCount(lines);
   const subtotalCents = cartSubtotalCents(lines);
-  const missingCents = amountToFreeShippingCents(lines);
 
   // Échap ferme le tiroir : c'est le geste attendu de tout panneau modal, et
   // l'écouteur est posé sur le document car le focus peut être n'importe où.
@@ -138,11 +153,23 @@ export function CartDrawer({ lines }: { lines: CartLine[] }) {
                       </span>
                     </Link>
                     <span className="text-caption-muted">
-                      Taille {line.size} · Quantité {line.quantity}
+                      Taille {line.size}
                     </span>
                     <span className="text-strong">
                       {formatPrice(line.product.priceCents * line.quantity)}
                     </span>
+                    {/* Les mêmes contrôles que la page panier : retirer un
+                        article ne doit pas obliger à quitter la page. */}
+                    <CartLineControls
+                      variantId={line.id}
+                      quantity={line.quantity}
+                      stock={line.stock}
+                      label={`${line.product.brand} — ${line.product.name}, taille ${line.size}`}
+                      onRemove={() => applyChange({ kind: "retrait", id: line.id })}
+                      onQuantity={(quantity) =>
+                        applyChange({ kind: "quantite", id: line.id, quantity })
+                      }
+                    />
                   </div>
                 </li>
               ))}
@@ -156,13 +183,9 @@ export function CartDrawer({ lines }: { lines: CartLine[] }) {
             <span className="text-strong">{formatPrice(subtotalCents)}</span>
           </p>
 
-          {/* Le rappel du seuil n'a de sens que s'il reste quelque chose à
-              atteindre — et seulement si le panier n'est pas vide. */}
           {lines.length > 0 && (
             <p className="text-caption-muted m-0">
-              {missingCents > 0
-                ? `Plus que ${formatPrice(missingCents)} pour la livraison offerte.`
-                : "Livraison offerte."}
+              Livraison calculée à l&apos;étape suivante, selon le transporteur.
             </p>
           )}
 

@@ -1,53 +1,68 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { AnnouncementBar } from "@/components/layout/announcement-bar";
+import { SiteAnnouncement } from "@/components/layout/site-announcement";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { EmptyCollection } from "@/components/sections/empty-collection";
-import { CATEGORIES, getCategory } from "@/lib/categories";
-import { DEMO_CART_LINES } from "@/lib/placeholder-data";
+import { ProductGrid } from "@/components/sections/product-grid";
+import {
+  getCategoryBySlug,
+  listCategories,
+  listProductsForCategory,
+} from "@/lib/queries/catalog";
 
 type PageProps = { params: Promise<{ categorie: string }> };
 
-/** Une page statique par rayon du hero : /bebe, /fille, /garcon. */
-export function generateStaticParams() {
-  return CATEGORIES.map((category) => ({ categorie: category.slug }));
+/**
+ * Une page par rayon connu au moment de la construction. Un rayon créé
+ * ensuite dans l'admin se rend à la première visite : les paramètres
+ * dynamiques restent permis.
+ */
+export async function generateStaticParams() {
+  const categories = await listCategories();
+  return categories.map((category) => ({ categorie: category.slug }));
 }
 
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const { categorie } = await params;
-  const category = getCategory(categorie);
+  const category = await getCategoryBySlug(categorie);
   if (!category) return {};
 
   return {
-    title: `${category.headline ?? category.title} | Droopys`,
-    description: category.intro,
+    title: `${category.headline ?? category.title} | Droopy's`,
+    description: category.intro ?? undefined,
   };
 }
 
 export default async function CategoryPage({ params }: PageProps) {
   const { categorie } = await params;
-  const category = getCategory(categorie);
+  const category = await getCategoryBySlug(categorie);
   if (!category) notFound();
+
+  const products = await listProductsForCategory(category.slug);
 
   return (
     <>
-      <AnnouncementBar>
-        Livraison offerte dès 150 € d&apos;achat · Retours sous 30 jours
-      </AnnouncementBar>
+      <SiteAnnouncement />
       <SiteHeader
-        cartLines={DEMO_CART_LINES}
-        backdrop={category.image}
-        backdropClassName={category.backdropClassName}
+        backdrop={category.imageUrl ?? undefined}
+        backdropClassName={category.backdropClassName ?? undefined}
         title={category.headline ?? category.title}
       />
 
       <main className="section-main min-h-[50vh]">
-        {/* Aucun article rattaché au rayon pour l'instant : la grille prendra
-            la place de cet état vide quand le catalogue sera branché. */}
-        <EmptyCollection />
+        {/* Un rayon sans article annonce son état plutôt que d'afficher une
+            grille vide, qu'on prendrait pour un chargement qui n'aboutit pas. */}
+        {products.length > 0 ? (
+          <ProductGrid
+            title={category.headline ?? category.title}
+            products={products}
+          />
+        ) : (
+          <EmptyCollection />
+        )}
       </main>
 
       <SiteFooter />

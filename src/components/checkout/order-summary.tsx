@@ -1,0 +1,75 @@
+import { FrameImage } from "@/components/ui/frame-image";
+import { formatPrice } from "@/lib/format";
+import type { CartLine } from "@/types/cart";
+
+/**
+ * Récapitulatif du panier, à droite du tunnel. Les montants affichés sont
+ * indicatifs : le serveur les recalcule à l'ouverture du paiement, et c'est
+ * le bouton « Payer » qui porte le total qui fait foi.
+ */
+export function OrderSummary({
+  lines,
+  shippingCents,
+}: {
+  lines: CartLine[];
+  /** `null` tant que le mode de livraison n'est pas choisi. */
+  shippingCents: number | null;
+}) {
+  const itemsCents = lines.reduce(
+    (total, line) => total + line.product.priceCents * line.quantity,
+    0,
+  );
+
+  return (
+    <aside className="checkout-summary" aria-labelledby="recapitulatif">
+      <h2 id="recapitulatif" className="account-subtitle">
+        Récapitulatif
+      </h2>
+
+      <ul className="checkout-summary__lines">
+        {lines.map((line) => (
+          <li key={line.id} className="checkout-summary__line">
+            <FrameImage
+              src={line.product.imageUrl}
+              alt={`${line.product.brand} — ${line.product.name}`}
+              ratio="2 / 3"
+              sizes="56px"
+            />
+            <span>
+              <span className="text-caption-muted block">{line.product.brand}</span>
+              {line.product.name}
+              <span className="account-card__muted block">
+                Taille {line.size} · ×{line.quantity}
+              </span>
+            </span>
+            <span className="text-strong">
+              {formatPrice(line.product.priceCents * line.quantity)}
+            </span>
+          </li>
+        ))}
+      </ul>
+
+      <div className="checkout-summary__totals">
+        <div className="checkout-summary__row">
+          <span>Sous-total</span>
+          <span>{formatPrice(itemsCents)}</span>
+        </div>
+        <div className="checkout-summary__row">
+          <span>Livraison</span>
+          <span>
+            {shippingCents === null
+              ? "Étape suivante"
+              : shippingCents === 0
+                ? "Offerte"
+                : formatPrice(shippingCents)}
+          </span>
+        </div>
+        <div className="checkout-summary__row checkout-summary__total">
+          <span>Total</span>
+          <span>{formatPrice(itemsCents + (shippingCents ?? 0))}</span>
+        </div>
+        <span className="account-card__muted">TVA incluse</span>
+      </div>
+    </aside>
+  );
+}

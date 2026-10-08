@@ -1,17 +1,19 @@
 "use client";
 
-import { useState } from "react";
-import { NEWSLETTER } from "@/lib/newsletter";
+import { useActionState, useState } from "react";
+import {
+  saveSettings,
+  type SettingsState,
+} from "@/app/admin/(back-office)/reglages/actions";
+import type { ShopSettings } from "@/lib/settings";
 
 /**
  * Réglages de la boutique.
  *
- * Ce sont les valeurs répétées partout sur le site : le seuil de livraison
- * offerte apparaît dans la barre d'annonce, sur la fiche produit, dans le
- * panier et dans le pied de page. Les saisir une fois évite qu'ils finissent
- * par se contredire d'une page à l'autre.
- *
- * Rien n'est enregistré tant que Supabase n'est pas branché.
+ * Ce sont les valeurs répétées partout : le seuil de livraison offerte
+ * apparaît dans la barre d'annonce, sur la fiche produit, dans le panier et
+ * dans le pied de page. Les saisir une fois évite qu'ils finissent par se
+ * contredire d'une page à l'autre.
  */
 const PAYMENTS = [
   "Carte bancaire",
@@ -22,15 +24,36 @@ const PAYMENTS = [
   "Virement",
 ];
 
-export function SettingsForm() {
-  const [payments, setPayments] = useState<string[]>([
-    "Carte bancaire",
-    "PayPal",
-    "Klarna — paiement en 3 fois",
-  ]);
+/** Centimes → « 150 » ou « 6,90 » : on n'écrit pas « 150,00 » dans un champ. */
+function euros(cents: number | null): string {
+  if (cents === null) return "";
+  return cents % 100 === 0
+    ? String(cents / 100)
+    : (cents / 100).toFixed(2).replace(".", ",");
+}
+
+export function SettingsForm({ settings }: { settings: ShopSettings }) {
+  const [state, action, pending] = useActionState<SettingsState, FormData>(
+    saveSettings,
+    {},
+  );
+  // Les moyens de paiement sont des cases à cocher déguisées en pastilles :
+  // l'état est nécessaire pour l'apparence, la valeur part en champs cachés.
+  const [methods, setMethods] = useState<string[]>(settings.paiement.methods);
 
   return (
-    <form className="admin-form admin-form--wide">
+    <form className="admin-form admin-form--wide" action={action}>
+      {state.error && (
+        <p role="alert" className="admin-form__error">
+          {state.error}
+        </p>
+      )}
+      {state.saved && (
+        <p role="status" className="admin-form__saved">
+          Réglages enregistrés. Le site les reprend immédiatement.
+        </p>
+      )}
+
       <fieldset className="admin-fieldset">
         <legend className="admin-fieldset__legend">Boutique</legend>
         <div className="admin-grid">
@@ -40,8 +63,9 @@ export function SettingsForm() {
             </label>
             <input
               id="nom-boutique"
+              name="shopName"
               className="admin-field__input"
-              defaultValue="Droopys"
+              defaultValue={settings.boutique.name}
             />
           </div>
           <div className="admin-field">
@@ -50,9 +74,11 @@ export function SettingsForm() {
             </label>
             <input
               id="email"
+              name="shopEmail"
               type="email"
               className="admin-field__input"
               placeholder="contact@droopys.fr"
+              defaultValue={settings.boutique.email}
             />
           </div>
           <div className="admin-field">
@@ -61,8 +87,10 @@ export function SettingsForm() {
             </label>
             <input
               id="telephone"
+              name="shopPhone"
               className="admin-field__input"
               placeholder="01 23 45 67 89"
+              defaultValue={settings.boutique.phone}
             />
           </div>
           <div className="admin-field admin-field--full">
@@ -71,9 +99,11 @@ export function SettingsForm() {
             </label>
             <textarea
               id="adresse"
+              name="shopAddress"
               rows={3}
               className="admin-field__input"
               placeholder="12 rue de la Paix, 75002 Paris"
+              defaultValue={settings.boutique.address}
             />
           </div>
         </div>
@@ -88,32 +118,92 @@ export function SettingsForm() {
             </label>
             <input
               id="seuil"
+              name="freeFrom"
+              inputMode="decimal"
               className="admin-field__input"
-              defaultValue="150"
+              defaultValue={euros(settings.livraison.freeFromCents)}
             />
             <p className="admin-field__hint">
-              Affiché dans la barre d&apos;annonce, sur les fiches et dans le
-              panier.
+              Vide : pas de livraison offerte, la cliente paie le tarif réel
+              du transporteur. Rempli : le port devient gratuit au-delà.
             </p>
           </div>
           <div className="admin-field">
-            <label className="admin-field__label" htmlFor="frais">
-              Frais de livraison (€)
+            <label className="admin-field__label" htmlFor="poids-clothes">
+              Vêtement (g)
             </label>
             <input
-              id="frais"
+              id="poids-clothes"
+              name="weight-clothes"
+              inputMode="numeric"
               className="admin-field__input"
-              placeholder="6,90"
+              defaultValue={settings.livraison.weights.clothes}
             />
           </div>
+          <div className="admin-field">
+            <label className="admin-field__label" htmlFor="poids-baby">
+              Pièce bébé (g)
+            </label>
+            <input
+              id="poids-baby"
+              name="weight-baby"
+              inputMode="numeric"
+              className="admin-field__input"
+              defaultValue={settings.livraison.weights.baby}
+            />
+          </div>
+          <div className="admin-field">
+            <label className="admin-field__label" htmlFor="poids-shoes">
+              Chaussures (g)
+            </label>
+            <input
+              id="poids-shoes"
+              name="weight-shoes"
+              inputMode="numeric"
+              className="admin-field__input"
+              defaultValue={settings.livraison.weights.shoes}
+            />
+          </div>
+          <div className="admin-field">
+            <label className="admin-field__label" htmlFor="poids-coat">
+              Manteau, doudoune (g)
+            </label>
+            <input
+              id="poids-coat"
+              name="weight-coat"
+              inputMode="numeric"
+              className="admin-field__input"
+              defaultValue={settings.livraison.weights.coat}
+            />
+          </div>
+          <div className="admin-field">
+            <label className="admin-field__label" htmlFor="poids-accessory">
+              Accessoire (g)
+            </label>
+            <input
+              id="poids-accessory"
+              name="weight-accessory"
+              inputMode="numeric"
+              className="admin-field__input"
+              defaultValue={settings.livraison.weights.accessory}
+            />
+          </div>
+          <p className="admin-field__hint">
+            Poids estimés d&apos;un article selon son rayon : ils servent à
+            calculer le port, qui est le tarif réel du transporteur (Sendcloud,
+            TVA comprise) pour le poids du colis. Le transporteur facture le
+            poids réel à l&apos;expédition.
+          </p>
           <div className="admin-field">
             <label className="admin-field__label" htmlFor="delai">
               Délai annoncé
             </label>
             <input
               id="delai"
+              name="deliveryDelay"
               className="admin-field__input"
               placeholder="48 h en France métropolitaine"
+              defaultValue={settings.livraison.delay}
             />
           </div>
         </div>
@@ -127,7 +217,7 @@ export function SettingsForm() {
         </p>
         <ul className="admin-picker__grid">
           {PAYMENTS.map((method) => {
-            const chosen = payments.includes(method);
+            const chosen = methods.includes(method);
             return (
               <li key={method}>
                 <button
@@ -135,10 +225,10 @@ export function SettingsForm() {
                   className="admin-chip admin-care__line"
                   aria-pressed={chosen}
                   onClick={() =>
-                    setPayments(
+                    setMethods(
                       chosen
-                        ? payments.filter((item) => item !== method)
-                        : [...payments, method],
+                        ? methods.filter((item) => item !== method)
+                        : [...methods, method],
                     )
                   }
                 >
@@ -148,6 +238,9 @@ export function SettingsForm() {
             );
           })}
         </ul>
+        {methods.map((method) => (
+          <input key={method} type="hidden" name="methods" value={method} />
+        ))}
       </fieldset>
 
       <fieldset className="admin-fieldset">
@@ -159,8 +252,10 @@ export function SettingsForm() {
             </label>
             <input
               id="retours-delai"
+              name="returnDays"
+              inputMode="numeric"
               className="admin-field__input"
-              defaultValue="30"
+              defaultValue={settings.retours.days}
             />
           </div>
           <div className="admin-field admin-field--full">
@@ -169,9 +264,10 @@ export function SettingsForm() {
             </label>
             <textarea
               id="retours-texte"
+              name="returnTerms"
               rows={3}
               className="admin-field__input"
-              placeholder="Retour offert sous 30 jours, article non porté et étiquette d'origine attachée."
+              defaultValue={settings.retours.terms}
             />
           </div>
         </div>
@@ -185,8 +281,9 @@ export function SettingsForm() {
           </label>
           <input
             id="annonce"
+            name="announcement"
             className="admin-field__input"
-            defaultValue="Livraison offerte dès 150 € d'achat · Retours sous 30 jours"
+            defaultValue={settings.annonce.message}
           />
           <p className="admin-field__hint">
             Bandeau noir en haut de toutes les pages. Vide, il ne s&apos;affiche
@@ -204,8 +301,9 @@ export function SettingsForm() {
             </label>
             <input
               id="news-titre"
+              name="newsletterTitle"
               className="admin-field__input"
-              defaultValue={NEWSLETTER.title}
+              defaultValue={settings.newsletter.title}
             />
           </div>
 
@@ -215,8 +313,9 @@ export function SettingsForm() {
             </label>
             <input
               id="news-bouton"
+              name="newsletterButton"
               className="admin-field__input"
-              defaultValue={NEWSLETTER.buttonLabel}
+              defaultValue={settings.newsletter.buttonLabel}
             />
           </div>
 
@@ -226,9 +325,10 @@ export function SettingsForm() {
             </label>
             <textarea
               id="news-texte"
+              name="newsletterText"
               rows={2}
               className="admin-field__input"
-              defaultValue={NEWSLETTER.text}
+              defaultValue={settings.newsletter.text}
             />
             <p className="admin-field__hint">
               Annoncez la fréquence : c&apos;est ce que le visiteur veut savoir
@@ -242,8 +342,9 @@ export function SettingsForm() {
             </label>
             <input
               id="news-placeholder"
+              name="newsletterPlaceholder"
               className="admin-field__input"
-              defaultValue={NEWSLETTER.placeholder}
+              defaultValue={settings.newsletter.placeholder}
             />
           </div>
 
@@ -253,13 +354,14 @@ export function SettingsForm() {
             </label>
             <input
               id="news-prestataire"
+              name="newsletterProvider"
               className="admin-field__input"
               placeholder="Brevo, Mailchimp, Resend…"
-              defaultValue={NEWSLETTER.provider ?? ""}
+              defaultValue={settings.newsletter.provider ?? ""}
             />
             <p className="admin-field__hint">
-              Vide, le bouton du site reste inactif et le bandeau annonce que
-              les inscriptions ne sont pas ouvertes.
+              Vide, les adresses sont simplement enregistrées en base et
+              aucune campagne n&apos;est envoyée.
             </p>
           </div>
         </div>
@@ -268,18 +370,24 @@ export function SettingsForm() {
       <fieldset className="admin-fieldset">
         <legend className="admin-fieldset__legend">Réseaux sociaux</legend>
         <div className="admin-grid">
-          {["Instagram", "Facebook", "TikTok", "Pinterest"].map((reseau) => (
-            <div key={reseau} className="admin-field">
-              <label
-                className="admin-field__label"
-                htmlFor={reseau.toLowerCase()}
-              >
-                {reseau} <span className="admin-badge">facultatif</span>
+          {(
+            [
+              ["instagram", "Instagram"],
+              ["facebook", "Facebook"],
+              ["tiktok", "TikTok"],
+              ["pinterest", "Pinterest"],
+            ] as const
+          ).map(([key, label]) => (
+            <div key={key} className="admin-field">
+              <label className="admin-field__label" htmlFor={key}>
+                {label} <span className="admin-badge">facultatif</span>
               </label>
               <input
-                id={reseau.toLowerCase()}
+                id={key}
+                name={key}
                 className="admin-field__input"
-                placeholder={`https://${reseau.toLowerCase()}.com/droopys`}
+                placeholder={`https://${key}.com/droopys`}
+                defaultValue={settings.reseaux[key]}
               />
             </div>
           ))}
@@ -287,12 +395,9 @@ export function SettingsForm() {
       </fieldset>
 
       <div className="admin-form__actions">
-        <button type="submit" className="admin-button" disabled>
-          Enregistrer les réglages
+        <button type="submit" className="admin-button" disabled={pending}>
+          {pending ? "Enregistrement…" : "Enregistrer les réglages"}
         </button>
-        <p className="admin-form__note">
-          L&apos;enregistrement sera actif une fois Supabase connecté.
-        </p>
       </div>
     </form>
   );

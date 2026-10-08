@@ -1,5 +1,5 @@
 import { Breadcrumb } from "@/components/ui/breadcrumb";
-import { AnnouncementBar } from "@/components/layout/announcement-bar";
+import { SiteAnnouncement } from "@/components/layout/site-announcement";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import {
@@ -8,7 +8,6 @@ import {
 } from "@/components/sections/content-blocks";
 import { CONTENT_GROUPS } from "@/lib/content-pages";
 import { formatDate } from "@/lib/format";
-import { DEMO_CART_LINES } from "@/lib/placeholder-data";
 import type { ContentPage } from "@/types/content-page";
 
 /**
@@ -35,13 +34,10 @@ export function ContentPageView({
 
   return (
     <>
-      <AnnouncementBar>
-        Livraison offerte dès 150 € d&apos;achat · Retours sous 30 jours
-      </AnnouncementBar>
+      <SiteAnnouncement />
       {/* Avec une photo, l'en-tête porte lui-même le titre en blanc ; sans
           photo, le titre vit dans la bande grise juste en dessous. */}
       <SiteHeader
-        cartLines={DEMO_CART_LINES}
         backdrop={page.image}
         backdropClassName={page.imageClassName}
         title={page.image ? page.title : undefined}

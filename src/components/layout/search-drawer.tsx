@@ -5,20 +5,30 @@ import Link from "next/link";
 import { FrameImage } from "@/components/ui/frame-image";
 import { useSearchDrawer } from "@/components/layout/search-drawer-context";
 import { formatPrice } from "@/lib/format";
-import { searchProducts } from "@/lib/search";
 
 /** Entrées proposées tant que rien n'est saisi. */
 const SUGGESTIONS = ["Doudoune", "Manteau", "Pull", "Baskets", "Bonnet"];
 
-/** Au-delà, le tiroir devient une page de résultats : c'est le rôle de /recherche. */
-const MAX_RESULTS = 6;
+/** Délai d'inactivité avant d'interroger le serveur, en millisecondes. */
+const TYPING_PAUSE = 200;
+
+/** Une vignette de résultat : le strict nécessaire, tel que rend l'API. */
+type Suggestion = {
+  id: string;
+  slug: string;
+  brand: string;
+  name: string;
+  priceCents: number;
+  imageUrl?: string;
+};
 
 /**
  * Tiroir de recherche : même panneau que celui du panier, sorti du même bord,
  * ouvert par l'icône voisine. Chercher est un geste qu'on fait depuis
  * n'importe où — il ne doit pas coûter un changement de page.
  *
- * Les résultats se mettent à jour à la frappe, sur le catalogue déjà chargé.
+ * Les résultats se mettent à jour à la frappe, interrogés à /api/recherche
+ * après une courte pause de saisie.
  * Valider mène à `/recherche?q=…` : les résultats complets ont besoin d'une
  * adresse partageable, et le formulaire y va en `GET`, sans routeur.
  *
@@ -32,7 +42,43 @@ export function SearchDrawer() {
   const openerRef = useRef<HTMLElement | null>(null);
 
   const trimmed = query.trim();
-  const results = searchProducts(trimmed).slice(0, MAX_RESULTS);
+  // Les résultats portent la requête qui les a produits : c'est ce qui permet
+  // de n'afficher que ceux du mot en cours, sans avoir à les effacer — donc
+  // sans mise à jour d'état synchrone dans l'effet, qui relancerait un rendu.
+  const [answer, setAnswer] = useState<{ query: string; items: Suggestion[] }>({
+    query: "",
+    items: [],
+  });
+  const results = answer.query === trimmed ? answer.items : [];
+
+  // Le catalogue vit en base : chaque frappe demanderait une requête. On
+  // attend une pause de saisie, et on annule la requête précédente — sans
+  // quoi une réponse lente peut arriver après une plus récente et réafficher
+  // les résultats d'un mot déjà effacé.
+  useEffect(() => {
+    if (trimmed === "") return;
+
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      try {
+        const response = await fetch(
+          `/api/recherche?q=${encodeURIComponent(trimmed)}`,
+          { signal: controller.signal },
+        );
+        if (!response.ok) return;
+        const payload: { results: Suggestion[] } = await response.json();
+        setAnswer({ query: trimmed, items: payload.results });
+      } catch (error) {
+        // L'annulation est le fonctionnement normal, pas une panne.
+        if ((error as Error).name !== "AbortError") throw error;
+      }
+    }, TYPING_PAUSE);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [trimmed]);
 
   // Échap ferme le tiroir, où que soit le focus.
   useEffect(() => {

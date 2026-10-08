@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AnnouncementBar } from "@/components/layout/announcement-bar";
+import { SiteAnnouncement } from "@/components/layout/site-announcement";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { ProductAccordion } from "@/components/product/product-accordion";
@@ -9,38 +9,43 @@ import { ProductGallery } from "@/components/product/product-gallery";
 import { ShareButton } from "@/components/product/share-button";
 import { SizePicker } from "@/components/product/size-picker";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
-import { getCategory } from "@/lib/categories";
 import { formatPrice } from "@/lib/format";
-import { ALL_PRODUCTS, getProduct } from "@/lib/catalog";
-import { DEMO_CART_LINES } from "@/lib/placeholder-data";
+import {
+  getCategoryBySlug,
+  getProductBySlug,
+  listProductSlugs,
+} from "@/lib/queries/catalog";
+import { getShopSettings } from "@/lib/queries/settings";
 import type { Product } from "@/types/product";
 
 type PageProps = { params: Promise<{ slug: string }> };
 
-export function generateStaticParams() {
-  return ALL_PRODUCTS.map((product) => ({ slug: product.slug }));
+export async function generateStaticParams() {
+  return (await listProductSlugs()).map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
-  const product = getProduct((await params).slug);
+  const product = await getProductBySlug((await params).slug);
   if (!product) return {};
 
   return {
-    title: `${product.name} — ${product.brand} | Droopys`,
+    title: `${product.name} — ${product.brand} | Droopy's`,
     description: product.description?.[0],
   };
 }
 
 export default async function ProductPage({ params }: PageProps) {
-  const product = getProduct((await params).slug);
+  const product = await getProductBySlug((await params).slug);
   // Un slug absent du catalogue est une 404, pas un repli sur un autre
   // article : afficher la mauvaise fiche est pire que ne rien afficher.
   if (!product) notFound();
 
+  const { livraison, retours } = await getShopSettings();
+
   const category = product.categorySlug
-    ? getCategory(product.categorySlug)
+    ? await getCategoryBySlug(product.categorySlug)
     : undefined;
   const images = galleryImages(product);
   const onSale =
@@ -49,10 +54,8 @@ export default async function ProductPage({ params }: PageProps) {
 
   return (
     <>
-      <AnnouncementBar>
-        Livraison offerte dès 150 € d&apos;achat · Retours sous 30 jours
-      </AnnouncementBar>
-      <SiteHeader cartLines={DEMO_CART_LINES} />
+      <SiteAnnouncement />
+      <SiteHeader />
 
       <main className="section-main">
         <div className="container-page pt-9">
@@ -106,6 +109,7 @@ export default async function ProductPage({ params }: PageProps) {
             {product.sizes && (
               <SizePicker
                 sizes={product.sizes}
+                productId={product.id}
                 productName={product.name}
                 sizeAdvice={product.sizeAdvice}
               />
@@ -116,8 +120,14 @@ export default async function ProductPage({ params }: PageProps) {
             </Link>
 
             <ul className="product-reassure-grid">
-              <li className="product-reassure">Livraison offerte dès 150 €</li>
-              <li className="product-reassure">Retour offert sous 30 jours</li>
+              {livraison.freeFromCents !== null && (
+                <li className="product-reassure">
+                  Livraison offerte dès {formatPrice(livraison.freeFromCents)}
+                </li>
+              )}
+              <li className="product-reassure">
+                Retour offert sous {retours.days} jours
+              </li>
               <li className="product-reassure">Paiement en 3 fois</li>
             </ul>
 
@@ -177,14 +187,13 @@ export default async function ProductPage({ params }: PageProps) {
                   toujours par se contredire. */}
               <ProductAccordion title="Livraison et retour">
                 <p className="m-0">
-                  Livraison en point relais ou à domicile sous 2 à 4 jours
-                  ouvrés, offerte dès 150 € d&apos;achat. Retrait en boutique
-                  gratuit, souvent disponible dans la journée.
+                  Livraison en point relais ou à domicile — {livraison.delay}
+                  {livraison.freeFromCents !== null &&
+                    `, offerte dès ${formatPrice(livraison.freeFromCents)} d'achat`}
+                  . Retrait en boutique gratuit, souvent disponible dans la
+                  journée.
                 </p>
-                <p className="m-0">
-                  Retour sans frais sous 30 jours depuis un point relais ou en
-                  boutique, article non porté et étiquettes attachées.
-                </p>
+                <p className="m-0">{retours.terms}</p>
                 <p className="m-0">
                   <Link href="/aide/livraison">Délais et frais détaillés</Link>
                   {" · "}
@@ -212,7 +221,13 @@ export default async function ProductPage({ params }: PageProps) {
                     {category.headline ?? category.title}
                   </Link>
                 )}
-                {product.subcategory && <span>{product.subcategory}</span>}
+                {/* Le sous-rayon a désormais sa page : on y mène, au lieu
+                    d'afficher son nom au milieu de liens cliquables. */}
+                {product.subcategory && category && (
+                  <Link href={`/${category.slug}/${product.subcategory.slug}`}>
+                    {product.subcategory.title}
+                  </Link>
+                )}
                 <Link href="/marques">{product.brand}</Link>
               </p>
             )}

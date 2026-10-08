@@ -11,4 +11,10 @@ export type CartLine = {
   /** Taille choisie, telle qu'affichée (« 4 ans », « 38 »…). */
   size: string;
   quantity: number;
+  /**
+   * Stock restant de cette taille. Il accompagne la ligne plutôt que d'être
+   * rechargé au moment d'afficher le sélecteur de quantité : sans lui, le
+   * panier proposerait d'en commander dix quand il en reste deux.
+   */
+  stock: number;
 };

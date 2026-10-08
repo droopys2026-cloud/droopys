@@ -45,7 +45,7 @@ export function contentPage(slug: string): ContentPage {
 /** Métadonnées Next dérivées d'une page — titre et description en un appel. */
 export function contentMetadata(slug: string) {
   const page = contentPage(slug);
-  return { title: `${page.title} | Droopys`, description: page.lead };
+  return { title: `${page.title} | Droopy's`, description: page.lead };
 }
 
 /** Pages d'un groupe, dans l'ordre de déclaration. Vue complète : c'est celle

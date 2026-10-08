@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { NavColumn } from "@/lib/navigation";
+import type { NavColumn } from "@/types/navigation";
 
 /**
  * Sous-rayons d'une page de rayon, repris tels quels du menu principal :

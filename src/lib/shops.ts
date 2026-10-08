@@ -19,12 +19,14 @@ export type Shop = {
   phone: string | null;
   /** Services disponibles sur place, repris de la page « Retrait en boutique ». */
   services: string[];
+  /** Photos de la boutique, servies depuis `public/`. */
+  photos: { src: string; alt: string }[];
 };
 
 export const SHOPS: Shop[] = [
   {
     id: "marseille-grand-littoral",
-    name: "Droopys Marseille — Grand Littoral",
+    name: "Droopy's Marseille — Grand Littoral",
     address: [
       "Centre commercial Grand Littoral",
       "139 avenue de la Viste",
@@ -39,6 +41,16 @@ export const SHOPS: Shop[] = [
       "Retour et échange d'un achat en ligne",
       "Conseil taille et essayage",
       "Carte cadeau",
+    ],
+    photos: [
+      {
+        src: "/boutiques/grand-littoral-vitrine.jpg",
+        alt: "Vitrine de la boutique Droopy's dans la galerie de Grand Littoral",
+      },
+      {
+        src: "/boutiques/grand-littoral-entree.jpeg",
+        alt: "Un enfant pose devant l'entrée de la boutique Droopy's",
+      },
     ],
   },
 ];

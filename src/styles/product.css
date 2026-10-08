@@ -195,6 +195,12 @@
     color: var(--color-ink-inverse);
   }
 
+  /* Cœur des cartes : posé sur la photo, il ne peut pas s'inverser en
+     pastille noire comme celui de la fiche ; il se remplit. */
+  .product-card__wishlist[aria-pressed="true"] svg {
+    fill: currentColor;
+  }
+
   .product-wishlist:focus-visible {
     outline: 3px solid var(--color-focus);
     outline-offset: 2px;
@@ -313,5 +319,45 @@
   /* Trois pavés côte à côte deviennent illisibles sous 640 px : on empile. */
   .product-reassure-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@layer components {
+  /* Rareté et rupture sur la carte produit. Même rouge que
+     `.size-picker__warning` de la fiche : c'est la même information, elle ne
+     doit pas changer d'aspect selon l'endroit où on la lit. */
+  .product-card__scarce {
+    font-family: var(--font-medium);
+    font-size: var(--text-md);
+    color: rgb(180, 40, 40);
+  }
+}
+
+@layer components {
+  /* ---- lignes du panier -------------------------------------------------
+     Quantité et retrait sur une même ligne, en petits caractères : ce sont
+     des corrections, pas l'action principale de la page. */
+
+  .cart-line__controls {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-7);
+    flex-wrap: wrap;
+    padding-top: var(--spacing-2);
+  }
+
+  .cart-line__quantity {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-4);
+  }
+
+  .cart-line__select {
+    padding: 2px 6px;
+    border: 1px solid var(--color-border-muted);
+    border-radius: 2px;
+    background-color: transparent;
+    font: inherit;
+    font-size: var(--text-md);
   }
 }

@@ -1,7 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState, useState } from "react";
 import Link from "next/link";
+import {
+  addToCart,
+  type CartActionState,
+} from "@/app/actions/cart";
+import { useCartDrawer } from "@/components/layout/cart-drawer-context";
 import { WishlistButton } from "@/components/product/wishlist-button";
 
 /**
@@ -17,19 +22,37 @@ import { WishlistButton } from "@/components/product/wishlist-button";
  */
 export function SizePicker({
   sizes,
+  productId,
   productName,
   sizeAdvice,
 }: {
-  sizes: { size: string; quantity: number }[];
+  sizes: { variantId: string; size: string; quantity: number }[];
+  productId: string;
   productName: string;
   /** Conseil propre à la pièce, saisi à l'admin. */
   sizeAdvice?: string;
 }) {
   const [chosen, setChosen] = useState<string | null>(null);
-  const selected = sizes.find((entry) => entry.size === chosen);
+  const selected = sizes.find((entry) => entry.variantId === chosen);
+  const { open: openCart } = useCartDrawer();
+  // Après un ajout réussi, le tiroir du panier s'ouvre : la cliente voit ce
+  // qu'elle vient d'ajouter, le total, et le chemin vers la commande, sans
+  // quitter la fiche. « Acheter maintenant » n'en a pas besoin — l'action
+  // redirige vers le tunnel avant de revenir ici.
+  const [state, action, pending] = useActionState<CartActionState, FormData>(
+    async (previous, formData) => {
+      const result = await addToCart(previous, formData);
+      if (result.added) openCart();
+      return result;
+    },
+    {},
+  );
 
   return (
-    <div className="size-picker">
+    <form action={action} className="size-picker">
+      {/* La taille choisie voyage par son identifiant de variante : c'est lui
+          qui porte à la fois le produit et la taille, donc le stock. */}
+      <input type="hidden" name="variantId" value={chosen ?? ""} />
       <div className="size-picker__head">
         <span className="text-caption-muted">Taille</span>
         <Link href="/aide/tailles" className="link-underline-sm">
@@ -38,16 +61,16 @@ export function SizePicker({
       </div>
 
       <ul className="size-picker__list">
-        {sizes.map(({ size, quantity }) => {
+        {sizes.map(({ variantId, size, quantity }) => {
           const soldOut = quantity <= 0;
           return (
-            <li key={size}>
+            <li key={variantId}>
               <button
                 type="button"
                 className="size-chip"
-                aria-pressed={chosen === size}
+                aria-pressed={chosen === variantId}
                 disabled={soldOut}
-                onClick={() => setChosen(size)}
+                onClick={() => setChosen(variantId)}
               >
                 {size}
                 {soldOut && <span className="size-chip__out">épuisé</span>}
@@ -69,12 +92,46 @@ export function SizePicker({
         </p>
       )}
 
+      {state.error && (
+        <p role="alert" className="size-picker__warning">
+          {state.error}
+        </p>
+      )}
+
+      {/* La confirmation reste aussi sur la fiche : une fois le tiroir refermé,
+          elle dit encore que l'ajout a eu lieu. */}
+      {state.added && !state.error && (
+        <p role="status" className="size-picker__added">
+          Ajouté au panier. <Link href="/panier">Voir mon panier</Link>
+        </p>
+      )}
+
       <div className="product-buy-row">
-        <button type="button" className="link-cta-block" disabled={!chosen}>
-          {chosen ? "Ajouter au panier" : "Choisissez une taille"}
+        <button
+          type="submit"
+          className="link-cta-block"
+          disabled={!chosen || pending}
+        >
+          {!chosen
+            ? "Choisissez une taille"
+            : pending
+              ? "Ajout…"
+              : "Ajouter au panier"}
         </button>
-        <WishlistButton productName={productName} />
+        <WishlistButton productId={productId} productName={productName} />
       </div>
-    </div>
+
+      {/* Deuxième bouton du même formulaire : il envoie la même taille, avec
+          l'intention de passer directement au paiement. */}
+      <button
+        type="submit"
+        name="intent"
+        value="acheter"
+        className="account-button-outline"
+        disabled={!chosen || pending}
+      >
+        Acheter maintenant
+      </button>
+    </form>
   );
 }

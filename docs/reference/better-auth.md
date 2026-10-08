@@ -1,0 +1,229 @@
+# Better Auth Documentation
+
+> The most comprehensive authentication framework for TypeScript
+
+This index covers the Better Auth 1.7.x documentation.
+
+## Documentation
+
+- [Introduction](https://better-auth.com/docs/introduction.md): Introduction to Better Auth.
+- [Comparison](https://better-auth.com/docs/comparison.md): Comparison of Better Auth versus other auth libraries and services.
+- [Installation](https://better-auth.com/docs/installation.md): Learn how to configure Better Auth in your project.
+- [Basic Usage](https://better-auth.com/docs/basic-usage.md): Getting started with Better Auth
+- Concepts
+  - [API](https://better-auth.com/docs/concepts/api.md): Learn how to call Better Auth API endpoints on the server, pass body, headers, and query parameters, retrieve response headers, and handle errors.
+  - [CLI](https://better-auth.com/docs/concepts/cli.md): Learn about the Better Auth CLI commands for generating and migrating database schemas, creating initial admins, initializing projects, generating secret keys, and gathering diagnostic info.
+  - [Client](https://better-auth.com/docs/concepts/client.md): Learn how to set up the Better Auth client for React, Vue, Svelte, and other frameworks, use hooks, configure fetch options, handle errors, and extend with client plugins.
+  - [Cookies](https://better-auth.com/docs/concepts/cookies.md): Learn how Better Auth uses cookies, including cookie prefixes, custom cookie attributes, cross-subdomain sharing, secure cookies, and handling Safari ITP with proxies.
+  - [Database](https://better-auth.com/docs/concepts/database.md): Learn about database adapters, migrations, secondary storage with Redis, core schema (user, session, account, verification), custom tables, extending schemas, ID generation, database hooks, and plugin schemas.
+  - [Email](https://better-auth.com/docs/concepts/email.md): Learn how to set up email verification, require verified emails for sign-in, auto sign-in after verification, handle post-verification callbacks, and implement password reset emails.
+  - [Hooks](https://better-auth.com/docs/concepts/hooks.md): Learn how to use before and after hooks to customize endpoint behavior, modify requests and responses, handle cookies, throw errors, access auth context, and run background tasks.
+  - [Plugins](https://better-auth.com/docs/concepts/plugins.md): Learn how to use and create Better Auth plugins, including defining endpoints, schemas, hooks, middleware, rate limits, trusted origins, and building client plugins with custom actions and atoms.
+  - [OAuth](https://better-auth.com/docs/concepts/oauth.md): Learn how to configure social OAuth providers, sign in and link accounts, request scopes, pass additional data, refresh access tokens, map profiles, and customize provider options.
+  - [Rate Limit](https://better-auth.com/docs/concepts/rate-limit.md): Learn how to configure rate limiting in Better Auth, including IP address detection, IPv6 support, custom rate limit windows, storage backends, error handling, and per-endpoint rules.
+  - [Session Management](https://better-auth.com/docs/concepts/session-management.md): Learn about session management in Better Auth, including session expiration, freshness, cookie caching strategies, secondary storage, stateless sessions, and customizing session responses.
+  - [TypeScript](https://better-auth.com/docs/concepts/typescript.md): Learn about TypeScript configuration for Better Auth, including strict mode, inferring types for sessions and users, defining additional fields, and inferring additional fields on the client.
+  - [User & Accounts](https://better-auth.com/docs/concepts/users-accounts.md): Learn how to manage users and accounts, including updating user info, changing emails and passwords, deleting users with verification, token encryption, and account linking and unlinking.
+- Authentication
+  - [Email & Password](https://better-auth.com/docs/authentication/email-password.md): Implementing email and password authentication with Better Auth.
+
+  - **Social Sign-On**
+  - [Apple](https://better-auth.com/docs/authentication/apple.md): Apple provider setup and usage.
+  - [Atlassian](https://better-auth.com/docs/authentication/atlassian.md): Atlassian provider setup and usage.
+  - [Cognito](https://better-auth.com/docs/authentication/cognito.md): Amazon Cognito provider setup and usage.
+  - [Discord](https://better-auth.com/docs/authentication/discord.md): Discord provider setup and usage.
+  - [Dropbox](https://better-auth.com/docs/authentication/dropbox.md): Dropbox provider setup and usage.
+  - [Facebook](https://better-auth.com/docs/authentication/facebook.md): Facebook provider setup and usage.
+  - [Figma](https://better-auth.com/docs/authentication/figma.md): Figma provider setup and usage.
+  - [GitHub](https://better-auth.com/docs/authentication/github.md): GitHub provider setup and usage.
+  - [GitLab](https://better-auth.com/docs/authentication/gitlab.md): GitLab provider setup and usage.
+  - [Railway](https://better-auth.com/docs/authentication/railway.md): Railway provider setup and usage.
+  - [Google](https://better-auth.com/docs/authentication/google.md): Google provider setup and usage.
+  - [Hugging Face](https://better-auth.com/docs/authentication/huggingface.md): Hugging Face provider setup and usage.
+  - [Kakao](https://better-auth.com/docs/authentication/kakao.md): Kakao provider setup and usage.
+  - [Kick](https://better-auth.com/docs/authentication/kick.md): Kick provider setup and usage.
+  - [LINE](https://better-auth.com/docs/authentication/line.md): LINE provider setup and usage.
+  - [Linear](https://better-auth.com/docs/authentication/linear.md): Linear provider setup and usage.
+  - [LinkedIn](https://better-auth.com/docs/authentication/linkedin.md): LinkedIn Provider
+  - [Microsoft](https://better-auth.com/docs/authentication/microsoft.md): Microsoft provider setup and usage.
+  - [Naver](https://better-auth.com/docs/authentication/naver.md): Naver provider setup and usage.
+  - [Notion](https://better-auth.com/docs/authentication/notion.md): Notion provider setup and usage.
+  - [Paybin](https://better-auth.com/docs/authentication/paybin.md): Paybin provider setup and usage.
+  - [PayPal](https://better-auth.com/docs/authentication/paypal.md): Paypal provider setup and usage.
+  - [Polar](https://better-auth.com/docs/authentication/polar.md): Polar provider setup and usage.
+  - [Reddit](https://better-auth.com/docs/authentication/reddit.md): Reddit provider setup and usage.
+  - [Roblox](https://better-auth.com/docs/authentication/roblox.md): Roblox provider setup and usage.
+  - [Spotify](https://better-auth.com/docs/authentication/spotify.md): Spotify provider setup and usage.
+  - [Salesforce](https://better-auth.com/docs/authentication/salesforce.md): Salesforce provider setup and usage.
+  - [Slack](https://better-auth.com/docs/authentication/slack.md): Slack provider setup and usage.
+  - [TikTok](https://better-auth.com/docs/authentication/tiktok.md): TikTok provider setup and usage.
+  - [Twitch](https://better-auth.com/docs/authentication/twitch.md): Twitch provider setup and usage.
+  - [Twitter (X)](https://better-auth.com/docs/authentication/twitter.md): Twitter provider setup and usage.
+  - [Vercel](https://better-auth.com/docs/authentication/vercel.md): Vercel provider setup and usage.
+  - [VK](https://better-auth.com/docs/authentication/vk.md): VK ID Provider
+  - [WeChat](https://better-auth.com/docs/authentication/wechat.md): WeChat provider setup and usage.
+  - [Zoom](https://better-auth.com/docs/authentication/zoom.md): Zoom provider setup and usage.
+
+  - **Others**
+  - [Other Social Providers](https://better-auth.com/docs/authentication/other-social-providers.md): Other social providers setup and usage.
+- Databases
+  - [MySQL](https://better-auth.com/docs/adapters/mysql.md): Integrate Better Auth with MySQL.
+  - [SQLite](https://better-auth.com/docs/adapters/sqlite.md): Integrate Better Auth with SQLite.
+  - [PostgreSQL](https://better-auth.com/docs/adapters/postgresql.md): Integrate Better Auth with PostgreSQL.
+  - [MS SQL](https://better-auth.com/docs/adapters/mssql.md): Integrate Better Auth with MS SQL.
+  - [Other Relational Databases](https://better-auth.com/docs/adapters/other-relational-databases.md): Integrate Better Auth with other relational databases.
+
+  - **Adapters**
+  - [Drizzle ORM Adapter](https://better-auth.com/docs/adapters/drizzle.md): Integrate Better Auth with Drizzle ORM.
+  - [Prisma](https://better-auth.com/docs/adapters/prisma.md): Integrate Better Auth with Prisma.
+  - [MongoDB Adapter](https://better-auth.com/docs/adapters/mongo.md): Integrate Better Auth with MongoDB.
+
+  - **Others**
+  - [Community Adapters](https://better-auth.com/docs/adapters/community-adapters.md): Community-built database adapters that extend Better Auth.
+- Integrations
+
+  - **Full Stack**
+  - [Astro Integration](https://better-auth.com/docs/integrations/astro.md): Integrate Better Auth with Astro.
+  - [React Router v7 Integration](https://better-auth.com/docs/integrations/react-router.md): Integrate Better Auth with React Router v7 (formerly Remix).
+  - [Next.js integration](https://better-auth.com/docs/integrations/next.md): Integrate Better Auth with Next.js.
+  - [Nuxt Integration](https://better-auth.com/docs/integrations/nuxt.md): Integrate Better Auth with Nuxt.
+  - [Electron Integration](https://better-auth.com/docs/integrations/electron.md): Integrate Better Auth with Electron.
+  - [SvelteKit Integration](https://better-auth.com/docs/integrations/svelte-kit.md): Integrate Better Auth with SvelteKit.
+  - [SolidStart Integration](https://better-auth.com/docs/integrations/solid-start.md): Integrate Better Auth with SolidStart.
+  - [TanStack Start Integration](https://better-auth.com/docs/integrations/tanstack.md): Integrate Better Auth with TanStack Start.
+  - [Waku Integration](https://better-auth.com/docs/integrations/waku.md): Integrate Better Auth with Waku.
+
+  - **Backend**
+  - [Hono Integration](https://better-auth.com/docs/integrations/hono.md): Integrate Better Auth with Hono.
+  - [Better Auth Fastify Integration Guide](https://better-auth.com/docs/integrations/fastify.md): Learn how to seamlessly integrate Better Auth with your Fastify application.
+  - [Encore Integration](https://better-auth.com/docs/integrations/encore.md): Integrate Better Auth with Encore.
+  - [Express Integration](https://better-auth.com/docs/integrations/express.md): Integrate Better Auth with Express.
+  - [Elysia Integration](https://better-auth.com/docs/integrations/elysia.md): Integrate Better Auth with Elysia.
+  - [Nitro Integration](https://better-auth.com/docs/integrations/nitro.md): Integrate Better Auth with Nitro.
+  - [NestJS Integration](https://better-auth.com/docs/integrations/nestjs.md): Integrate Better Auth with NestJS.
+  - [Convex Integration](https://better-auth.com/docs/integrations/convex.md): Integrate Better Auth with Convex.
+
+  - **Mobile & Desktop**
+  - [Expo Integration](https://better-auth.com/docs/integrations/expo.md): Integrate Better Auth with Expo.
+  - [Lynx Integration](https://better-auth.com/docs/integrations/lynx.md): Integrate Better Auth with Lynx cross-platform framework.
+- Infrastructure
+  - [Better Auth Infrastructure](https://better-auth.com/docs/infrastructure/introduction.md): Enterprise-grade dashboard, security, and managed services for Better Auth.
+  - [Getting Started](https://better-auth.com/docs/infrastructure/getting-started.md): This guide will help you integrate Better Auth Infrastructure into your application.
+
+  - **Plugins**
+  - [Dashboard](https://better-auth.com/docs/infrastructure/plugins/dashboard.md): The `dash()` plugin connects your Better Auth instance to Better Auth Infrastructure, enabling analytics tracking, activity monitoring, event logging, and admin dashboard APIs.
+  - [Audit Logs](https://better-auth.com/docs/infrastructure/plugins/audit-logs.md): Track and query authentication events across your application with automatic audit logging.
+  - [Security Plugin (sentinel)](https://better-auth.com/docs/infrastructure/plugins/sentinel.md): The `sentinel()` plugin provides comprehensive security and abuse protection for your authentication system. It detects and prevents various attack vectors including credential stuffing, impossible travel, free trial abuse, and more.
+
+  - **Services**
+  - [Email Service](https://better-auth.com/docs/infrastructure/services/email.md): Better Auth Infrastructure provides a managed transactional email service with pre-built templates for common authentication flows. Send verification emails, password resets, invitations, and more without managing email infrastructure.
+  - [SMS Service](https://better-auth.com/docs/infrastructure/services/sms.md): Better Auth Infrastructure provides a managed SMS service for sending OTP codes for phone verification and two-factor authentication. Send verification codes without managing SMS providers.
+- Plugins
+
+  - **Authentication**
+  - [Two-Factor Authentication (2FA)](https://better-auth.com/docs/plugins/2fa.md): Enhance your app's security with two-factor authentication.
+  - [Username](https://better-auth.com/docs/plugins/username.md): Username plugin
+  - [Anonymous](https://better-auth.com/docs/plugins/anonymous.md): Anonymous plugin for Better Auth.
+  - [Phone Number](https://better-auth.com/docs/plugins/phone-number.md): Phone number plugin
+  - [Magic link](https://better-auth.com/docs/plugins/magic-link.md): Magic link plugin
+  - [Email OTP](https://better-auth.com/docs/plugins/email-otp.md): Email OTP plugin for Better Auth.
+  - [Passkey](https://better-auth.com/docs/plugins/passkey.md): Passkey
+  - [Generic OAuth](https://better-auth.com/docs/plugins/generic-oauth.md): Authenticate users with any OAuth provider
+  - [One Tap](https://better-auth.com/docs/plugins/one-tap.md): One Tap plugin for Better Auth
+  - [Sign In With Ethereum (SIWE)](https://better-auth.com/docs/plugins/siwe.md): Sign in with Ethereum plugin for Better Auth
+
+  - **Authorization**
+  - [Admin](https://better-auth.com/docs/plugins/admin.md): Admin plugin for Better Auth
+  - [Agent Auth](https://better-auth.com/docs/plugins/agent-auth.md): Agent identity, registration, discovery, and capability-based authorization for AI agents.
+  - API Key
+    - [API Key](https://better-auth.com/docs/plugins/api-key.md): API Key plugin for Better Auth.
+    - [Advanced Features](https://better-auth.com/docs/plugins/api-key/advanced.md): Advanced API Key features including sessions, multiple configurations, organization keys, storage modes, and more.
+    - [Reference](https://better-auth.com/docs/plugins/api-key/reference.md): API Key plugin options, permissions, and schema reference.
+  - [MCP](https://better-auth.com/docs/plugins/mcp.md): Turn your Better Auth server into an OAuth provider for MCP clients
+  - [Organization](https://better-auth.com/docs/plugins/organization.md): The organization plugin allows you to manage your organization's members and teams.
+
+  - **Enterprise**
+  - [OAuth 2.1 Provider](https://better-auth.com/docs/plugins/oauth-provider.md): A Better Auth plugin that enables your auth server to serve as an OAuth 2.1 provider.
+  - [Client ID Metadata Document (CIMD)](https://better-auth.com/docs/plugins/cimd.md): Discover OAuth clients from HTTPS metadata documents.
+  - [Single Sign-On (SSO)](https://better-auth.com/docs/plugins/sso.md): Integrate Single Sign-On (SSO) with your application.
+  - SCIM
+    - [System for Cross-domain Identity Management (SCIM)](https://better-auth.com/docs/plugins/scim.md): Provision users and groups from a directory into Better Auth.
+    - [Groups and custom roles](https://better-auth.com/docs/plugins/scim/groups-and-roles.md): Provision SCIM Groups and map them to application roles.
+    - [SCIM reference](https://better-auth.com/docs/plugins/scim/reference.md): SCIM options, endpoints, resource behavior, and database schema.
+
+  - **Utility**
+  - [Bearer Token Authentication](https://better-auth.com/docs/plugins/bearer.md): Authenticate API requests using Bearer tokens instead of browser cookies
+  - [Device Authorization](https://better-auth.com/docs/plugins/device-authorization.md): OAuth 2.0 Device Authorization Grant for limited-input devices
+  - [Captcha](https://better-auth.com/docs/plugins/captcha.md): Captcha plugin
+  - [Have I Been Pwned](https://better-auth.com/docs/plugins/have-i-been-pwned.md): A plugin to check if a password has been compromised
+  - [i18n](https://better-auth.com/docs/plugins/i18n.md): Internationalization plugin for translating error messages
+  - [Last Login Method](https://better-auth.com/docs/plugins/last-login-method.md): Track and display the last authentication method used by users
+  - [Multi Session](https://better-auth.com/docs/plugins/multi-session.md): Learn how to use multi-session plugin in Better Auth.
+  - [OAuth Proxy](https://better-auth.com/docs/plugins/oauth-proxy.md): OAuth Proxy plugin for Better Auth
+  - [One-Time Token Plugin](https://better-auth.com/docs/plugins/one-time-token.md): Generate and verify single-use token
+  - [Open API](https://better-auth.com/docs/plugins/open-api.md): Open API reference for Better Auth.
+  - [JWT](https://better-auth.com/docs/plugins/jwt.md): Authenticate users with JWT tokens in services that can't use the session
+  - [Test Utils](https://better-auth.com/docs/plugins/test-utils.md): Testing utilities for integration and E2E testing
+
+  - **Payments**
+  - [Stripe](https://better-auth.com/docs/plugins/stripe.md): Stripe plugin for Better Auth to manage subscriptions and payments.
+  - [Polar](https://better-auth.com/docs/plugins/polar.md): Better Auth Plugin for Payment and Checkouts using Polar
+  - [Autumn Billing](https://better-auth.com/docs/plugins/autumn.md): Better Auth Plugin for Autumn Billing
+  - [Dodo Payments](https://better-auth.com/docs/plugins/dodopayments.md): Better Auth Plugin for Dodo Payments
+  - [Creem](https://better-auth.com/docs/plugins/creem.md): Better Auth Plugin for Payment and Subscriptions using Creem
+  - [Chargebee](https://better-auth.com/docs/plugins/chargebee.md): Chargebee plugin for Better Auth to manage subscriptions and payments.
+  - [Commet](https://better-auth.com/docs/plugins/commet.md): Better Auth Plugin for Billing and Subscriptions using Commet
+
+  - **Others**
+  - [Dub](https://better-auth.com/docs/plugins/dub.md): Better Auth Plugin for Lead Tracking using Dub links and OAuth Linking
+  - [Community Plugins](https://better-auth.com/docs/plugins/community-plugins.md): Community-built plugins that extend Better Auth.
+- Guides
+  - [Create your first plugin](https://better-auth.com/docs/guides/your-first-plugin.md): A step-by-step guide to creating your first Better Auth plugin.
+  - [Create a Database Adapter](https://better-auth.com/docs/guides/create-a-db-adapter.md): Learn how to create a custom database adapter for Better-Auth
+  - [Browser Extension Guide](https://better-auth.com/docs/guides/browser-extension-guide.md): A step-by-step guide to creating a browser extension with Better Auth.
+  - [Dynamic Base URL](https://better-auth.com/docs/guides/dynamic-base-url.md): Configure Better Auth for preview deployments, multiple domains, and per-request URL resolution.
+  - [SAML SSO with Okta](https://better-auth.com/docs/guides/saml-sso-with-okta.md): A guide to integrating SAML Single Sign-On (SSO) with Better Auth, featuring Okta
+  - [Optimizing for Performance](https://better-auth.com/docs/guides/optimizing-for-performance.md): A guide to optimizing your Better Auth application for performance.
+
+  - **Upgrade**
+  - [Upgrading to Better Auth 1.7](https://better-auth.com/docs/guides/1-7-upgrade-guide.md): Upgrade Better Auth from 1.6 to 1.7, including Expo, OAuth, OpenID Connect, MCP, SAML, SCIM, proxy, and custom adapter changes.
+
+  - **Migration**
+  - [Migrating from Auth.js to Better Auth](https://better-auth.com/docs/guides/next-auth-migration-guide.md): A step-by-step guide to transitioning from Auth.js to Better Auth.
+  - [Migrating from Auth0 to Better Auth](https://better-auth.com/docs/guides/auth0-migration-guide.md): A step-by-step guide to transitioning from Auth0 to Better Auth.
+  - [Migrating from Clerk to Better Auth](https://better-auth.com/docs/guides/clerk-migration-guide.md): A step-by-step guide to transitioning from Clerk to Better Auth.
+  - [Migrating from Supabase Auth to Better Auth](https://better-auth.com/docs/guides/supabase-migration-guide.md): A step-by-step guide to transitioning from Supabase Auth to Better Auth.
+  - [Migrating from WorkOS to Better Auth](https://better-auth.com/docs/guides/workos-migration-guide.md): A step-by-step guide to transitioning from WorkOS to Better Auth.
+- AI Resources
+  - [AI Resources](https://better-auth.com/docs/ai-resources.md): Ask AI in the docs, LLMs.txt, the documentation MCP server, and Better Auth skills for coding assistants.
+  - [MCP](https://better-auth.com/docs/ai-resources/mcp.md): Connect Better Auth documentation to MCP-capable clients via the remote documentation MCP server.
+  - [Skills](https://better-auth.com/docs/ai-resources/skills.md): Install Better Auth agent skills so your coding assistant follows library conventions and patterns.
+  - [LLMs.txt](/llms.txt)
+- Reference
+  - [Options](https://better-auth.com/docs/reference/options.md): Better Auth configuration options reference.
+  - Errors
+    - [Errors](https://better-auth.com/docs/reference/errors.md): Errors that can occur in Better Auth.
+    - [invalid_callback_request](https://better-auth.com/docs/reference/errors/invalid_callback_request.md): The callback request is invalid.
+    - [invalid_code](https://better-auth.com/docs/reference/errors/invalid_code.md): The provided authentication code is invalid or expired.
+    - [internal_server_error](https://better-auth.com/docs/reference/errors/internal_server_error.md): An unexpected error occurred during authentication.
+    - [state_not_found](https://better-auth.com/docs/reference/errors/state_not_found.md): The state parameter was not found in the request.
+    - [state_invalid](https://better-auth.com/docs/reference/errors/state_invalid.md): Failed to decrypt or parse the OAuth state during the callback.
+    - [state_mismatch](https://better-auth.com/docs/reference/errors/state_mismatch.md): State verification failed during the OAuth callback. Covers all state-related error codes and their causes.
+    - [no_code](https://better-auth.com/docs/reference/errors/no_code.md): The code was not found in the request.
+    - [no_callback_url](https://better-auth.com/docs/reference/errors/no_callback_url.md): The callback URL was not found in the request.
+    - [oauth_provider_not_found](https://better-auth.com/docs/reference/errors/oauth_provider_not_found.md): The OAuth provider was not found.
+    - [email_not_found](https://better-auth.com/docs/reference/errors/email_not_found.md): The provider did not return an email address.
+    - [email_doesn't_match](https://better-auth.com/docs/reference/errors/email_doesn't_match.md): The email doesn't match the email of the account.
+    - [unable_to_get_user_info](https://better-auth.com/docs/reference/errors/unable_to_get_user_info.md): The user info was not found in the request.
+    - [unable_to_link_account](https://better-auth.com/docs/reference/errors/unable_to_link_account.md): The account could not be linked.
+    - [unable_to_create_user](https://better-auth.com/docs/reference/errors/unable_to_create_user.md): The user could not be created during authentication.
+    - [unable_to_create_session](https://better-auth.com/docs/reference/errors/unable_to_create_session.md): The session could not be created during authentication.
+    - [account_not_linked](https://better-auth.com/docs/reference/errors/account_not_linked.md): The provider account is not linked to the current user and cannot be linked automatically.
+    - [account_already_linked_to_different_user](https://better-auth.com/docs/reference/errors/account_already_linked_to_different_user.md): The account is already linked to a different user.
+    - [signup_disabled](https://better-auth.com/docs/reference/errors/signup_disabled.md): Signup disabled error
+  - [Contributing to BetterAuth](https://better-auth.com/docs/reference/contributing.md): A concise guide to contributing to BetterAuth
+  - [Resources](https://better-auth.com/docs/reference/resources.md): A curated collection of resources to help you learn and master Better Auth.
+  - [Security](https://better-auth.com/docs/reference/security.md): Better Auth security features.
+  - [Telemetry](https://better-auth.com/docs/reference/telemetry.md): Better Auth now collects anonymous telemetry data about general usage.
+  - [Instrumentation (Experimental)](https://better-auth.com/docs/reference/instrumentation.md): Distributed tracing for Better Auth
+  - [FAQ](https://better-auth.com/docs/reference/faq.md): Frequently asked questions about Better Auth.

@@ -73,11 +73,14 @@ export function ProductForm({
   categories,
   subcategories,
   product,
+  photoGeneration,
 }: {
   brands: Option[];
   categories: Option[];
   subcategories: SubcategoryOption[];
   product?: ProductFormValues;
+  /** Vrai quand la génération de photos par l'IA est branchée. */
+  photoGeneration: boolean;
 }) {
   const [state, action, pending] = useActionState<ProductFormState, FormData>(
     saveProduct,
@@ -423,6 +426,7 @@ export function ProductForm({
         onPendingChange={setPendingImages}
         selectedId={selectedImage}
         onSelect={setSelectedImage}
+        generationEnabled={photoGeneration}
       />
 
       {/* ---- publication ---- */}

@@ -22,6 +22,12 @@ const nextConfig: NextConfig = {
    * reste ne fait que répartir les pages entre eux.
    */
   experimental: {
+    /**
+     * Les photos produit passent par des actions serveur (enregistrement de
+     * la fiche, génération par l'IA). 1 Mo par défaut ne suffit pas à une
+     * photo de 2000 px ; 4 Mo, c'est le plafond d'une requête sur Vercel.
+     */
+    serverActions: { bodySizeLimit: "4mb" },
     cpus: 3,
     staticGenerationMaxConcurrency: 2,
     staticGenerationMinPagesPerWorker: 60,

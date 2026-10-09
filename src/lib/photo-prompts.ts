@@ -12,33 +12,79 @@ const DECOR =
 
 const STYLE = "Luxury e-commerce editorial style — quiet, refined, premium.";
 
-/** Rayons de la boutique, avec le modèle que chacun appelle. */
+/** Un âge de mannequin proposé dans l'admin. */
+export type ModelAge = {
+  id: string;
+  label: string;
+  /** Tel qu'écrit dans le prompt : « around 6 years old ». */
+  words: string;
+  /**
+   * Faux pour un bébé qui ne tient pas encore debout seul : la photo portée
+   * le montre assis. Un nourrisson debout, l'IA le dessine, et c'est faux.
+   */
+  stands: boolean;
+};
+
+type SubjectSpec = {
+  label: string;
+  ages: ModelAge[];
+  /** Âge proposé d'office quand on choisit ce mannequin. */
+  defaultAge: string;
+  /** Le mannequin, à l'âge choisi. */
+  person: (age: string) => string;
+  pose: string;
+  /** Pose de la photo portée pour un bébé qui ne tient pas debout. */
+  seatedPose: string;
+  closePose: string;
+};
+
+const CHILD_AGES: ModelAge[] = [
+  { id: "3-ans", label: "3 ans", words: "around 3 years old", stands: true },
+  { id: "6-ans", label: "6 ans", words: "around 6 years old", stands: true },
+  { id: "10-ans", label: "10 ans", words: "around 10 years old", stands: true },
+  { id: "13-ans", label: "13 ans", words: "around 13 years old", stands: true },
+  { id: "16-ans", label: "16 ans", words: "around 16 years old", stands: true },
+];
+
+/** Rayons de la boutique, avec le mannequin que chacun appelle. */
 export const PHOTO_SUBJECTS = {
   bebe: {
     label: "Bébé 0-24 mois",
-    model:
-      "a white European baby, around 18 months old, light skin and fine light hair",
+    ages: [
+      { id: "6-mois", label: "6 mois", words: "around 6 months old", stands: false },
+      { id: "12-mois", label: "12 mois", words: "around 12 months old", stands: false },
+      { id: "18-mois", label: "18 mois", words: "around 18 months old", stands: true },
+      { id: "24-mois", label: "24 mois", words: "around 2 years old", stands: true },
+    ],
+    defaultAge: "18-mois",
+    person: (age) => `a white European baby, ${age}, light skin and fine light hair`,
     pose: "Standing on their own, feet slightly apart, arms relaxed, genuinely smiling at the camera with a natural open baby smile — happy, unposed, candid.",
+    seatedPose:
+      "Sitting on the floor the way a baby sits, legs loosely in front, steady and upright, looking at the camera with a natural open baby smile — happy, unposed, candid.",
     closePose:
       "Sitting on the floor the way a baby sits, legs folded loosely in front, looking up at the camera and laughing openly — a real unposed baby smile.",
   },
   fille: {
     label: "Fille 2-16 ans",
-    model:
-      "a white European girl, around 10 years old, light skin and long brown hair",
+    ages: CHILD_AGES,
+    defaultAge: "10-ans",
+    person: (age) => `a white European girl, ${age}, light skin and long brown hair`,
     pose: "Standing relaxed facing the camera, weight on one leg, arms loose, calm natural expression with a faint easy smile. Age-appropriate and unforced — a child standing naturally, not posing like an adult model.",
+    seatedPose: "",
     closePose:
       "Head slightly turned, chin level, calm natural expression looking just past the camera.",
   },
   garcon: {
     label: "Garçon 2-16 ans",
-    model:
-      "a white European boy, around 10 years old, light skin and short light brown hair",
+    ages: CHILD_AGES,
+    defaultAge: "10-ans",
+    person: (age) => `a white European boy, ${age}, light skin and short light brown hair`,
     pose: "Standing relaxed facing the camera, weight on one leg, hands loose or one in pocket, calm natural expression looking slightly off-camera. Age-appropriate and unforced.",
+    seatedPose: "",
     closePose:
       "Head slightly turned, chin level, calm natural expression looking just past the camera.",
   },
-} as const;
+} satisfies Record<string, SubjectSpec>;
 
 export type PhotoSubject = keyof typeof PHOTO_SUBJECTS;
 
@@ -100,30 +146,52 @@ export type PhotoGarment = keyof typeof PHOTO_GARMENTS;
 
 export type PromptInput = {
   subject: PhotoSubject;
+  /** Identifiant d'âge (« 6-ans ») ; absent ou inconnu : l'âge par défaut. */
+  age?: string;
   garment: PhotoGarment;
   /** Vide pour un article sans marque : la phrase s'écrit alors sans elle. */
   brand: string;
   productName: string;
 };
 
-/** « Lanvin baskets curb » ou simplement « baskets curb ». */
-function subjectOf(brand: string, productName: string): string {
-  const name = productName.toLowerCase();
+/**
+ * « Lanvin baskets curb » ou simplement « baskets curb ». Sans nom — la
+ * photo peut être générée avant que la fiche soit remplie —, le mot générique
+ * suffit : c'est l'image de référence qui dit à l'IA de quoi il s'agit.
+ */
+function subjectOf(brand: string, productName: string, generic = "item"): string {
+  const name = productName.trim().toLowerCase() || generic;
   return brand ? `${brand} ${name}` : name;
+}
+
+/** Le mannequin à l'âge choisi, et la pose qu'il peut tenir. */
+function modelOf(subject: PhotoSubject, ageId: string | undefined) {
+  const spec: SubjectSpec = PHOTO_SUBJECTS[subject];
+  const age =
+    spec.ages.find((entry) => entry.id === ageId) ??
+    spec.ages.find((entry) => entry.id === spec.defaultAge) ??
+    spec.ages[0];
+  return {
+    person: spec.person(age.words),
+    stands: age.stands,
+    pose: age.stands ? spec.pose : spec.seatedPose,
+    closePose: spec.closePose,
+  };
 }
 
 /** Plan complet : la vue révélée au survol d'une carte produit. */
 export function buildFullShotPrompt({
   subject,
+  age,
   garment,
   brand,
   productName,
 }: PromptInput): string {
-  const s = PHOTO_SUBJECTS[subject];
+  const s = modelOf(subject, age);
   const g = PHOTO_GARMENTS[garment];
 
   return [
-    `Full-body editorial fashion photograph of ${s.model}, wearing the ${subjectOf(brand, productName)} from the reference image — reproduce the garment exactly: same colour, fabric and proportions, including ${g.detail}. Styled ${g.styling}.`,
+    `Full-body editorial fashion photograph of ${s.person}, wearing the ${subjectOf(brand, productName)} from the reference image — reproduce the garment exactly: same colour, fabric and proportions, including ${g.detail}. Styled ${g.styling}.`,
     s.pose,
     DECOR,
     `${STYLE} Vertical framing, full body in frame with headroom and space at the bottom for caption text. --ar 2:3`,
@@ -133,11 +201,12 @@ export function buildFullShotPrompt({
 /** Gros plan : la vue affichée au repos. */
 export function buildCloseShotPrompt({
   subject,
+  age,
   garment,
   brand,
   productName,
 }: PromptInput): string {
-  const s = PHOTO_SUBJECTS[subject];
+  const s = modelOf(subject, age);
   const g = PHOTO_GARMENTS[garment];
 
   // Les chaussures se photographient sans modèle : le cadrage rapproché est un
@@ -145,7 +214,7 @@ export function buildCloseShotPrompt({
   const framing =
     garment === "chaussures"
       ? `Close-up product photograph of the ${subjectOf(brand, productName)} from the reference image — ${g.closeFraming}. Reproduce the pair exactly: ${g.detail}. Nothing else in shot — no box, no props, no hands.`
-      : `Close-up editorial fashion photograph of the same ${s.model}, wearing the ${subjectOf(brand, productName)} from the reference image — ${g.closeFraming}. Reproduce the garment exactly, including ${g.detail}.`;
+      : `Close-up editorial fashion photograph of the same ${s.person}, wearing the ${subjectOf(brand, productName)} from the reference image — ${g.closeFraming}. Reproduce the garment exactly, including ${g.detail}.`;
 
   const pose = garment === "chaussures" ? "" : s.closePose;
 
@@ -160,44 +229,95 @@ export function buildCloseShotPrompt({
 }
 
 /**
- * Modes de génération. Chacun appelle une IA différente, parce que chacun
- * demande autre chose : un packshot doit être net d'un bout à l'autre et
- * centré, une photo portée doit tenir un modèle et une pose crédibles.
+ * Porté de trois-quarts, en mouvement : le deuxième angle porté de la série
+ * de quatre. Le vêtement est vu de côté, jamais de dos — l'IA n'a que la face
+ * sur la photo de référence, et un dos inventé serait un mensonge sur l'article.
+ */
+export function buildThreeQuarterShotPrompt({
+  subject,
+  age,
+  garment,
+  brand,
+  productName,
+}: PromptInput): string {
+  const s = modelOf(subject, age);
+  const g = PHOTO_GARMENTS[garment];
+
+  // Un bébé qui ne marche pas encore ne passe pas devant l'objectif : il est
+  // assis, tourné de trois-quarts.
+  const angle = s.stands
+    ? "body turned three-quarters to the side, caught walking slowly past the camera, head turned back towards the lens"
+    : "sitting on the floor, body turned three-quarters to the side, reaching out with one hand, head turned towards the lens";
+  const movement = s.stands
+    ? "Natural relaxed movement, one foot lifted mid-step, arms swinging loosely, a faint easy smile. Age-appropriate and unforced. The front and side of the garment stay visible; never show the back."
+    : "Natural, curious, unposed — a real baby moment. The front and side of the garment stay visible; never show the back.";
+
+  return [
+    `Full-body editorial fashion photograph of the same ${s.person}, wearing the ${subjectOf(brand, productName)} from the reference image, ${angle} — reproduce the garment exactly: same colour, fabric and proportions, including ${g.detail}. Styled ${g.styling}.`,
+    movement,
+    DECOR,
+    `${STYLE} Vertical framing, full body in frame with headroom. --ar 2:3`,
+  ].join("\n\n");
+}
+
+/**
+ * Détail en très gros plan, sans modèle : la matière et la signature de la
+ * marque, ce qu'une cliente regarderait de près en boutique.
+ */
+export function buildDetailShotPrompt({
+  garment,
+  brand,
+  productName,
+}: Pick<PromptInput, "garment" | "brand" | "productName">): string {
+  const g = PHOTO_GARMENTS[garment];
+
+  return [
+    `Macro detail photograph of the ${subjectOf(brand, productName)} from the reference image — a tight crop on its most distinctive detail: ${g.detail}. Reproduce it exactly: true colour, fabric texture, stitching, and any logo at its exact typography.`,
+    "The detail fills the frame, sharp where it matters, softly falling out of focus at the edges. No model, no hands, no props.",
+    DECOR,
+    `${STYLE} Vertical framing. --ar 2:3`,
+  ].join("\n\n");
+}
+
+/**
+ * Prises de vue. Chacune a son prompt, parce que chacune demande autre
+ * chose : un packshot doit être net d'un bout à l'autre et centré, une photo
+ * portée doit tenir un modèle et une pose crédibles.
  */
 export type GenerationMode =
-  "chaussures" | "vetement" | "accessoire" | "outlet" | "porte";
+  | "chaussures"
+  | "vetement"
+  | "accessoire"
+  | "outlet"
+  | "porte"
+  | "porte-trois-quarts"
+  | "gros-plan"
+  | "detail"
+  | "invisible"
+  | "cintre"
+  | "plie"
+  | "scene";
 
-export const GENERATION_MODES: {
-  id: GenerationMode;
-  label: string;
-  hint: string;
-}[] = [
-  {
-    id: "chaussures",
-    label: "Chaussures",
-    hint: "La paire seule, sans modèle",
-  },
-  {
-    id: "vetement",
-    label: "Vêtement",
-    hint: "La pièce seule, à plat",
-  },
-  {
-    id: "accessoire",
-    label: "Accessoire",
-    hint: "L'objet seul, de près",
-  },
-  {
-    id: "outlet",
-    label: "Outlet",
-    hint: "Prise de vue simple et rapide",
-  },
-  {
-    id: "porte",
-    label: "Porté",
-    hint: "Sur un mannequin, en pied",
-  },
-];
+/** Libellé de chaque prise de vue, y compris celles réservées à la série. */
+export const SHOT_LABELS: Record<GenerationMode, string> = {
+  chaussures: "Chaussures",
+  vetement: "Vêtement",
+  accessoire: "Accessoire",
+  outlet: "Outlet",
+  porte: "Porté de face",
+  "porte-trois-quarts": "Porté de trois-quarts",
+  "gros-plan": "Gros plan porté",
+  detail: "Détail",
+  invisible: "Mannequin invisible",
+  cintre: "Sur cintre",
+  plie: "Plié à plat",
+  scene: "Posé dans le studio",
+};
+
+/** La photo « produit seul » qui convient au type d'article. */
+export function aloneShot(garment: PhotoGarment): GenerationMode {
+  return garment === "chaussures" ? "chaussures" : garment === "accessoire" ? "accessoire" : "vetement";
+}
 
 /** Packshot d'une paire de chaussures : pas de modèle, netteté totale. */
 export function buildShoePackshotPrompt({
@@ -205,7 +325,7 @@ export function buildShoePackshotPrompt({
   productName,
 }: Pick<PromptInput, "brand" | "productName">): string {
   return [
-    `E-commerce product photograph of a pair of ${subjectOf(brand, productName)} from the reference image, both shoes shown together in three-quarter front view, angled slightly to the right, one set a little forward and the other just behind and overlapping it, both standing level — reproduce the shoes exactly: materials, panels, laces, perforations, midsole, heel tab, stitching and every logo at its exact size and position.`,
+    `E-commerce product photograph of a pair of ${subjectOf(brand, productName, "shoes")} from the reference image, both shoes shown together in three-quarter front view, angled slightly to the right, one set a little forward and the other just behind and overlapping it, both standing level — reproduce the shoes exactly: materials, panels, laces, perforations, midsole, heel tab, stitching and every logo at its exact size and position.`,
     "The pair only, centred in the frame and seen from slightly above, nothing else in shot — no box, no props, no hands, no reflections.",
     "Plain very pale grey seamless background with a soft even gradient, no visible floor line or corner, no texture. Even soft studio daylight, flat, with only a faint contact shadow beneath each sole. Shot on 85mm, everything in sharp focus front to back, true-to-life colours and visible material texture.",
     `${STYLE} Generous even margin around the pair. --ar 2:3`,
@@ -256,5 +376,66 @@ export function buildOutletPackshotPrompt({
     "The item only, nothing else in shot — no model, no props, no hands, no reflections.",
     "Plain very pale grey seamless background, no texture, no visible floor line. Even soft studio daylight, flat and shadowless. Shot on 85mm, everything in sharp focus, true-to-life colours.",
     `${STYLE} Generous even margin around the item. --ar 2:3`,
+  ].join("\n\n");
+}
+
+/*
+ * Mises en scène sans mannequin. Pas de personne dans le cadre, mais le même
+ * studio ou le même fond que les packshots : la grille reste une seule séance.
+ */
+
+/** Mannequin invisible : la forme portée, sans personne dedans. */
+export function buildGhostMannequinPrompt({
+  garment,
+  brand,
+  productName,
+}: Pick<PromptInput, "garment" | "brand" | "productName">): string {
+  const g = PHOTO_GARMENTS[garment];
+  return [
+    `Ghost mannequin e-commerce photograph of the ${subjectOf(brand, productName)} from the reference image — the garment shown front-on with the natural three-dimensional shape of being worn, but with no person, no mannequin and no hanger visible: hollow neckline and sleeves showing the inside of the garment. Reproduce it exactly, including ${g.detail}.`,
+    "Plain very pale grey seamless background, no texture, no visible floor line. Even soft studio daylight, flat and shadowless. Shot on 85mm, everything in sharp focus, true-to-life colours and visible fabric texture.",
+    `${STYLE} Centred, generous even margin around the garment. --ar 2:3`,
+  ].join("\n\n");
+}
+
+/** Sur cintre, contre le mur du studio. */
+export function buildHangerPrompt({
+  garment,
+  brand,
+  productName,
+}: Pick<PromptInput, "garment" | "brand" | "productName">): string {
+  const g = PHOTO_GARMENTS[garment];
+  return [
+    `Editorial still-life photograph of the ${subjectOf(brand, productName)} from the reference image, hanging on a plain light wooden hanger against the wall, front facing the camera, falling naturally — reproduce it exactly, including ${g.detail}. No person, no hands, nothing else in frame.`,
+    DECOR,
+    `${STYLE} Vertical framing, the garment centred with space above the hanger. --ar 2:3`,
+  ].join("\n\n");
+}
+
+/** Plié à plat, vu du dessus. */
+export function buildFoldedPrompt({
+  garment,
+  brand,
+  productName,
+}: Pick<PromptInput, "garment" | "brand" | "productName">): string {
+  const g = PHOTO_GARMENTS[garment];
+  return [
+    `Editorial still-life photograph of the ${subjectOf(brand, productName)} from the reference image, neatly folded and laid on the floor, shot straight from above, the front and any logo clearly visible on top — reproduce it exactly, including ${g.detail}. No person, no hands, no props.`,
+    DECOR,
+    `${STYLE} Vertical framing, the folded piece centred with a generous margin. --ar 2:3`,
+  ].join("\n\n");
+}
+
+/** Posé dans le studio : l'article seul, au sol, dans le décor du site. */
+export function buildStudioScenePrompt({
+  garment,
+  brand,
+  productName,
+}: Pick<PromptInput, "garment" | "brand" | "productName">): string {
+  const g = PHOTO_GARMENTS[garment];
+  return [
+    `Editorial still-life photograph of the ${subjectOf(brand, productName, garment === "chaussures" ? "shoes" : "item")} from the reference image, placed naturally on the floor against the wall, seen at a three-quarter angle slightly from above — reproduce it exactly, including ${g.detail}. No person, no hands, nothing else in frame.`,
+    DECOR,
+    `${STYLE} Vertical framing, the item in the lower half of the frame with the wall rising behind it. --ar 2:3`,
   ].join("\n\n");
 }

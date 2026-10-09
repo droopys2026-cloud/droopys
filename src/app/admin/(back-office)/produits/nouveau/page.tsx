@@ -3,6 +3,7 @@ import Link from "next/link";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { ProductForm } from "@/components/admin/product-form";
 import { requireAdmin } from "@/lib/auth";
+import { serverEnv } from "@/lib/env";
 import {
   listBrandOptions,
   listCategoryOptions,
@@ -34,6 +35,7 @@ export default async function AdminNouveauProduitPage() {
       />
 
       <ProductForm
+        photoGeneration={Boolean(serverEnv.GEMINI_API_KEY)}
         brands={brands}
         categories={categories}
         subcategories={subcategories}

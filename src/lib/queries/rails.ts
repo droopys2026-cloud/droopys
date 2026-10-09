@@ -7,12 +7,16 @@ import type { ProductRail } from "@/types/product";
 /** Nombre d'articles par carrousel : au-delà, personne ne fait défiler. */
 const RAIL_SIZE = 12;
 
+/** Les deux sélections de l'accueil, par rayon, dans l'ordre d'affichage. */
+const SELECTIONS = ["fille", "garcon"];
+
 /**
  * Les trois carrousels de la page d'accueil.
  *
  * Ils se construisent à partir du catalogue et non d'une liste écrite à la
  * main : le premier montre les dernières fiches publiées, les deux suivants
- * les rayons les mieux fournis. Une mise en avant éditoriale — « la sélection
+ * « La sélection Fille » et « La sélection Garçon » — les articles rangés
+ * dans ces rayons, et eux seuls. Une mise en avant éditoriale — « la sélection
  * de Noël » — demandera une vraie table de collections ; tant que personne
  * ne l'a demandée, on ne l'invente pas.
  */
@@ -43,12 +47,19 @@ export const getHomeRails = cache(async (): Promise<ProductRail[]> => {
     })),
   );
 
-  // Les deux rayons les mieux fournis, et seulement s'ils tiennent un
-  // carrousel : trois articles sous une flèche de défilement font pauvre.
-  const furnished = byCategory
-    .filter((entry) => entry.products.length >= 4)
-    .sort((a, b) => b.products.length - a.products.length)
-    .slice(0, 2);
+  // Fille et Garçon, toujours, dans cet ordre : c'est ce que la boutique
+  // attend sous ces titres. Choisir « les deux rayons les mieux fournis »
+  // faisait disparaître la sélection Garçon dès que Bébé la dépassait. Un
+  // autre rayon ne prend la place que d'une sélection trop maigre pour tenir
+  // un carrousel — trois articles sous une flèche de défilement font pauvre.
+  const fills = (entry: (typeof byCategory)[number]) => entry.products.length >= 4;
+  const preferred = SELECTIONS.flatMap((slug) =>
+    byCategory.filter((entry) => entry.category.slug === slug && fills(entry)),
+  );
+  const fallback = byCategory
+    .filter((entry) => fills(entry) && !preferred.includes(entry))
+    .sort((a, b) => b.products.length - a.products.length);
+  const furnished = [...preferred, ...fallback].slice(0, 2);
 
   for (const entry of furnished) {
     rails.push({

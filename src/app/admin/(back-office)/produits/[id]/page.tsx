@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { ProductForm } from "@/components/admin/product-form";
 import { requireAdmin } from "@/lib/auth";
+import { serverEnv } from "@/lib/env";
 import {
   getAdminProduct,
   listBrandOptions,
@@ -45,6 +46,7 @@ export default async function AdminProduitPage({ params }: PageProps) {
       />
 
       <ProductForm
+        photoGeneration={Boolean(serverEnv.GEMINI_API_KEY)}
         brands={brands}
         categories={categories}
         subcategories={subcategories}

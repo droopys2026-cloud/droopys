@@ -18,7 +18,7 @@ const key = process.env.SUPABASE_SECRET_KEY;
 if (!url || !key) throw new Error("Configuration Supabase incomplète — voir .env.example.");
 
 /** Doit rester aligné sur `@/lib/supabase/admin`. */
-const BUCKETS = ["produits", "rayons"];
+const BUCKETS = ["produits", "rayons", "photos-ia"];
 
 const supabase = createClient(url, key);
 

@@ -1753,3 +1753,234 @@
   font-size: 13px;
   cursor: pointer;
 }
+
+/* Réglages de la photo portée, sous les boutons de génération. */
+.admin-generate__options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.admin-generate__option {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 200px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.admin-generate__redo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+}
+
+/* ---- Photos IA ------------------------------------------------------------ */
+
+.admin-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-gallery__item {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid rgb(232, 232, 232);
+  border-radius: 12px;
+  background-color: rgb(255, 255, 255);
+}
+
+.admin-gallery__image {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  border-radius: 8px;
+  background-color: rgb(242, 242, 242);
+}
+
+.admin-gallery__title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.admin-gallery__info {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: rgb(105, 105, 105);
+}
+
+.admin-gallery__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* Série de photos : le nombre, puis une ligne par photo (angle, mannequin,
+   âge), dans l'ordre de la galerie. */
+.admin-generate__count {
+  display: flex;
+  gap: 6px;
+}
+
+.admin-generate__count-button {
+  width: 40px;
+  height: 36px;
+  border: 1px solid rgb(216, 216, 216);
+  border-radius: 8px;
+  background-color: rgb(255, 255, 255);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.admin-generate__count-button:hover {
+  border-color: rgb(24, 24, 24);
+}
+
+.admin-generate__count-button[aria-pressed="true"] {
+  border-color: rgb(24, 24, 24);
+  background-color: rgb(24, 24, 24);
+  color: rgb(255, 255, 255);
+}
+
+.admin-generate__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-generate__row {
+  display: grid;
+  grid-template-columns: 150px repeat(3, minmax(0, 1fr));
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid rgb(232, 232, 232);
+  border-radius: 10px;
+  background-color: rgb(255, 255, 255);
+}
+
+.admin-generate__row-title {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .admin-generate__row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Photo portée sans mannequin : c'est elle qui bloque le bouton. */
+.admin-generate__row--missing {
+  border-color: rgb(180, 40, 40);
+}
+
+/* ---- génération en cours ---------------------------------------------------
+   Une case par photo demandée, à la place qu'occupera l'image : une barre
+   bleue avance tant que Google travaille, la photo la remplace à l'arrivée.
+   Google ne dit pas où il en est : la barre avance d'elle-même vers 90 % en
+   une quarantaine de secondes (la durée observée), puis attend la photo. */
+.admin-generate__tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-generate__tile {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-generate__tile-wait,
+.admin-generate__tile-image {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  border-radius: 8px;
+}
+
+.admin-generate__tile-image {
+  object-fit: cover;
+}
+
+.admin-generate__tile-wait {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid rgb(219, 228, 255);
+  background-color: rgb(239, 244, 255);
+}
+
+.admin-generate__tile-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgb(37, 99, 235);
+}
+
+.admin-generate__tile-label {
+  font-size: 12px;
+  color: rgb(105, 105, 105);
+}
+
+.admin-generate__bar {
+  position: relative;
+  width: 100%;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background-color: rgb(219, 228, 255);
+}
+
+.admin-generate__bar-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgb(37, 99, 235), rgb(96, 165, 250), rgb(37, 99, 235));
+  background-size: 200% 100%;
+  animation:
+    admin-bar-progress 40s cubic-bezier(0.1, 0.6, 0.3, 1) forwards,
+    admin-bar-shimmer 1.2s linear infinite;
+}
+
+@keyframes admin-bar-progress {
+  to {
+    width: 90%;
+  }
+}
+
+@keyframes admin-bar-shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-generate__bar-fill {
+    width: 50%;
+    animation: none;
+  }
+}

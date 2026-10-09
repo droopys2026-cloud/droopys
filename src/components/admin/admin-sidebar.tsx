@@ -9,6 +9,7 @@ import {
   IconDashboard,
   IconHelp,
   IconMenu,
+  IconSparkleImage,
   IconMail,
   IconOrders,
   IconPages,
@@ -34,6 +35,7 @@ const SECTIONS = [
       { href: "/admin/marques", label: "Marques", Icon: IconTag },
       { href: "/admin/menu", label: "Menu", Icon: IconMenu },
       { href: "/admin/produits", label: "Produits", Icon: IconBox },
+      { href: "/admin/photos-ia", label: "Photos IA", Icon: IconSparkleImage },
     ],
   },
   {

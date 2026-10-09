@@ -31,3 +31,9 @@ export const PRODUCT_BUCKET = "produits";
  * les photos d'un produit ne doit pas risquer d'emporter l'image d'un rayon.
  */
 export const TAXONOMY_BUCKET = "rayons";
+/**
+ * Photos générées par l'IA, gardées dès leur création (Admin → Photos IA) :
+ * chacune est payée, et une fiche abandonnée ne doit pas les emporter. Un
+ * bucket à part, pour que la purge des photos produit ne les atteigne jamais.
+ */
+export const GENERATED_BUCKET = "photos-ia";

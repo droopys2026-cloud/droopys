@@ -71,6 +71,13 @@
       "when": 1791487568619,
       "tag": "0009_yielding_slyde",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791555365704,
+      "tag": "0010_exotic_hammerhead",
+      "breakpoints": true
     }
   ]
 }

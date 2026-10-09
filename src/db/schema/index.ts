@@ -9,6 +9,7 @@
 export * from "./catalog";
 export * from "./content";
 export * from "./customers";
+export * from "./generated-photos";
 export * from "./navigation";
 export * from "./orders";
 export * from "./placements";

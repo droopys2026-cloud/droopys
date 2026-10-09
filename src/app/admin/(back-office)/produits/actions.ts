@@ -41,7 +41,15 @@ const sizesField = z.array(
 const measurementsField = z.array(
   z.object({ label: z.string().trim().min(1), value: z.string().trim().min(1) }),
 );
-const keptImagesField = z.array(z.string().url());
+/**
+ * Photos gardées : une URL du stockage, ou un chemin du site (`/imgdress/…`)
+ * pour les photos livrées avec le code. N'accepter que les URL complètes
+ * faisait échouer toute la liste en silence, et l'enregistrement effaçait
+ * alors toutes les photos de la fiche.
+ */
+const keptImagesField = z.array(
+  z.string().refine((value) => value.startsWith("/") || URL.canParse(value), "Photo invalide."),
+);
 
 function readJson<T>(formData: FormData, key: string, schema: z.ZodType<T>, fallback: T): T {
   const raw = formData.get(key);

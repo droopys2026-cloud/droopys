@@ -71,6 +71,14 @@ const serverSchema = z.object({
    */
   SENDCLOUD_TEST_LABELS: z.enum(["0", "1"]).default("1"),
   EMAIL_FROM: z.string().min(3).optional(),
+
+  /**
+   * Google Gemini, pour générer les photos produit depuis l'admin.
+   * Facultative : sans elle, les boutons de génération restent inactifs et
+   * le disent. Les modèles d'image n'ont pas de quota gratuit : la
+   * facturation doit être activée sur le projet Google.
+   */
+  GEMINI_API_KEY: z.string().min(1).optional(),
 });
 
 const publicSchema = z.object({

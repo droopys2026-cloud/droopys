@@ -142,6 +142,17 @@ export function IconLayers() {
   );
 }
 
+/** Photos IA : un cadre photo et une étincelle. */
+export function IconSparkleImage() {
+  return (
+    <svg {...base}>
+      <rect x="3.5" y="5" width="13" height="14.5" rx="2" />
+      <path d="m3.5 16 4-4 3.5 3.5 2-2 3.5 3.5" />
+      <path d="M19 3v4M17 5h4" />
+    </svg>
+  );
+}
+
 /** Menu principal : trois traits, comme la barre de navigation elle-même. */
 export function IconMenu() {
   return (

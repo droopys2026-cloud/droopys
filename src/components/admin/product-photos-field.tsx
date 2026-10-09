@@ -5,7 +5,10 @@ import {
   ImageUploader,
   type UploadedImage,
 } from "@/components/admin/image-uploader";
-import { GENERATION_MODES } from "@/lib/photo-prompts";
+import {
+  PhotoGenerator,
+  type GenerationReference,
+} from "@/components/admin/photo-generator";
 
 /**
  * Photos d'une fiche.
@@ -21,6 +24,7 @@ export function ProductPhotosField({
   onPendingChange,
   selectedId,
   onSelect,
+  generationEnabled,
 }: {
   kept: string[];
   onKeptChange: (urls: string[]) => void;
@@ -28,6 +32,8 @@ export function ProductPhotosField({
   onPendingChange: (images: UploadedImage[]) => void;
   selectedId: string | null;
   onSelect: (id: string) => void;
+  /** Vrai quand la clé Gemini est configurée. */
+  generationEnabled: boolean;
 }) {
   return (
     <fieldset className="admin-fieldset">
@@ -89,7 +95,8 @@ export function ProductPhotosField({
             ))}
           </ul>
           <p className="admin-field__hint">
-            Retirer une photo ici la supprime du stockage à l&apos;enregistrement.
+            Retirer une photo ici la supprime du stockage à
+            l&apos;enregistrement.
           </p>
         </>
       )}
@@ -101,31 +108,30 @@ export function ProductPhotosField({
         onSelect={onSelect}
       />
 
-      {/* Trois boutons, trois IA : un packshot et une photo portée ne
-          demandent pas la même chose, et une seule IA qui ferait les deux les
-          ferait mal toutes les deux. */}
-      <div className="admin-generate">
-        <p className="admin-field__label">Générer une photo</p>
-        <div className="admin-generate__actions">
-          {GENERATION_MODES.map((mode) => (
-            <button
-              key={mode.id}
-              type="button"
-              className="admin-button admin-button--ghost admin-button--small"
-              disabled
-              title="Aucun fournisseur d'images n'est encore branché."
-            >
-              {mode.label}
-              <span className="admin-generate__hint">{mode.hint}</span>
-            </button>
-          ))}
-        </div>
-        <p className="admin-field__hint">
-          Les prompts sont prêts (voir <code>@/lib/photo-prompts</code>) mais
-          aucun fournisseur d&apos;images n&apos;est branché : les boutons
-          restent inactifs plutôt que de faire semblant.
-        </p>
-      </div>
+      <PhotoGenerator
+        enabled={generationEnabled}
+        references={generationReferences(pending, kept, selectedId)}
+        onGenerated={(photos) => {
+          let next = [...pending];
+          const added: UploadedImage[] = [];
+          for (const { image, replaces } of photos) {
+            const old = next.find((entry) => entry.id === replaces);
+            if (old) {
+              // Refaite : la nouvelle prend la place de l'ancienne, au même
+              // rang, et l'aperçu de l'ancienne est libéré.
+              URL.revokeObjectURL(old.previewUrl);
+              next = next.map((entry) =>
+                entry.id === replaces ? image : entry,
+              );
+            } else {
+              added.push(image);
+            }
+          }
+          // Les photos du studio passent devant les photos brutes de
+          // l'article : la première fait la carte, la deuxième son survol.
+          onPendingChange([...added, ...next]);
+        }}
+      />
     </fieldset>
   );
 }
@@ -137,4 +143,52 @@ function move<T>(list: T[], index: number, direction: -1 | 1): T[] {
   const next = [...list];
   [next[index], next[target]] = [next[target], next[index]];
   return next;
+}
+
+/**
+ * Les photos dont l'IA part, deux au plus (face et dos, typiquement), par
+ * ordre de préférence :
+ * 1. celle qu'on a cliquée ;
+ * 2. les photos réelles déposées ;
+ * 3. les photos déjà en ligne de la fiche ;
+ * 4. à défaut, les photos générées présentes.
+ *
+ * Les photos générées passent en dernier — refaire une image à partir d'une
+ * image refaite fait dériver le rendu —, mais elles restent un recours : si
+ * on a retiré la photo d'origine pour ne garder que les générées, le bouton
+ * ne doit pas se griser sans raison visible.
+ */
+function generationReferences(
+  pending: UploadedImage[],
+  kept: string[],
+  selectedId: string | null,
+): GenerationReference[] {
+  const fromFile = (image: UploadedImage): GenerationReference => ({
+    kind: "file",
+    file: image.file,
+    label: image.name,
+  });
+  const selected = pending.find((image) => image.id === selectedId);
+  const others = pending.filter((image) => image !== selected);
+  const originals = others.filter((image) => !isGenerated(image)).map(fromFile);
+  const online: GenerationReference[] = kept.map((url, index) => ({
+    kind: "url",
+    url,
+    label: index === 0 ? "la photo principale" : `la photo ${index + 1}`,
+  }));
+  const generated = others.filter(isGenerated).map(fromFile);
+
+  const preferred =
+    originals.length > 0 ? originals : online.length > 0 ? online : generated;
+  return [...(selected ? [fromFile(selected)] : []), ...preferred].slice(
+    0,
+    MAX_REFERENCES,
+  );
+}
+
+const MAX_REFERENCES = 2;
+
+/** Les photos rendues par l'IA portent un identifiant « ia-… ». */
+function isGenerated(image: UploadedImage): boolean {
+  return image.id.startsWith("ia-");
 }

@@ -1,0 +1,4 @@
+# Documentation et prompts : utiles au développement, inutiles au site. Les
+# envoyer à chaque déploiement alourdissait l'envoi au point de le faire
+# échouer.
+docs/

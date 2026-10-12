@@ -32,15 +32,17 @@ import { serverEnv } from "@/lib/env";
  * Derrière le pooler en mode transaction, des requêtes de 150 ms restaient
  * figées (« active / ClientRead ») : en développement d'abord, puis au build,
  * puis en production, où des pages entières tombaient au bout de 300 s
- * (12 octobre 2026). Le mode session ne fige pas ; il plafonne à quinze
- * connexions pour tout le projet, d'où les pools réduits ci-dessous.
+ * (12 octobre 2026). Le mode session ne fige pas ; il plafonne au « Pool
+ * Size » de Supabase pour tout le projet (porté de 15 à 40 le 12 octobre
+ * 2026 : les instances du site gardaient les 15 et le build n'en trouvait
+ * plus), d'où les pools réduits ci-dessous.
  */
 function connectionUrl(): string {
   return serverEnv.DEV_DATABASE_URL ?? serverEnv.DATABASE_URL;
 }
 
 /**
- * Connexions par processus. Quinze au total pour le projet en mode session :
+ * Connexions par processus. Quarante au total pour le projet en mode session :
  * - build : 3 processus × 2 ;
  * - production : 2 par instance de fonction, rendues vite au pooler ;
  * - développement : 4, un seul serveur.

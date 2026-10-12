@@ -60,6 +60,18 @@ export default async function ThankYouPage({ searchParams }: PageProps) {
               <p className="text-strong m-0">
                 Total réglé : {formatPrice(session.amount_total ?? 0)}
               </p>
+
+              {/* La fonction de rétractation doit être facile à trouver
+                  (directive (UE) 2023/2673) : elle est aussi en pied de page
+                  et sur la commande dans l'espace client. */}
+              <p className="text-paragraph m-0 max-w-lg">
+                Vous changez d&apos;avis ? Vous avez 14 jours après réception
+                pour vous rétracter :{" "}
+                <Link href="/retractation" className="link-underline-sm">
+                  se rétracter du contrat ici
+                </Link>
+                .
+              </p>
             </>
           ) : (
             <p className="text-paragraph m-0 max-w-lg">

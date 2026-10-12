@@ -38,6 +38,7 @@ const ORDER_STATUS_IDS = [
   "livree",
   "retour",
   "annulee",
+  "remboursee",
 ] as const;
 
 function asStatus(value: string | undefined): OrderStatus | undefined {

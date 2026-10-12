@@ -25,7 +25,9 @@ export default async function AdminHomePage() {
   const revenueCents = recent.reduce((total, order) => {
     // Une commande annulée n'est pas un chiffre d'affaires. Un retour non
     // plus, mais il garde sa trace : on l'écarte du total, pas de la liste.
-    if (order.status === "annulee" || order.status === "retour") return total;
+    if (order.status === "annulee" || order.status === "retour" || order.status === "remboursee") {
+      return total;
+    }
     return total + order.totalCents;
   }, 0);
 

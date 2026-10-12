@@ -78,6 +78,13 @@
       "when": 1791555365704,
       "tag": "0010_exotic_hammerhead",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1791829366520,
+      "tag": "0011_stiff_maddog",
+      "breakpoints": true
     }
   ]
 }

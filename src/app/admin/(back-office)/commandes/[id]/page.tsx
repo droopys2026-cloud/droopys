@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { changeOrderStatus } from "@/app/admin/(back-office)/commandes/actions";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { markWithdrawalHandled } from "@/app/admin/(back-office)/commandes/actions";
+import { OrderRefund } from "@/components/admin/order-refund";
 import { OrderShipping } from "@/components/admin/order-shipping";
 import { OrderStatusBadge } from "@/components/admin/order-status-badge";
 import { requireAdmin } from "@/lib/auth";
@@ -153,6 +154,13 @@ export default async function AdminCommandePage({ params }: PageProps) {
               ))}
             </address>
           </section>
+
+          <OrderRefund
+            orderId={order.id}
+            paidCents={totalCents}
+            refundedCents={order.refundedCents}
+            onlinePayment={Boolean(order.stripeSessionId)}
+          />
 
           {/* Changer l'état à la main reste nécessaire : une commande annulée
               au téléphone ou un retour reçu ne passent par aucun automatisme. */}

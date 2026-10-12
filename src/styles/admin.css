@@ -1452,6 +1452,11 @@
   color: rgb(180, 40, 40);
 }
 
+.admin-status--remboursee {
+  background-color: rgb(240, 240, 240);
+  color: rgb(80, 80, 80);
+}
+
 .admin-badge--live {
   border-color: rgb(196, 224, 196);
   background-color: rgb(240, 249, 240);
@@ -1983,4 +1988,27 @@
     width: 50%;
     animation: none;
   }
+}
+
+/* ---- remboursement --------------------------------------------------------- */
+
+.admin-refund {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-refund__confirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.admin-refund__done {
+  margin: 0;
+  font-size: 13px;
+  color: rgb(38, 105, 48);
 }

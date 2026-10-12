@@ -11,4 +11,5 @@ export const CUSTOMER_STATUS_LABELS: Record<OrderStatus, string> = {
   livree: "Livrée",
   retour: "Retour en cours",
   annulee: "Annulée",
+  remboursee: "Remboursée",
 };

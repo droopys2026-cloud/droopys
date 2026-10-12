@@ -23,7 +23,7 @@ import { parcelWeightGrams } from "@/lib/shipping/weight";
 
 const statusSchema = z.object({
   orderId: z.string().uuid(),
-  status: z.enum(["a-preparer", "expediee", "livree", "retour", "annulee"]),
+  status: z.enum(["a-preparer", "expediee", "livree", "retour", "annulee", "remboursee"]),
 });
 
 export async function changeOrderStatus(formData: FormData) {

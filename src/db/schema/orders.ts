@@ -32,6 +32,7 @@ export const orderStatus = pgEnum("order_status", [
   "livree",
   "retour",
   "annulee",
+  "remboursee",
 ]);
 
 /**
@@ -92,6 +93,15 @@ export const orders = pgTable("orders", {
 
   /** Identifiant de session Stripe, pour rapprocher un paiement d'un litige. */
   stripeSessionId: text("stripe_session_id"),
+
+  /**
+   * Total déjà remboursé depuis l'admin, en centimes. Un remboursement peut
+   * être partiel (un seul article retourné) : le reste à rembourser se
+   * calcule à partir de ce cumul, pour ne jamais rendre plus que le payé.
+   */
+  refundedCents: integer("refunded_cents").notNull().default(0),
+  /** Dernier remboursement. */
+  refundedAt: timestamp("refunded_at", { withTimezone: true }),
 });
 
 export const orderLines = pgTable("order_lines", {

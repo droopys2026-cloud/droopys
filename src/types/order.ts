@@ -6,7 +6,7 @@
  * commande d'hier ne doit pas changer avec lui.
  */
 export type OrderStatus =
-  "a-preparer" | "expediee" | "livree" | "retour" | "annulee";
+  "a-preparer" | "expediee" | "livree" | "retour" | "annulee" | "remboursee";
 
 export type OrderLine = {
   productName: string;
@@ -42,6 +42,7 @@ export const ORDER_STATUSES: { id: OrderStatus; label: string }[] = [
   { id: "livree", label: "Livrée" },
   { id: "retour", label: "Retour" },
   { id: "annulee", label: "Annulée" },
+  { id: "remboursee", label: "Remboursée" },
 ];
 
 export function orderTotalCents(order: Order): number {

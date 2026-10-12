@@ -188,8 +188,8 @@ commande de l'admin, suivi enregistré, avis d'expédition à la cliente.
 
 Avant la mise en production :
 
-- [ ] Sendcloud → Réglages → Mes adresses : corriger l'adresse d'expédition (rue saisie « 139 avenue de la Viste 139 », contact « fathma fathma ») — elle s'imprime sur chaque étiquette.
-- [ ] Sendcloud → Facturation : enregistrer une carte, les étiquettes y sont débitées.
-- [ ] Régénérer la clé secrète Sendcloud (elle est passée par un chat) et mettre les deux clés chez l'hébergeur.
-- [ ] `SENDCLOUD_TEST_LABELS=0` **en production seulement** — à 1, les étiquettes sont des lettres de test gratuites.
+- [x] Sendcloud → Réglages → Mes adresses : adresse d'expédition corrigée (12 octobre 2026).
+- [x] Sendcloud → Facturation : carte enregistrée (paiement récurrent).
+- [x] Clés Sendcloud régénérées, dans `.env.local` et sur Vercel.
+- [x] `SENDCLOUD_TEST_LABELS=0` sur Vercel (production) ; reste à 1 en local — à 1, les étiquettes sont des lettres de test gratuites.
 - [ ] Webhook Sendcloud (suivi « livré ») : à activer une fois le site en ligne, `https://<domaine>/api/sendcloud/webhook` (route à écrire).

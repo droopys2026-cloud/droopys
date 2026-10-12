@@ -35,10 +35,50 @@ export async function changeOrderStatus(formData: FormData) {
   });
   if (!parsed.success) return;
 
+  const before = await db.query.orders.findFirst({
+    where: eq(orders.id, parsed.data.orderId),
+    columns: {
+      status: true,
+      reference: true,
+      customerName: true,
+      customerEmail: true,
+      deliveryMethod: true,
+      shippingService: true,
+      trackingNumber: true,
+      trackingUrl: true,
+      labelIsTest: true,
+    },
+  });
+  if (!before) return;
+
   await db
     .update(orders)
     .set({ status: parsed.data.status })
     .where(eq(orders.id, parsed.data.orderId));
+
+  // Passée à la main en « Expédiée » : la cliente est prévenue comme si
+  // l'étiquette venait d'être créée — colis posté hors Sendcloud, par
+  // exemple. Rien pour un retrait (pas de colis) ni pour une étiquette de
+  // test. Pas de doublon si l'avis est déjà parti à la création de
+  // l'étiquette : la clé d'idempotence de Resend porte la référence.
+  if (
+    parsed.data.status === "expediee" &&
+    before.status !== "expediee" &&
+    before.deliveryMethod !== "retrait" &&
+    before.labelIsTest !== true
+  ) {
+    await sendShippingNotification(before.customerEmail, {
+      reference: before.reference,
+      customerName: before.customerName,
+      deliveryMethod: before.deliveryMethod,
+      serviceLabel:
+        SERVICES.find((service) => service.key === before.shippingService)?.label ??
+        "notre transporteur",
+      trackingNumber: before.trackingNumber,
+      trackingUrl: before.trackingUrl,
+      siteUrl: publicEnv.NEXT_PUBLIC_SITE_URL,
+    });
+  }
 
   revalidatePath("/admin/commandes");
   revalidatePath(`/admin/commandes/${parsed.data.orderId}`);

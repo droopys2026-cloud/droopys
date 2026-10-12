@@ -154,9 +154,7 @@
      long (« Karl Lagerfeld ») plutôt que de le couper sur deux lignes. */
   .brand-marquee-cell {
     flex: 0 0 auto;
-    /* Resserrée à la demande de la boutique : à 240 px, les logos étroits
-       flottaient dans leur case. */
-    min-width: 190px;
+    min-width: 240px;
     border-inline-end: 1px solid var(--color-border-muted);
   }
 
@@ -167,7 +165,7 @@
     /* Haut : le bandeau doit se voir comme une section à part entière, pas
        comme un filet entre deux blocs. */
     height: 180px;
-    padding-inline: var(--spacing-8);
+    padding-inline: var(--spacing-9);
     opacity: 0.6;
     transition: opacity var(--duration-medium) var(--ease-in-out);
   }
@@ -818,7 +816,7 @@
   }
   /* Cases plus étroites : deux logotypes et demi visibles sur un téléphone. */
   .brand-marquee-cell {
-    min-width: 130px;
+    min-width: 160px;
   }
   .brand-wall-link {
     height: 130px;

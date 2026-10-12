@@ -79,7 +79,7 @@ export function SearchPanel({
             {results.length} article{results.length > 1 ? "s" : ""} pour «{" "}
             {query} »
           </p>
-          <ul className="grid grid-cols-2 gap-x-11 gap-y-13 lg:grid-cols-4">
+          <ul className="grid grid-cols-2 gap-x-5 gap-y-9 md:gap-x-7 md:gap-y-11 lg:grid-cols-4">
             {results.map((product) => (
               <li key={product.id}>
                 <ProductCard product={product} />

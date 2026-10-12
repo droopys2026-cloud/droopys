@@ -16,7 +16,7 @@ export function ProductGrid({
   return (
     <section className="container-page py-14">
       <h2 className="heading-h2 pt-0">{title}</h2>
-      <ul className="grid grid-cols-2 gap-x-11 gap-y-13 lg:grid-cols-4">
+      <ul className="grid grid-cols-2 gap-x-5 gap-y-9 md:gap-x-7 md:gap-y-11 lg:grid-cols-4">
         {products.map((product) => (
           <li key={product.id}>
             <ProductCard product={product} />

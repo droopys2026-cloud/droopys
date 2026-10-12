@@ -41,10 +41,16 @@ export function ProductRail({ rail }: { rail: Rail }) {
 
       <ul
         ref={trackRef}
-        className="flex snap-x snap-mandatory gap-11 overflow-x-auto scroll-smooth pb-9 [scrollbar-width:none]"
+        // Écart resserré à la demande de la boutique (32 px avant), et largeur
+        // des cartes calculée pour que 2 (téléphone) ou 4 (ordinateur) tiennent
+        // pile : à un quart de la largeur plus l'écart, la 4e était coupée.
+        className="flex snap-x snap-mandatory gap-5 overflow-x-auto scroll-smooth pb-9 [scrollbar-width:none] md:gap-7"
       >
         {rail.products.map((product) => (
-          <li key={product.id} className="w-1/2 shrink-0 snap-start md:w-1/4">
+          <li
+            key={product.id}
+            className="w-[calc((100%-var(--spacing-5))/2)] shrink-0 snap-start md:w-[calc((100%-3*var(--spacing-7))/4)]"
+          >
             <ProductCard product={product} />
           </li>
         ))}

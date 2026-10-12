@@ -75,6 +75,14 @@ export function OrderShipping({
             )}
           </p>
         )}
+        {/* L'étiquette s'affiche dans la fiche : on vérifie d'un coup d'œil
+            le destinataire et le transporteur avant d'imprimer. Format A4,
+            d'où le rapport 210/297 qui évite un cadre vide ou rogné. */}
+        <iframe
+          src={`/admin/commandes/${orderId}/etiquette`}
+          title="Aperçu de l'étiquette"
+          className="aspect-[210/297] w-full max-w-md border"
+        />
         <a
           href={`/admin/commandes/${orderId}/etiquette`}
           target="_blank"

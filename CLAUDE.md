@@ -165,15 +165,17 @@ npx eslint src  # lint
 Le code des comptes clients est en place (spec :
 [docs/superpowers/specs/2026-10-08-comptes-clients-design.md](docs/superpowers/specs/2026-10-08-comptes-clients-design.md)),
 mais ces réglages manquent encore. Tant qu'ils ne sont pas faits, la connexion
-Google et les e-mails (confirmation d'inscription, mot de passe oublié) ne
-marchent pas.
+Google ne marche pas.
 
-- [ ] Supabase → Auth → SMTP : brancher Resend (`smtp.resend.com`, port 465, clé API Resend).
-- [ ] Supabase → Auth → Templates : e-mails de confirmation et de réinitialisation en français.
-- [ ] Supabase → Auth → Providers → Google : identifiants OAuth de la console Google.
-- [ ] Supabase → Auth → URL Configuration : autoriser `/compte/confirmation` (local et production).
+Les e-mails d'inscription et de mot de passe oublié ne passent **pas** par
+Supabase : le site génère le lien (`generateLink`) et l'envoie lui-même par
+Resend, en français (`@/lib/account/auth-emails`). Aucun SMTP ni modèle à
+régler côté Supabase.
+
+- [ ] Supabase → Auth → Providers → Google : identifiants OAuth de la console Google (redirection : `https://<projet>.supabase.co/auth/v1/callback`).
+- [ ] Supabase → Auth → URL Configuration : autoriser `/compte/confirmation` (local et production) — utile au retour de Google.
 - [ ] Mentions de confidentialité : ajouter Google comme fournisseur d'identité.
-- [ ] Tester ensuite au navigateur : inscription → e-mail → confirmation, mot de passe oublié, Google.
+- [ ] Tester ensuite au navigateur la connexion Google.
 - [x] Resend : domaine `droopys-marseille.com` vérifié, `RESEND_API_KEY` et `EMAIL_FROM` (`commandes@droopys-marseille.com`) dans `.env.local`. **Reste** : les copier dans les variables d'environnement Vercel, et ajouter l'enregistrement DMARC (`_dmarc` TXT `v=DMARC1; p=none;`).
 
 Nouvel admin : `npm run grant-admin -- <email>` (être connecté ne suffit plus pour entrer dans l'admin).

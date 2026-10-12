@@ -12,6 +12,7 @@ import {
   signInSchema,
   signUpSchema,
 } from "@/lib/account/schema";
+import { sendPasswordReset, sendSignupConfirmation } from "@/lib/account/auth-emails";
 import { publicEnv } from "@/lib/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { mergeWishlistCookie } from "@/lib/wishlist/store";
@@ -97,29 +98,19 @@ export async function signUpCustomer(
     return { status: "error", errors: issueMessages(parsed.error), values };
   }
 
-  const { firstName, lastName, email, password } = parsed.data;
-  const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      emailRedirectTo: CONFIRMATION_URL,
-      // Repris par `ensureCustomer` à la première connexion.
-      data: { first_name: firstName, last_name: lastName },
-    },
-  });
-
-  if (error) {
-    if (error.code === "weak_password") {
+  // Le lien de confirmation part par Resend, en français : voir
+  // `@/lib/account/auth-emails`.
+  try {
+    const result = await sendSignupConfirmation(parsed.data);
+    if (result.status === "weak-password") {
       return {
         status: "error",
         errors: ["Ce mot de passe est trop faible : allongez-le ou variez les caractères."],
         values,
       };
     }
-    // Une adresse déjà inscrite ne produit **pas** d'erreur chez Supabase
-    // (il rend un faux utilisateur) : on arrive ici pour une vraie panne.
-    console.error("Inscription refusée par Supabase :", error.code ?? error.message);
+  } catch (error) {
+    console.error("Inscription :", error);
     return { status: "error", errors: [UNEXPECTED], values };
   }
 
@@ -159,13 +150,13 @@ export async function requestPasswordReset(
     };
   }
 
-  const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.auth.resetPasswordForEmail(parsed.data, {
-    redirectTo: `${CONFIRMATION_URL}?suite=${encodeURIComponent("/compte/nouveau-mot-de-passe")}`,
-  });
-  // Une erreur ici (quota d'envoi, panne) ne doit pas trahir l'existence du
-  // compte : on la journalise et on répond comme si tout allait bien.
-  if (error) console.error("Réinitialisation non envoyée :", error.code ?? error.message);
+  // Une panne ici ne doit pas trahir l'existence du compte : on la journalise
+  // et on répond comme si tout allait bien.
+  try {
+    await sendPasswordReset(parsed.data);
+  } catch (error) {
+    console.error("Réinitialisation non envoyée :", error);
+  }
 
   return { status: "sent" };
 }

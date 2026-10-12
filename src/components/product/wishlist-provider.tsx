@@ -4,6 +4,8 @@ import { createContext, use, useCallback, useEffect, useState, useTransition } f
 import { loadWishlist, toggleWishlist } from "@/app/actions/wishlist";
 
 type WishlistContextValue = {
+  /** Nombre de favoris : la pastille de l'icône dans l'en-tête. */
+  count: number;
   isSaved: (productId: string) => boolean;
   toggle: (productId: string) => void;
 };
@@ -56,7 +58,7 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
 
   const isSaved = useCallback((productId: string) => ids.has(productId), [ids]);
 
-  return <WishlistContext value={{ isSaved, toggle }}>{children}</WishlistContext>;
+  return <WishlistContext value={{ count: ids.size, isSaved, toggle }}>{children}</WishlistContext>;
 }
 
 export function useWishlist(): WishlistContextValue {

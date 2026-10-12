@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { CartButton } from "@/components/layout/cart-button";
 import { SearchButton } from "@/components/layout/search-button";
-import { IconAccount, IconWishlist } from "@/components/ui/icons";
+import { WishlistLink } from "@/components/layout/wishlist-link";
+import { IconAccount } from "@/components/ui/icons";
 
 /**
  * Rangée d'icônes utilisateur : recherche, compte, favoris, panier.
@@ -40,14 +41,10 @@ export function HeaderActions({
             <IconAccount />
           </Link>
         </li>
-        <li className={compact ? "max-[359px]:hidden" : undefined}>
-          <Link
-            href="/favoris"
-            className="icon-link-nav"
-            aria-label="Mes favoris"
-          >
-            <IconWishlist />
-          </Link>
+        {/* `relative` : la pastille du nombre se pose sur l'icône, comme
+            celle du panier. */}
+        <li className={compact ? "relative max-[359px]:hidden" : "relative"}>
+          <WishlistLink />
         </li>
         <li className="relative">
           <CartButton count={cartCount} />

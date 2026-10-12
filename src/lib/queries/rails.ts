@@ -1,7 +1,7 @@
 import "server-only";
 
 import { cache } from "react";
-import { listCategories, listProducts } from "@/lib/queries/catalog";
+import { listCategories, listProducts, listProductsForCategory } from "@/lib/queries/catalog";
 import type { ProductRail } from "@/types/product";
 
 /** Nombre d'articles par carrousel : au-delà, personne ne fait défiler. */
@@ -15,8 +15,8 @@ const SELECTIONS = ["fille", "garcon"];
  *
  * Ils se construisent à partir du catalogue et non d'une liste écrite à la
  * main : le premier montre les dernières fiches publiées, les deux suivants
- * « La sélection Fille » et « La sélection Garçon » — les articles rangés
- * dans ces rayons, et eux seuls. Une mise en avant éditoriale — « la sélection
+ * « La sélection Fille » et « La sélection Garçon » — les articles de la
+ * page du rayon, placements compris, et eux seuls. Une mise en avant éditoriale — « la sélection
  * de Noël » — demandera une vraie table de collections ; tant que personne
  * ne l'a demandée, on ne l'invente pas.
  */
@@ -37,13 +37,13 @@ export const getHomeRails = cache(async (): Promise<ProductRail[]> => {
     });
   }
 
+  // Mêmes articles que la page du rayon, placements compris : une basket
+  // rangée en Garçon et placée en Fille doit aussi sortir dans la sélection
+  // Fille, puisqu'elle est sur la page Fille.
   const byCategory = await Promise.all(
     categories.map(async (category) => ({
       category,
-      products: await listProducts({
-        categorySlug: category.slug,
-        limit: RAIL_SIZE,
-      }),
+      products: (await listProductsForCategory(category.slug)).slice(0, RAIL_SIZE),
     })),
   );
 

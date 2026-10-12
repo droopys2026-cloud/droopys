@@ -18,7 +18,7 @@ export function AnnouncementBar({
   if (!visible) return null;
 
   return (
-    <div className="section-announcement box-announcement-wrapper announcement-bar gap-x-4 gap-y-1 px-9">
+    <div className="section-announcement box-announcement-wrapper announcement-bar gap-x-4 gap-y-1">
       {logo}
       <p className="text-paragraph m-0">{children}</p>
       <button

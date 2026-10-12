@@ -19,6 +19,16 @@
      parfois un logo, et un logo à 18 px de haut ne se lit plus. */
   .announcement-bar {
     min-height: 48px;
+    padding-inline: var(--spacing-9);
+  }
+
+  /* Logo et message alignés sur le milieu du logo DROOPY'S, qui se trouve
+     lui-même un peu à gauche du centre de la page : 80 px de plus à droite
+     décalent le bloc de 40 px (mesuré à 1024, 1280 et 1440 px de large). */
+  @media (min-width: 769px) {
+    .announcement-bar {
+      padding-inline: var(--spacing-9) calc(var(--spacing-9) + 80px);
+    }
   }
 
   .announcement-bar__logo {

@@ -2012,3 +2012,8 @@
   font-size: 13px;
   color: rgb(38, 105, 48);
 }
+
+/* Rétractation en attente, à côté de l'état dans la liste des commandes. */
+.admin-withdrawal-badge {
+  margin-left: 6px;
+}

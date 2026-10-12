@@ -156,6 +156,14 @@ export function OrderList({
                   <td className="admin-table__muted">{row.payment}</td>
                   <td>
                     <OrderStatusBadge status={row.status} />
+                    {row.pendingWithdrawal && (
+                      <span
+                        className="admin-badge admin-status admin-status--annulee admin-withdrawal-badge"
+                        title="La cliente s'est rétractée : ne pas expédier, ou rembourser au retour."
+                      >
+                        Rétractation
+                      </span>
+                    )}
                   </td>
                   <td className="admin-table__actions">
                     <Link

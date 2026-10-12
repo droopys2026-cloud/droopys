@@ -28,6 +28,11 @@ export type OrderRow = {
   /** Total payé : lignes plus port, figé à la commande. */
   totalCents: number;
   lineCount: number;
+  /**
+   * Rétractation demandée et pas encore traitée : la boutique ne doit pas
+   * expédier, ou doit attendre le retour pour rembourser.
+   */
+  pendingWithdrawal: boolean;
 };
 
 export type OrderFilters = { q?: string; etat?: string };
@@ -93,6 +98,10 @@ export const listOrders = cache(
         lineCount: sql<number>`(
           select count(*) from order_lines l where l.order_id = "orders"."id"
         )::int`,
+        pendingWithdrawal: sql<boolean>`exists (
+          select 1 from withdrawals w
+          where w.order_id = "orders"."id" and w.handled_at is null
+        )`,
       })
       .from(orders)
       .where(conditions.length > 0 ? and(...conditions) : undefined)

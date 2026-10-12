@@ -131,6 +131,13 @@ export function OrderShipping({
         </p>
       )}
 
+      {!testMode && (
+        <p className="admin-field__hint m-0">
+          L&apos;acheteur reçoit aussitôt un e-mail « Votre commande est
+          expédiée » avec son numéro de suivi.
+        </p>
+      )}
+
       {testMode && (
         <p className="admin-field__hint m-0">
           Mode test : l&apos;étiquette sera une lettre non affranchie, gratuite

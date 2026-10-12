@@ -1,18 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { changeOrderStatus } from "@/app/admin/(back-office)/commandes/actions";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { markWithdrawalHandled } from "@/app/admin/(back-office)/commandes/actions";
 import { OrderRefund } from "@/components/admin/order-refund";
 import { OrderShipping } from "@/components/admin/order-shipping";
 import { OrderStatusBadge } from "@/components/admin/order-status-badge";
+import { OrderStatusChips } from "@/components/admin/order-status-chips";
 import { requireAdmin } from "@/lib/auth";
 import { serverEnv } from "@/lib/env";
 import { SERVICES } from "@/lib/shipping/services";
 import { formatPrice } from "@/lib/format";
 import { getOrder } from "@/lib/queries/orders";
-import { ORDER_STATUSES } from "@/types/order";
 
 type PageProps = { params: Promise<{ id: string }> };
 
@@ -166,21 +165,17 @@ export default async function AdminCommandePage({ params }: PageProps) {
               au téléphone ou un retour reçu ne passent par aucun automatisme. */}
           <section className="admin-card">
             <h2 className="admin-card__title">État</h2>
-            <div className="admin-filter__chips">
-              {ORDER_STATUSES.map((entry) => (
-                <form key={entry.id} action={changeOrderStatus}>
-                  <input type="hidden" name="orderId" value={order.id} />
-                  <input type="hidden" name="status" value={entry.id} />
-                  <button
-                    type="submit"
-                    className="admin-chip"
-                    aria-pressed={order.status === entry.id}
-                  >
-                    {entry.label}
-                  </button>
-                </form>
-              ))}
-            </div>
+            <OrderStatusChips
+              orderId={order.id}
+              status={order.status}
+              shippingNoticeTo={
+                order.status !== "expediee" &&
+                order.deliveryMethod !== "retrait" &&
+                order.labelIsTest !== true
+                  ? order.customerEmail
+                  : null
+              }
+            />
           </section>
 
           <OrderShipping

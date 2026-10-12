@@ -105,7 +105,10 @@ export const listAdminProducts = cache(
       .innerJoin(brands, eq(products.brandId, brands.id))
       .leftJoin(categories, eq(products.categoryId, categories.id))
       .where(conditions.length > 0 ? and(...conditions) : undefined)
-      .orderBy(desc(products.updatedAt));
+      // Les derniers ajoutés en tête, à place fixe : trier sur la date de
+      // modification faisait remonter tout article simplement corrigé — et une
+      // mise à jour en masse enterrait les nouveautés sous le catalogue entier.
+      .orderBy(desc(products.createdAt), desc(products.id));
 
     return rows;
   },

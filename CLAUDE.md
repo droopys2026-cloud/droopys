@@ -192,4 +192,4 @@ Avant la mise en production :
 - [x] Sendcloud → Facturation : carte enregistrée (paiement récurrent).
 - [x] Clés Sendcloud régénérées, dans `.env.local` et sur Vercel.
 - [x] `SENDCLOUD_TEST_LABELS=0` sur Vercel (production) ; reste à 1 en local — à 1, les étiquettes sont des lettres de test gratuites.
-- [ ] Webhook Sendcloud (suivi « livré ») : à activer une fois le site en ligne, `https://<domaine>/api/sendcloud/webhook` (route à écrire).
+- [ ] Webhook Sendcloud (suivi « livré ») : route écrite (`/api/sendcloud/webhook`). Reste à l'activer dans Sendcloud → Boutiques connectées → l'intégration API : cocher « Webhook », URL `https://www.droopys-marseille.com/api/sendcloud/webhook`.

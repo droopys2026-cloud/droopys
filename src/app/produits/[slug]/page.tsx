@@ -8,6 +8,7 @@ import { ProductAccordion } from "@/components/product/product-accordion";
 import { ProductGallery } from "@/components/product/product-gallery";
 import { ShareButton } from "@/components/product/share-button";
 import { SizePicker } from "@/components/product/size-picker";
+import { ProductRail } from "@/components/sections/product-rail";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { formatPrice } from "@/lib/format";
 import {
@@ -15,6 +16,7 @@ import {
   getProductBySlug,
   listProductSlugs,
 } from "@/lib/queries/catalog";
+import { getRelatedProducts } from "@/lib/queries/related";
 import { getShopSettings } from "@/lib/queries/settings";
 import type { Product } from "@/types/product";
 
@@ -42,7 +44,10 @@ export default async function ProductPage({ params }: PageProps) {
   // article : afficher la mauvaise fiche est pire que ne rien afficher.
   if (!product) notFound();
 
-  const { livraison, retours } = await getShopSettings();
+  const [{ livraison, retours }, related] = await Promise.all([
+    getShopSettings(),
+    getRelatedProducts(product),
+  ]);
 
   const category = product.categorySlug
     ? await getCategoryBySlug(product.categorySlug)
@@ -233,6 +238,21 @@ export default async function ProductPage({ params }: PageProps) {
             )}
           </div>
         </div>
+
+        {/* D'autres pièces sous la fiche : la cliente qui hésite repart vers
+            un article voisin plutôt que vers le bouton « Retour ». */}
+        {related.length > 0 && (
+          <div className="subsection-gray">
+            <ProductRail
+              rail={{
+                title: "Vous aimerez ",
+                titleAccent: "aussi",
+                href: category ? `/${category.slug}` : "/nouveautes",
+                products: related,
+              }}
+            />
+          </div>
+        )}
       </main>
 
       <SiteFooter />

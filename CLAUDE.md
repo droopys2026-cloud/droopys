@@ -176,7 +176,7 @@ régler côté Supabase.
 - [ ] Supabase → Auth → URL Configuration : autoriser `/compte/confirmation` (local et production) — utile au retour de Google.
 - [ ] Mentions de confidentialité : ajouter Google comme fournisseur d'identité.
 - [ ] Tester ensuite au navigateur la connexion Google.
-- [x] Resend : domaine `droopys-marseille.com` vérifié, `RESEND_API_KEY` et `EMAIL_FROM` (`commandes@droopys-marseille.com`) dans `.env.local`. **Reste** : les copier dans les variables d'environnement Vercel, et ajouter l'enregistrement DMARC (`_dmarc` TXT `v=DMARC1; p=none;`).
+- [x] Resend : domaine `droopys-marseille.com` vérifié, `RESEND_API_KEY` et `EMAIL_FROM` (`commandes@droopys-marseille.com`) dans `.env.local`. Variables copiées sur Vercel ; DMARC (`_dmarc` TXT `v=DMARC1; p=none;`) ajouté le 12 octobre 2026.
 
 Nouvel admin : `npm run grant-admin -- <email>` (être connecté ne suffit plus pour entrer dans l'admin).
 

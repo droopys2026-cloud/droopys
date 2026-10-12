@@ -64,8 +64,8 @@ export async function SiteHeader({
               <div className="pointer-events-none absolute inset-0 bg-black/40" />
             </div>
           )}
-          <div className="container-page flex items-center justify-between gap-4 py-5 md:gap-9 md:py-7">
-            <div className="flex items-center gap-6">
+          <div className="container-page flex items-center justify-between gap-2 py-5 sm:gap-4 md:gap-9 md:py-7">
+            <div className="flex items-center gap-3 sm:gap-6">
               <MobileNav items={nav} />
               <Link
                 href="/boutiques"
@@ -78,12 +78,14 @@ export async function SiteHeader({
 
             <Link
               href="/"
-              className="text-[clamp(20px,6vw,36px)] leading-none font-bold tracking-[1px] uppercase [.section-header--overlay_&]:text-[clamp(26px,7vw,52px)]"
+              className="text-[clamp(20px,6vw,36px)] leading-none font-bold tracking-[1px] whitespace-nowrap uppercase [.section-header--overlay_&]:text-[clamp(20px,6.5vw,52px)]"
             >
               Droopy&apos;s
             </Link>
 
-            <HeaderActions cartCount={cartCount} />
+            {/* Sur un petit iPhone, logo et quatre icônes faisaient déborder
+                la page : les favoris s'effacent sous 360 px de large. */}
+            <HeaderActions cartCount={cartCount} compact />
           </div>
 
           <MainNav items={nav} />

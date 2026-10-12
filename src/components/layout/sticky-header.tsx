@@ -53,12 +53,12 @@ export function StickyHeader({
         // lecteur d'écran : les liens de l'en-tête complet font déjà le travail.
         inert={!stuck}
       >
-        <div className="container-page flex items-center justify-between gap-4 md:gap-9">
-          <div className="flex items-center gap-6">
+        <div className="container-page flex items-center justify-between gap-2 sm:gap-4 md:gap-9">
+          <div className="flex min-w-0 items-center gap-3 sm:gap-6">
             <MobileNav items={nav} />
             <Link
               href="/"
-              className="text-[clamp(18px,5vw,22px)] leading-none font-black tracking-[1px] uppercase"
+              className="text-[clamp(16px,5vw,22px)] leading-none font-black tracking-[1px] whitespace-nowrap uppercase"
             >
               Droopy&apos;s
             </Link>
@@ -66,7 +66,7 @@ export function StickyHeader({
 
           <MainNav items={nav} />
 
-          <HeaderActions cartCount={cartCount} />
+          <HeaderActions cartCount={cartCount} compact />
         </div>
       </div>
     </>

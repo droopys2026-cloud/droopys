@@ -286,6 +286,13 @@
     padding-block: var(--spacing-4);
   }
 
+  /* Petit iPhone : chaque pixel compte sur cette ligne unique. */
+  @media (max-width: 374px) {
+    .sticky-header > .container-page {
+      padding-inline: var(--spacing-7);
+    }
+  }
+
   /* Le menu vit ici dans une rangée : il ne doit ni recentrer ni repadder
      sa liste, sinon il pousse le logo et les icônes vers les bords. */
   .sticky-header nav > ul.container-page {
@@ -861,9 +868,7 @@
     box-shadow: 0 12px 24px rgb(0 0 0 / 8%);
   }
 
-  /* Le tiroir du menu mobile vit dans l'en-tête, qui forme son propre
-     contexte d'empilement : son z-index ne peut donc pas passer au-dessus de
-     la carte. On masque la carte tant que le menu est ouvert. */
+  /* Menu mobile ouvert : la carte n'a rien à faire par-dessus. */
   body:has(#menu-mobile) .social-card {
     display: none;
   }
@@ -874,9 +879,9 @@
     background-color: var(--color-surface-muted);
   }
 
-  @media (max-width: 480px) {
-    .social-card {
-      grid-template-columns: 110px 1fr;
+  .social-card__close {
+      top: 50%;
+      transform: translateY(-50%);
     }
   }
 
@@ -943,4 +948,46 @@
     text-decoration: underline;
     text-underline-offset: 3px;
   }
+
+  /* Sur téléphone, la carte en longueur couvrait près de la moitié de
+     l'écran. Elle devient un bandeau d'une ligne en bas : « Suivez-nous » et
+     les trois icônes. Photo et phrase s'effacent ; les noms des réseaux
+     restent lus par les lecteurs d'écran. */
+  @media (max-width: 768px) {
+    .social-card {
+      inset-inline: var(--spacing-7);
+      bottom: var(--spacing-7);
+      width: auto;
+      grid-template-columns: 1fr;
+    }
+
+    .social-card__image,
+    .social-card__text {
+      display: none;
+    }
+
+    .social-card__body {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--spacing-7);
+      padding: var(--spacing-6) 52px var(--spacing-6) var(--spacing-8);
+    }
+
+    .social-card__links {
+      flex-wrap: nowrap;
+      gap: var(--spacing-8);
+      padding-top: 0;
+    }
+
+    .social-card__link span {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+
+  
 }

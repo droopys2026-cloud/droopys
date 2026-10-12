@@ -13,7 +13,18 @@ import { IconAccount, IconWishlist } from "@/components/ui/icons";
  * (`SearchButton`, `CartButton`) pour que cette rangée, elle, continue d'être
  * rendue sur le serveur.
  */
-export function HeaderActions({ cartCount = 0 }: { cartCount?: number }) {
+export function HeaderActions({
+  cartCount = 0,
+  compact = false,
+}: {
+  cartCount?: number;
+  /**
+   * Sous 360 px de large, l'icône des favoris s'efface : logo, menu et quatre
+   * icônes ne tenaient pas sur un petit iPhone, et toute la page débordait à
+   * droite. Les favoris restent accessibles depuis l'espace client.
+   */
+  compact?: boolean;
+}) {
   return (
     <nav aria-label="Navigation utilisateur">
       <ul className="flex items-center justify-end gap-2 sm:gap-4">
@@ -29,7 +40,7 @@ export function HeaderActions({ cartCount = 0 }: { cartCount?: number }) {
             <IconAccount />
           </Link>
         </li>
-        <li>
+        <li className={compact ? "max-[359px]:hidden" : undefined}>
           <Link
             href="/favoris"
             className="icon-link-nav"

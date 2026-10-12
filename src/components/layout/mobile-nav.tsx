@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import type { NavItem } from "@/types/navigation";
 
@@ -59,7 +60,12 @@ export function MobileNav({ items }: { items: NavItem[] }) {
         </svg>
       </button>
 
-      {drawerOpen && (
+      {/* Rendu à la racine du document, hors de l'en-tête : dans Safari, un
+          tiroir en position fixe placé sous le bloc de fondu des pages
+          s'affichait vide sur iPhone. Le portail le met à l'abri de tout
+          effet porté par ses parents. */}
+      {drawerOpen &&
+        createPortal(
         <div
           id="menu-mobile"
           className="bg-surface fixed inset-x-0 top-0 bottom-0 z-50 overflow-y-auto"
@@ -136,8 +142,9 @@ export function MobileNav({ items }: { items: NavItem[] }) {
               );
             })}
           </ul>
-        </div>
-      )}
+        </div>,
+          document.body,
+        )}
     </div>
   );
 }

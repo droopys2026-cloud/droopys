@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  billingContact,
   checkoutDetailsSchema,
   readSessionMetadata,
   shippingCentsFor,
@@ -140,5 +141,24 @@ describe("métadonnées de session", () => {
     const long = "x".repeat(200);
     const meta = toSessionMetadata(details, { addressLines: [long, long, long], methodId: 1 });
     for (const value of Object.values(meta)) expect(value.length).toBeLessThanOrEqual(500);
+  });
+});
+
+describe("billingContact (adresse de facturation pour Stripe, exigée par Klarna)", () => {
+  it("reprend l'adresse de livraison à domicile", () => {
+    expect(billingContact({ contact, delivery: home })).toEqual({
+      name: "Léa Martin",
+      address: { country: "FR", line1: "1 rue de Rome", line2: null, city: "Marseille", postal_code: "13001" },
+    });
+  });
+  it("donne au moins le nom et la France en retrait ou en point relais", () => {
+    expect(billingContact({ contact, delivery: { method: "retrait" } })).toEqual({
+      name: "Léa Martin",
+      address: { country: "FR" },
+    });
+    expect(
+      billingContact({ contact, delivery: { method: "relais", service: "mondial-relay-relais", servicePointId: 1 } })
+        .address.country,
+    ).toBe("FR");
   });
 });

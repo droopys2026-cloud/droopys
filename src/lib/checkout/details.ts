@@ -77,6 +77,33 @@ export type DeliveryMethod = DeliveryChoice["method"];
 export type CheckoutDetails = z.infer<typeof checkoutDetailsSchema>;
 
 /**
+ * L'adresse de facturation passée à Stripe au moment de payer.
+ *
+ * La carte s'en passe, Klarna non : sans nom ni pays, Stripe refuse de
+ * confirmer (« error_details_unknown »). À domicile, c'est l'adresse de
+ * livraison ; en point relais ou en retrait, la cliente n'a saisi aucune
+ * adresse — on transmet son nom et la France, le seul pays de ces deux modes.
+ */
+export function billingContact(details: CheckoutDetails): {
+  name: string;
+  address: { country: string; line1?: string; line2?: string | null; city?: string; postal_code?: string };
+} {
+  const name = `${details.contact.firstName} ${details.contact.lastName}`;
+  if (details.delivery.method !== "domicile") return { name, address: { country: "FR" } };
+  const { address } = details.delivery;
+  return {
+    name,
+    address: {
+      country: address.country,
+      line1: address.line1,
+      line2: address.line2,
+      city: address.city,
+      postal_code: address.postalCode,
+    },
+  };
+}
+
+/**
  * Port TTC en centimes pour un choix de livraison, ou `null` si ce service
  * n'est pas disponible (poids hors tranche, pays non desservi).
  *

@@ -11,7 +11,7 @@ import {
 import { createPaymentSession } from "@/app/actions/checkout";
 import { FormAlert } from "@/components/account/form-alert";
 import type { CheckoutDetails } from "@/lib/checkout/details";
-import { addressLines } from "@/lib/checkout/details";
+import { addressLines, billingContact } from "@/lib/checkout/details";
 import { formatPrice } from "@/lib/format";
 
 type Session =
@@ -115,6 +115,11 @@ export function PaymentStep({
           options={{
             clientSecret: session.clientSecret,
             elementsOptions: { appearance: siteAppearance() },
+            // Klarna refuse de confirmer sans nom ni pays de facturation
+            // (« error_details_unknown »), la carte s'en passe. Donnés ici, à
+            // l'ouverture : passés à `confirm()`, la confirmation ne rendait
+            // jamais la main. L'e-mail, lui, est déjà sur la session.
+            defaultValues: { billingAddress: billingContact(details) },
           }}
         >
           <PaymentForm totalCents={session.totalCents} />

@@ -24,14 +24,13 @@ const serverSchema = z.object({
    */
   DIRECT_URL: z.string().url(),
   /**
-   * Pooler en mode **session** (port 5432), pour le serveur de développement
-   * et le build. Facultatif, mais à définir aussi chez l'hébergeur pour que
-   * le build y passe. En mode transaction, des requêtes restaient figées à
-   * mi-protocole (état « active / ClientRead » côté base) jusqu'au délai de
-   * 15 s : pages bloquées en dev, build qui échoue au hasard. La production,
-   * faite de fonctions courtes et nombreuses, reste sur `DATABASE_URL` — le
-   * mode session plafonne à quinze connexions, d'où les trois processus de
-   * build au plus (`next.config.ts`).
+   * Pooler en mode **session** (port 5432). Le nom est historique : il sert
+   * désormais partout — développement, build et production — dès qu'il est
+   * défini. En mode transaction (`DATABASE_URL`), des requêtes restaient
+   * figées à mi-protocole (état « active / ClientRead » côté base) : pages
+   * bloquées en dev, build qui échoue au hasard, pages en ligne qui tombent
+   * au bout de 300 s. Le mode session plafonne à quinze connexions pour tout
+   * le projet : voir les pools réduits dans `@/db`.
    */
   DEV_DATABASE_URL: z.string().url().optional(),
   /** Accès privilégié : contourne RLS. Jamais exposée au navigateur. */

@@ -26,21 +26,29 @@ import { serverEnv } from "@/lib/env";
  *    chaque sauvegarde laisserait une connexion ouverte derrière elle.
  */
 /**
- * Mode session en développement **et pendant le build** s'il est fourni,
+ * Mode session partout s'il est fourni (`DEV_DATABASE_URL`, nom historique),
  * transaction sinon — voir `env.ts`.
  *
- * Le build aussi : derrière le pooler en mode transaction, des requêtes de
- * 150 ms restaient figées (« active / ClientRead ») jusqu'au délai de 15 s,
- * et le build échouait une fois sur deux sur une page au hasard. Le mode
- * session ne fige pas ; il plafonne à quinze connexions, d'où les trois
- * processus de build au plus fixés dans `next.config.ts` (3 × 4 = 12).
+ * Derrière le pooler en mode transaction, des requêtes de 150 ms restaient
+ * figées (« active / ClientRead ») : en développement d'abord, puis au build,
+ * puis en production, où des pages entières tombaient au bout de 300 s
+ * (12 octobre 2026). Le mode session ne fige pas ; il plafonne à quinze
+ * connexions pour tout le projet, d'où les pools réduits ci-dessous.
  */
 function connectionUrl(): string {
-  const longLived =
-    process.env.NODE_ENV === "development" ||
-    process.env.NEXT_PHASE === "phase-production-build";
-  if (longLived && serverEnv.DEV_DATABASE_URL) return serverEnv.DEV_DATABASE_URL;
-  return serverEnv.DATABASE_URL;
+  return serverEnv.DEV_DATABASE_URL ?? serverEnv.DATABASE_URL;
+}
+
+/**
+ * Connexions par processus. Quinze au total pour le projet en mode session :
+ * - build : 3 processus × 2 ;
+ * - production : 2 par instance de fonction, rendues vite au pooler ;
+ * - développement : 4, un seul serveur.
+ */
+function poolSize(): number {
+  if (process.env.NEXT_PHASE === "phase-production-build") return 2;
+  if (process.env.NODE_ENV === "production") return 2;
+  return 4;
 }
 
 const globalForDb = globalThis as unknown as {
@@ -51,14 +59,10 @@ const sql =
   globalForDb.droopysSql ??
   postgres(connectionUrl(), {
     prepare: false,
-    // Build : deux connexions par processus. Le mode session plafonne à
-    // quinze clients pour tout le projet, et le serveur de développement en
-    // tient déjà quelques-unes : à quatre, un build est tombé en
-    // « EMAXCONNSESSION ». Trois processus × 2 laissent de la marge.
-    max: process.env.NEXT_PHASE === "phase-production-build" ? 2 : 4,
+    max: poolSize(),
     // Une connexion inactive est rendue au pooler plutôt que gardée : elle
-    // servira à une autre fonction.
-    idle_timeout: 20,
+    // servira à une autre fonction. Vite, puisqu'elles sont comptées.
+    idle_timeout: 10,
     // Une connexion ne vit pas plus de dix minutes : le pooler recycle, et
     // une connexion devenue inutilisable finit par disparaître d'elle-même.
     max_lifetime: 60 * 10,

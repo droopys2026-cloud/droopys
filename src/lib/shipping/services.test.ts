@@ -32,15 +32,18 @@ describe("quoteServices", () => {
     expect(options.find((o) => o.key === "mondial-relay-relais")?.priceCents).toBe(469);
   });
 
-  it("ignore les variantes signature, QR et Shop2Shop", () => {
+  it("ignore les variantes signature et QR", () => {
     expect(options.find((o) => o.key === "colissimo-domicile")?.methodId).toBe(1);
     expect(options.find((o) => o.key === "mondial-relay-relais")?.methodId).toBe(3);
-    expect(options.find((o) => o.key === "chronopost-relais")?.methodId).toBe(7);
+    expect(options.find((o) => o.key === "colissimo-relais")?.methodId).toBe(372);
   });
 
-  it("propose les six services quand le poids le permet", () => {
+  it("propose Chronopost en relais au tarif Shop2Shop, pas Chrono Relais", () => {
+    expect(options.find((o) => o.key === "chronopost-relais")?.methodId).toBe(8);
+  });
+
+  it("propose les cinq services quand le poids le permet", () => {
     expect(options.map((o) => o.key).sort()).toEqual([
-      "chronopost-domicile",
       "chronopost-relais",
       "colissimo-domicile",
       "colissimo-relais",
@@ -51,7 +54,7 @@ describe("quoteServices", () => {
 
   it("omet un service sans tranche pour ce poids", () => {
     const heavy = quoteServices(methods, "FR", 2.5);
-    expect(heavy.find((o) => o.key === "chronopost-domicile")).toBeUndefined();
+    expect(heavy.find((o) => o.key === "chronopost-relais")).toBeUndefined();
   });
 
   it("omet un service sans prix pour ce pays", () => {

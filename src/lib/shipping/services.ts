@@ -8,9 +8,10 @@
  *
  * Sendcloud découpe chaque service en tranches de poids (« Colissimo Home
  * 0.25-0.5kg », « 0.5-0.75kg »…) : on retient celle qui contient le colis.
- * Les variantes qu'on ne propose pas — signature, QR, casier, samedi,
- * Shop2Shop (dépôt en relais par la boutique) — sont écartées par le motif
- * du nom.
+ * Les variantes qu'on ne propose pas — signature, QR, casier, samedi — sont
+ * écartées par le motif du nom. Chronopost à domicile (Chrono 18, 16 € pour
+ * un petit colis) a été retiré en octobre 2026 : trop cher pour ce qu'il
+ * apporte ; Chronopost reste proposé en relais, en Shop2Shop.
  */
 
 /** Une méthode d'envoi telle que la rend `GET /api/v2/shipping_methods`. */
@@ -63,15 +64,6 @@ export const SERVICES: ShippingService[] = [
     optionCode: "mondial_relay:home_domestic,dualapi/c2c",
   },
   {
-    key: "chronopost-domicile",
-    carrier: "chronopost",
-    kind: "domicile",
-    label: "Chronopost à domicile",
-    detail: "Express : livré le lendemain avant 18 h.",
-    pattern: /^Chrono 18 \d/,
-    optionCode: "chronopost:18",
-  },
-  {
     key: "colissimo-relais",
     carrier: "colissimo",
     kind: "relais",
@@ -94,9 +86,13 @@ export const SERVICES: ShippingService[] = [
     carrier: "chronopost",
     kind: "relais",
     label: "Chronopost en point relais",
-    detail: "Relais Pickup, livré le lendemain.",
-    pattern: /^Chrono Relais \d/,
-    optionCode: "chronopost:service_point",
+    detail: "Dans un relais Pickup près de chez vous, 2 à 4 jours.",
+    // Shop2Shop et non Chrono Relais : même réseau de relais pour la
+    // cliente, mais la boutique dépose le colis en relais au lieu d'un
+    // enlèvement — 4,15 € TTC contre 10,97 € pour 350 g (octobre 2026).
+    // L'espace est facultatif : Sendcloud écrit « Shop2Shop19-20kg ».
+    pattern: /^Chrono Shop2Shop ?\d/,
+    optionCode: "chronopost:shop2shop",
   },
 ];
 

@@ -37,7 +37,7 @@ describe("shippingCentsFor", () => {
     ).toBe(469);
   });
   it("rend null pour un service indisponible", () => {
-    expect(shippingCentsFor({ ...home, service: "chronopost-domicile" }, options, 10_000, null)).toBeNull();
+    expect(shippingCentsFor({ ...home, service: "mondial-relay-domicile" }, options, 10_000, null)).toBeNull();
   });
   it("ne facture jamais le retrait en boutique", () => {
     expect(shippingCentsFor({ method: "retrait" }, [], 1_000, null)).toBe(0);

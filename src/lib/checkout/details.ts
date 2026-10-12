@@ -42,7 +42,7 @@ export const shippingAddressSchema = z.object({
   country: z.enum(COUNTRY_CODES, { message: "Pays non desservi." }),
 });
 
-const HOME_SERVICES = ["colissimo-domicile", "mondial-relay-domicile", "chronopost-domicile"] as const;
+const HOME_SERVICES = ["colissimo-domicile", "mondial-relay-domicile"] as const;
 const RELAY_SERVICES = ["colissimo-relais", "mondial-relay-relais", "chronopost-relais"] as const;
 
 /**

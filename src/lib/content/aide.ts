@@ -31,10 +31,9 @@ export const AIDE_PAGES: ContentPage[] = [
         rows: [
           ["Point relais", "Mondial Relay", "3 à 5 jours ouvrés"],
           ["Point relais", "Colissimo (bureau de poste, relais Pickup)", "2 jours ouvrés"],
-          ["Point relais", "Chronopost (relais Pickup)", "Le lendemain"],
+          ["Point relais", "Chronopost (relais Pickup)", "2 à 4 jours ouvrés"],
           ["Domicile", "Mondial Relay", "3 à 5 jours ouvrés"],
           ["Domicile", "Colissimo", "2 jours ouvrés"],
-          ["Domicile express", "Chronopost", "Le lendemain avant 18 h"],
           ["Retrait en boutique", "Grand Littoral, Marseille", "Gratuit, dès que la commande est prête"],
         ],
       },

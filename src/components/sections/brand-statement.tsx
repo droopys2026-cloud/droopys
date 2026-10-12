@@ -17,7 +17,7 @@ export function BrandStatement({
   secondLine?: string;
 }) {
   return (
-    <div className="container-page py-14">
+    <div className="container-page py-9 md:py-14">
       <h1 className="sr-only">{text}</h1>
       {/* Deux bandes qui se croisent : la première part vers la gauche, la
           seconde vers la droite. C'est le croisement qui fait l'effet — une
@@ -25,12 +25,16 @@ export function BrandStatement({
       {/* La bande est coupée par ce cadre et non par la fenêtre : le texte
           entre et sort dans la colonne du site, sans toucher les bords. */}
       <div aria-hidden className="flex flex-col gap-2 overflow-hidden">
-        <div className="marquee-fade mx-auto w-full max-w-5xl overflow-hidden">
+        {/* Largeurs en pourcentage et tailles en `vw` : le bloc garde sur
+            téléphone exactement les proportions de l'ordinateur — deux
+            colonnes centrées, la seconde plus étroite —, au lieu de deux
+            lignes pleine largeur où le décalage disparaissait. */}
+        <div className="marquee-fade mx-auto w-[62%] max-w-5xl overflow-hidden">
           <ScrollTextMarquee
             baseVelocity={-1}
             delay={400}
             scrollDependent
-            sizeClassName="text-[10vw] sm:text-[6.5vw]"
+            sizeClassName="text-[6.5vw]"
             className="font-semibold tracking-[-0.03em]"
           >
             {text}
@@ -39,12 +43,12 @@ export function BrandStatement({
 
         {/* Seconde bande : plus petite et dans une colonne plus étroite, pour
             que la première garde le premier rôle. */}
-        <div className="marquee-fade mx-auto w-full max-w-3xl overflow-hidden">
+        <div className="marquee-fade mx-auto w-[46%] max-w-3xl overflow-hidden">
           <ScrollTextMarquee
             baseVelocity={1}
             delay={400}
             scrollDependent
-            sizeClassName="text-[7vw] sm:text-[4vw]"
+            sizeClassName="text-[4vw]"
             className="font-light tracking-[-0.03em]"
           >
             {secondLine ?? text}

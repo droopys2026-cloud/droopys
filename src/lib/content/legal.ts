@@ -247,7 +247,22 @@ export const LEGAL_PAGES: ContentPage[] = [
       },
       {
         kind: "paragraphe",
-        text: "Ces sous-traitants sont liés par contrat, n'utilisent vos données pour aucun autre usage, et sont hébergés dans l'Union européenne. Si l'un d'eux devait traiter des données hors de l'Union, nous l'indiquerions ici avec le mécanisme de transfert applicable.",
+        text: "Ces sous-traitants sont liés par contrat et n'utilisent vos données pour aucun autre usage. Les voici, avec le lieu où vos données sont traitées :",
+      },
+      {
+        kind: "liste",
+        items: [
+          "Supabase — base de données et comptes clients, hébergés à Francfort (Union européenne).",
+          "Vercel Inc. — hébergement du site ; les pages sont calculées à Francfort (Union européenne), la société est établie aux États-Unis.",
+          "Stripe — paiement par carte ; Klarna — paiement en plusieurs fois.",
+          "Sendcloud — préparation des colis et points relais ; le transporteur choisi reçoit le nom et l'adresse de livraison.",
+          "Resend — envoi des e-mails de commande et de compte.",
+          "Google — uniquement si vous choisissez « Continuer avec Google » pour vous connecter.",
+        ],
+      },
+      {
+        kind: "paragraphe",
+        text: "Certains de ces prestataires sont des sociétés américaines (Vercel, Stripe, Resend, Google) : un accès depuis les États-Unis reste possible. Ces transferts sont encadrés par le cadre de protection des données UE–États-Unis (Data Privacy Framework) auquel ils adhèrent, complété par les clauses contractuelles types de la Commission européenne.",
       },
       { kind: "titre", text: "Vos droits" },
       {

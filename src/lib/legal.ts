@@ -4,12 +4,13 @@
  * Deux origines distinctes, et elles ne se mélangent pas :
  *
  * 1. Ce qui vient du registre public (annuaire-entreprises.data.gouv.fr,
- *    établissement 491 728 945 00024, relevé le 15 septembre 2026). Ces
- *    valeurs sont vérifiables par n'importe qui, on les écrit telles quelles.
- * 2. Ce que le registre ne publie pas : capital social, numéro de TVA,
- *    greffe d'immatriculation, téléphone, e-mail, hébergeur, directeur de la
- *    publication. Ces champs valent `null` et s'affichent en clair comme
- *    restant à compléter.
+ *    établissement 491 728 945 00024, relevé le 15 septembre 2026 ; numéro de
+ *    TVA fourni par la boutique d'après l'INSEE et le RNE le 12 octobre
+ *    2026). Ces valeurs sont vérifiables par n'importe qui.
+ * 2. Ce que le registre ne publie pas et que la boutique n'a pas encore
+ *    fourni : capital social, téléphone, e-mail, directeur de la publication.
+ *    Ces champs valent `null` et s'affichent en clair comme restant à
+ *    compléter.
  *
  * Le choix de `null` plutôt qu'une valeur plausible est délibéré : une
  * mention légale fausse expose plus qu'une mention légale incomplète, et une
@@ -32,10 +33,13 @@ export const LEGAL = {
   legalForm: "Société à responsabilité limitée (SARL)",
   siren: "491 728 945",
   siret: "491 728 945 00024",
-  /** Registre du commerce : greffe non publié par l'API, à confirmer. */
-  rcs: null as string | null,
-  /** TVA intracommunautaire : non publiée, à confirmer auprès du SIE. */
-  vat: null as string | null,
+  /**
+   * Registre du commerce : siège à Marseille, donc greffe du tribunal de
+   * commerce de Marseille. À recouper avec l'extrait Kbis.
+   */
+  rcs: "RCS Marseille 491 728 945" as string | null,
+  /** TVA intracommunautaire (INSEE / RNE, relevé le 12 octobre 2026). */
+  vat: "FR80491728945" as string | null,
   /** Capital social : non publié par l'API. */
   capital: null as string | null,
 
@@ -59,8 +63,17 @@ export const LEGAL = {
 
   /** Responsable de la publication du site. */
   publicationDirector: null as string | null,
-  /** Hébergeur : raison sociale, adresse et téléphone sont obligatoires. */
-  host: null as { name: string; address: string; phone: string } | null,
+  /**
+   * Hébergeur (LCEN, art. 6). Adresse relevée dans la politique de
+   * confidentialité de Vercel le 12 octobre 2026 ; Vercel ne publie aucun
+   * numéro de téléphone, seulement une adresse de contact — on l'écrit
+   * plutôt que de recopier un numéro trouvé ailleurs et non vérifiable.
+   */
+  host: {
+    name: "Vercel Inc.",
+    address: "440 N Barranca Avenue #4133, Covina, CA 91723, États-Unis",
+    phone: "non publié par l'hébergeur — contact : privacy@vercel.com",
+  } as { name: string; address: string; phone: string } | null,
 
   /** Plateforme européenne de règlement en ligne des litiges (art. 14 RGL). */
   odrUrl: "https://ec.europa.eu/consumers/odr",

@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { loadStripe } from "@stripe/stripe-js";
+import { createPaymentSession, type PaymentSessionResult } from "@/app/actions/checkout";
 import { ContactStep } from "@/components/checkout/contact-step";
 import { DeliveryStep, type SavedAddress } from "@/components/checkout/delivery-step";
 import { OrderSummary } from "@/components/checkout/order-summary";
@@ -24,6 +26,23 @@ const STEPS: { id: Step; label: string }[] = [
   { id: 2, label: "Livraison" },
   { id: 3, label: "Paiement" },
 ];
+
+/**
+ * Une session préparée reste servie une demi-heure : au-delà, on en rouvre une
+ * neuve plutôt que de risquer de tendre à la cliente une session que Stripe
+ * aurait entre-temps expirée.
+ */
+const PREPARED_SESSION_MS = 30 * 60 * 1000;
+
+/** Attente après la dernière frappe avant de préparer le paiement. */
+const PREPARE_DELAY_MS = 600;
+
+/** Session de paiement ouverte d'avance, pour des coordonnées précises. */
+type PreparedPayment = {
+  detailsKey: string;
+  startedAt: number;
+  session: Promise<PaymentSessionResult>;
+};
 
 /** Brouillon gardé le temps de l'onglet : un rechargement ne vide rien. */
 const STORAGE_KEY = "droopys_tunnel";
@@ -64,6 +83,11 @@ export function CheckoutWizard({
   }));
   const [touched, setTouched] = useState<Set<string>>(() => new Set());
   const headingRef = useRef<HTMLDivElement>(null);
+  const [prepared, setPrepared] = useState<PreparedPayment | null>(null);
+  // Stripe.js se télécharge dès l'arrivée dans le tunnel, pendant que la
+  // cliente remplit ses coordonnées, et non au moment où elle veut payer.
+  // Une seule fois par clé : Stripe.js refuse d'être rechargé.
+  const stripePromise = useMemo(() => loadStripe(publishableKey), [publishableKey]);
 
   // Relecture après l'hydratation, jamais pendant : le serveur ne connaît pas
   // le `sessionStorage`, et lire avant ferait diverger les deux rendus.
@@ -116,7 +140,44 @@ export function CheckoutWizard({
   const detailsKey = JSON.stringify(toDetails(draft));
   const details = useMemo(() => toDetails(draft), [detailsKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  /**
+   * Ouvre la session de paiement pour ces coordonnées, sauf si une session
+   * encore fraîche existe déjà pour elles. Le serveur revalide tout : préparer
+   * d'avance ne fait que gagner l'aller-retour vers Stripe.
+   */
+  const preparePayment = (key: string, validDetails: NonNullable<typeof details>) => {
+    if (prepared?.detailsKey === key && Date.now() - prepared.startedAt < PREPARED_SESSION_MS) {
+      return;
+    }
+    const session: Promise<PaymentSessionResult> = createPaymentSession(validDetails).catch(
+      (error: unknown) => {
+        console.error("Session de paiement non ouverte :", error);
+        // Panne réseau, pas refus du serveur : on oublie cette tentative pour
+        // que le prochain passage à l'étape 3 en relance une.
+        setPrepared((current) => (current?.session === session ? null : current));
+        return {
+          status: "error",
+          errors: ["Le paiement est indisponible pour le moment. Réessayez dans un instant."],
+        };
+      },
+    );
+    setPrepared({ detailsKey: key, startedAt: Date.now(), session });
+  };
+
+  // Pendant l'étape Livraison, dès que tout est valide, le paiement se prépare
+  // en arrière-plan : en cliquant sur « Continuer », la cliente trouve le
+  // formulaire de carte déjà affiché. Le délai évite d'ouvrir une session à
+  // chaque lettre de l'adresse ; une session jamais payée expire seule chez
+  // Stripe, sans frais.
+  useEffect(() => {
+    if (step !== 2 || !details) return;
+    const timer = setTimeout(() => preparePayment(detailsKey, details), PREPARE_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [step, detailsKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const goTo = (next: Step) => {
+    // Clic avant la fin du délai, ou session trop ancienne : on la lance ici.
+    if (next === 3 && details) preparePayment(detailsKey, details);
     setStep(next);
     // Le focus suit l'étape : un lecteur d'écran entend le nouveau titre, et
     // l'écran revient en haut du formulaire au lieu de rester sur le bouton.
@@ -249,16 +310,23 @@ export function CheckoutWizard({
           </>
         )}
 
-        {step === 3 && details && (
-          <PaymentStep
-            key={detailsKey}
-            details={details}
-            publishableKey={publishableKey}
-            shopName={shop.name}
-            servicePointLabel={draft.servicePoint?.label ?? ""}
-            serviceLabel={chosenOption?.label ?? ""}
-            onEdit={goTo}
-          />
+        {/* Monté dès l'étape Livraison, mais caché : le formulaire de carte de
+            Stripe s'initialise pendant que la cliente choisit sa livraison, et
+            « Continuer » n'a plus qu'à le révéler. `hidden` le retire aussi de
+            l'arbre d'accessibilité tant qu'il n'est pas à l'écran. */}
+        {step >= 2 && details && prepared?.detailsKey === detailsKey && (
+          <div hidden={step !== 3}>
+            <PaymentStep
+              key={detailsKey}
+              details={details}
+              session={prepared.session}
+              stripePromise={stripePromise}
+              shopName={shop.name}
+              servicePointLabel={draft.servicePoint?.label ?? ""}
+              serviceLabel={chosenOption?.label ?? ""}
+              onEdit={goTo}
+            />
+          </div>
         )}
         {step === 3 && (
           <div className="checkout-actions">

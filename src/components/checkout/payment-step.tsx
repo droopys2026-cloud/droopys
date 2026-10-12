@@ -1,14 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import { loadStripe, type Appearance } from "@stripe/stripe-js";
+import { useEffect, useState } from "react";
+import type { Appearance, Stripe } from "@stripe/stripe-js";
 import {
   CheckoutElementsProvider,
   PaymentElement,
   useCheckoutElements,
 } from "@stripe/react-stripe-js/checkout";
-import { createPaymentSession } from "@/app/actions/checkout";
+import type { PaymentSessionResult } from "@/app/actions/checkout";
 import { FormAlert } from "@/components/account/form-alert";
 import type { CheckoutDetails } from "@/lib/checkout/details";
 import { addressLines, billingContact } from "@/lib/checkout/details";
@@ -22,21 +22,24 @@ type Session =
 /**
  * Étape 3 : rappel de la commande, formulaire de paiement Stripe, mention CGV.
  *
- * La session de paiement est ouverte **en arrivant ici**, avec les
- * coordonnées validées : le serveur relit le panier et calcule le total.
- * Revenir modifier une étape puis revenir rouvre une session neuve (le
- * composant est remonté avec une autre clé), pour que le montant suive.
+ * La session de paiement arrive toute prête : le tunnel l'ouvre dès que les
+ * coordonnées sont valides, pendant l'étape Livraison (voir `CheckoutWizard`).
+ * Revenir modifier une étape puis revenir en apporte une neuve (le composant
+ * est remonté avec une autre clé), pour que le montant suive.
  */
 export function PaymentStep({
   details,
-  publishableKey,
+  session: pendingSession,
+  stripePromise,
   shopName,
   servicePointLabel,
   serviceLabel,
   onEdit,
 }: {
   details: CheckoutDetails;
-  publishableKey: string;
+  /** Session ouverte d'avance par le tunnel ; ne rejette jamais. */
+  session: Promise<PaymentSessionResult>;
+  stripePromise: Promise<Stripe | null>;
   shopName: string;
   /** Libellé du point relais choisi, pour le rappel. */
   servicePointLabel: string;
@@ -45,28 +48,16 @@ export function PaymentStep({
   onEdit: (step: 1 | 2) => void;
 }) {
   const [session, setSession] = useState<Session>({ status: "loading" });
-  // `loadStripe` une seule fois par clé : Stripe.js refuse d'être rechargé.
-  const stripePromise = useMemo(() => loadStripe(publishableKey), [publishableKey]);
 
   useEffect(() => {
     let cancelled = false;
-    createPaymentSession(details)
-      .then((result) => {
-        if (!cancelled) setSession(result);
-      })
-      .catch((error: unknown) => {
-        console.error("Session de paiement non ouverte :", error);
-        if (!cancelled) {
-          setSession({
-            status: "error",
-            errors: ["Le paiement est indisponible pour le moment. Réessayez dans un instant."],
-          });
-        }
-      });
+    void pendingSession.then((result) => {
+      if (!cancelled) setSession(result);
+    });
     return () => {
       cancelled = true;
     };
-  }, [details]);
+  }, [pendingSession]);
 
   const { contact, delivery } = details;
 

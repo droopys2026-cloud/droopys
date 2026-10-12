@@ -10,8 +10,30 @@ import Link from "next/link";
  *
  * Elle s'ouvre après un court délai — surgir pendant que la page se peint
  * donne l'impression d'une publicité, et le visiteur ferme avant d'avoir lu.
- * Elle réapparaît à chaque chargement de page : rien n'est mémorisé.
+ *
+ * **Une seule fois par visiteur**, à sa première arrivée : la revoir à chaque
+ * page lassait plus qu'elle n'informait. Le navigateur s'en souvient
+ * (`localStorage`) ; s'il refuse de stocker — navigation privée —, la fenêtre
+ * ne s'ouvre pas du tout plutôt que de revenir à chaque page.
  */
+const SEEN_KEY = "droopys_klarna_vue";
+
+/** Vrai si le visiteur l'a déjà vue — ou si le navigateur ne peut pas le dire. */
+function alreadySeen(): boolean {
+  try {
+    return window.localStorage.getItem(SEEN_KEY) !== null;
+  } catch {
+    return true;
+  }
+}
+
+function markSeen() {
+  try {
+    window.localStorage.setItem(SEEN_KEY, new Date().toISOString());
+  } catch {
+    // Stockage refusé : `alreadySeen` répondra déjà « vue », rien à faire.
+  }
+}
 /** Pages où la cliente remplit un formulaire : pas de fenêtre par-dessus. */
 const BUSY_PATHS = ["/admin", "/commande", "/panier", "/compte", "/suivi-commande", "/retractation"];
 
@@ -28,8 +50,13 @@ export function KlarnaModal() {
   );
 
   useEffect(() => {
-    if (!inStorefront) return;
-    const timer = setTimeout(() => setOpen(true), 1200);
+    if (!inStorefront || alreadySeen()) return;
+    const timer = setTimeout(() => {
+      // Marquée vue dès qu'elle s'affiche, pas à la fermeture : un visiteur
+      // qui change de page sans la fermer ne doit pas la revoir.
+      markSeen();
+      setOpen(true);
+    }, 1200);
     return () => clearTimeout(timer);
   }, [inStorefront]);
 

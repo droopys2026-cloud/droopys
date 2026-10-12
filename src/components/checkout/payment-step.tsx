@@ -20,7 +20,7 @@ type Session =
   | { status: "error"; errors: string[] };
 
 /**
- * Étape 3 : rappel de la commande, formulaire de paiement Stripe, case CGV.
+ * Étape 3 : rappel de la commande, formulaire de paiement Stripe, mention CGV.
  *
  * La session de paiement est ouverte **en arrivant ici**, avec les
  * coordonnées validées : le serveur relit le panier et calcule le total.
@@ -126,7 +126,6 @@ export function PaymentStep({
 
 function PaymentForm({ totalCents }: { totalCents: number }) {
   const checkoutState = useCheckoutElements();
-  const [accepted, setAccepted] = useState(false);
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -160,29 +159,25 @@ function PaymentForm({ totalCents }: { totalCents: number }) {
       {error && <FormAlert errors={[error]} />}
       <PaymentElement options={{ layout: "accordion" }} />
 
-      <label className="account-checkbox">
-        <input
-          type="checkbox"
-          checked={accepted}
-          onChange={(event) => setAccepted(event.target.checked)}
-        />
-        <span>
-          J&apos;accepte les{" "}
-          <Link href="/legal/cgv" target="_blank" className="link-underline-sm">
-            conditions générales de vente
-          </Link>
-          .
-        </span>
-      </label>
-
       <button
         type="button"
         className="link-cta-block checkout-pay"
-        disabled={!accepted || paying}
+        disabled={paying}
         onClick={pay}
       >
         {paying ? "Paiement en cours…" : `Payer ${formatPrice(totalCents)}`}
       </button>
+      {/* Plus de case à cocher, à la demande de la boutique : l'acceptation
+          des CGV est portée par le clic sur « Payer », que cette phrase
+          annonce juste au-dessous. Une case précochée, elle, ne vaudrait pas
+          acceptation en droit de la consommation. */}
+      <p className="checkout-secure m-0">
+        En cliquant sur « Payer », vous acceptez nos{" "}
+        <Link href="/legal/cgv" target="_blank" className="link-underline-sm">
+          conditions générales de vente
+        </Link>
+        .
+      </p>
       <p className="checkout-secure m-0">
         Paiement chiffré, traité par Stripe. Droopy&apos;s ne voit jamais votre
         numéro de carte.

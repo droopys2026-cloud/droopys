@@ -5,6 +5,7 @@ import {
   ImageUploader,
   type UploadedImage,
 } from "@/components/admin/image-uploader";
+import { moveItem, useDragReorder } from "@/components/admin/use-drag-reorder";
 import {
   PhotoGenerator,
   type GenerationReference,
@@ -35,6 +36,8 @@ export function ProductPhotosField({
   /** Vrai quand la clé Gemini est configurée. */
   generationEnabled: boolean;
 }) {
+  const keptDragProps = useDragReorder((from, to) => onKeptChange(moveItem(kept, from, to)));
+
   return (
     <fieldset className="admin-fieldset">
       <legend className="admin-fieldset__legend">
@@ -47,13 +50,14 @@ export function ProductPhotosField({
           <p className="admin-field__label">Photos en ligne</p>
           <ul className="admin-uploader__list">
             {kept.map((url, index) => (
-              <li key={url} className="admin-thumb">
+              <li key={url} className="admin-thumb" {...keptDragProps(index)}>
                 <span className="admin-thumb__pick">
                   <Image
                     src={url}
                     alt=""
                     width={120}
                     height={160}
+                    draggable={false}
                     className="admin-thumb__image"
                   />
                 </span>
@@ -68,7 +72,7 @@ export function ProductPhotosField({
                     type="button"
                     className="admin-thumb__icon"
                     aria-label="Monter"
-                    onClick={() => onKeptChange(move(kept, index, -1))}
+                    onClick={() => onKeptChange(moveItem(kept, index, index - 1))}
                   >
                     ↑
                   </button>
@@ -76,7 +80,7 @@ export function ProductPhotosField({
                     type="button"
                     className="admin-thumb__icon"
                     aria-label="Descendre"
-                    onClick={() => onKeptChange(move(kept, index, 1))}
+                    onClick={() => onKeptChange(moveItem(kept, index, index + 1))}
                   >
                     ↓
                   </button>
@@ -134,15 +138,6 @@ export function ProductPhotosField({
       />
     </fieldset>
   );
-}
-
-/** Déplace un élément d'un rang, sans sortir du tableau. */
-function move<T>(list: T[], index: number, direction: -1 | 1): T[] {
-  const target = index + direction;
-  if (target < 0 || target >= list.length) return list;
-  const next = [...list];
-  [next[index], next[target]] = [next[target], next[index]];
-  return next;
 }
 
 /**

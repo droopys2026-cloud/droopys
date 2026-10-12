@@ -896,6 +896,21 @@
   opacity: 0.7;
 }
 
+/* Vignettes déplaçables à la souris (voir `use-drag-reorder`) : la main dit
+   qu'on peut saisir, la vignette saisie s'efface, la place visée s'encadre. */
+.admin-thumb[draggable="true"] {
+  cursor: grab;
+}
+
+.admin-thumb[data-dragging="true"] {
+  opacity: 0.4;
+}
+
+.admin-thumb[data-drop-target="true"] {
+  border-color: rgb(24, 24, 24);
+  border-style: dashed;
+}
+
 /* La photo servant de référence se distingue nettement. */
 .admin-thumb[aria-current="true"] {
   border-color: rgb(24, 24, 24);

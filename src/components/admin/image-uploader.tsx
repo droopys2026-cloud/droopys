@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { moveItem, useDragReorder } from "@/components/admin/use-drag-reorder";
 import { MAX_EDGE, toWebp } from "@/lib/images/to-webp";
 
 /**
@@ -79,13 +80,11 @@ export function ImageUploader({
     onChange(images.filter((item) => item.id !== id));
   }
 
-  function move(index: number, direction: -1 | 1) {
-    const next = [...images];
-    const target = index + direction;
-    if (target < 0 || target >= next.length) return;
-    [next[index], next[target]] = [next[target], next[index]];
-    onChange(next);
+  function move(from: number, to: number) {
+    onChange(moveItem(images, from, to));
   }
+
+  const dragProps = useDragReorder(move);
 
   return (
     <div className="admin-uploader">
@@ -132,6 +131,7 @@ export function ImageUploader({
               key={image.id}
               className="admin-thumb"
               aria-current={selectedId === image.id ? "true" : undefined}
+              {...dragProps(index)}
             >
               {/* La vignette sélectionne la photo : les boutons de génération
                   agissent sur celle qui est choisie. Grand aperçu — on juge
@@ -148,6 +148,7 @@ export function ImageUploader({
                 <img
                   src={image.previewUrl}
                   alt=""
+                  draggable={false}
                   className="admin-thumb__image"
                 />
               </button>
@@ -167,7 +168,7 @@ export function ImageUploader({
                   type="button"
                   className="admin-thumb__icon"
                   aria-label="Monter"
-                  onClick={() => move(index, -1)}
+                  onClick={() => move(index, index - 1)}
                 >
                   ↑
                 </button>
@@ -175,7 +176,7 @@ export function ImageUploader({
                   type="button"
                   className="admin-thumb__icon"
                   aria-label="Descendre"
-                  onClick={() => move(index, 1)}
+                  onClick={() => move(index, index + 1)}
                 >
                   ↓
                 </button>

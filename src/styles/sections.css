@@ -15,6 +15,32 @@
     z-index: 1;
   }
 
+  /* Hauteur fixe, un peu plus grande que la capture (36 px) : la bande porte
+     parfois un logo, et un logo à 18 px de haut ne se lit plus. */
+  .announcement-bar {
+    min-height: 48px;
+  }
+
+  .announcement-bar__logo {
+    width: auto;
+    height: 28px;
+    border-radius: 4px;
+  }
+
+  /* Sur téléphone, le message va presque d'un bord à l'autre : la croix de
+     fermeture, posée à droite, mordait sur le dernier mot. On lui réserve sa
+     place et on resserre logo et espacement. */
+  @media (max-width: 768px) {
+    .announcement-bar {
+      column-gap: var(--spacing-5);
+      padding-inline: var(--spacing-7) 44px;
+    }
+
+    .announcement-bar__logo {
+      height: 22px;
+    }
+  }
+
   .section-header {
     background-color: var(--color-surface);
     position: relative;

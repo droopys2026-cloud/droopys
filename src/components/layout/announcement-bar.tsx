@@ -6,12 +6,20 @@
 
 import { useState } from "react";
 
-export function AnnouncementBar({ children }: { children: React.ReactNode }) {
+export function AnnouncementBar({
+  children,
+  logo,
+}: {
+  children: React.ReactNode;
+  /** Logo posé avant le message (le badge Klarna, par exemple). */
+  logo?: React.ReactNode;
+}) {
   const [visible, setVisible] = useState(true);
   if (!visible) return null;
 
   return (
-    <div className="section-announcement box-announcement-wrapper gap-y-1 px-9 py-2">
+    <div className="section-announcement box-announcement-wrapper announcement-bar gap-x-4 gap-y-1 px-9">
+      {logo}
       <p className="text-paragraph m-0">{children}</p>
       <button
         type="button"

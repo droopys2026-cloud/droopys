@@ -110,9 +110,11 @@ export default async function CustomerOrderPage({ params }: PageProps) {
           <Link href="/aide/retours" className="link-underline-sm self-start">
             Retourner un article
           </Link>
+          {/* Un vrai bouton, et non un lien discret : la fonction de
+              rétractation doit sauter aux yeux (directive (UE) 2023/2673). */}
           <Link
             href={`/retractation?commande=${encodeURIComponent(order.reference)}&email=${encodeURIComponent(order.customerEmail)}`}
-            className="link-underline-sm self-start"
+            className="account-button-outline mt-3 w-auto self-start"
           >
             Se rétracter du contrat ici
           </Link>

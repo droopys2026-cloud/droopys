@@ -6,6 +6,9 @@ import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { ClearCartOnMount } from "@/components/sections/clear-cart";
 import { formatPrice } from "@/lib/format";
+import { eq } from "drizzle-orm";
+import { db } from "@/db";
+import { orders } from "@/db/schema";
 import { stripe } from "@/lib/stripe";
 
 export const metadata: Metadata = {
@@ -33,6 +36,20 @@ export default async function ThankYouPage({ searchParams }: PageProps) {
 
   const session = await stripe.checkout.sessions.retrieve(sessionId);
   const paid = session.payment_status === "paid";
+
+  // La commande est créée par le webhook, parfois une seconde après l'arrivée
+  // ici : trouvée, son numéro préremplit le formulaire de rétractation ; sinon
+  // la cliente le saisit, il est dans l'e-mail de confirmation.
+  const order = paid
+    ? await db.query.orders.findFirst({
+        where: eq(orders.stripeSessionId, session.id),
+        columns: { reference: true },
+      })
+    : undefined;
+  const withdrawalParams = new URLSearchParams();
+  if (order) withdrawalParams.set("commande", order.reference);
+  if (session.customer_details?.email) withdrawalParams.set("email", session.customer_details.email);
+  const withdrawalHref = `/retractation${withdrawalParams.size > 0 ? `?${withdrawalParams}` : ""}`;
 
   return (
     <>
@@ -66,12 +83,11 @@ export default async function ThankYouPage({ searchParams }: PageProps) {
                   et sur la commande dans l'espace client. */}
               <p className="text-paragraph m-0 max-w-lg">
                 Vous changez d&apos;avis ? Vous avez 14 jours après réception
-                pour vous rétracter :{" "}
-                <Link href="/retractation" className="link-underline-sm">
-                  se rétracter du contrat ici
-                </Link>
-                .
+                pour vous rétracter.
               </p>
+              <Link href={withdrawalHref} className="account-button-outline w-auto">
+                Se rétracter du contrat ici
+              </Link>
             </>
           ) : (
             <p className="text-paragraph m-0 max-w-lg">

@@ -51,7 +51,11 @@ const sql =
   globalForDb.droopysSql ??
   postgres(connectionUrl(), {
     prepare: false,
-    max: 4,
+    // Build : deux connexions par processus. Le mode session plafonne à
+    // quinze clients pour tout le projet, et le serveur de développement en
+    // tient déjà quelques-unes : à quatre, un build est tombé en
+    // « EMAXCONNSESSION ». Trois processus × 2 laissent de la marge.
+    max: process.env.NEXT_PHASE === "phase-production-build" ? 2 : 4,
     // Une connexion inactive est rendue au pooler plutôt que gardée : elle
     // servira à une autre fonction.
     idle_timeout: 20,

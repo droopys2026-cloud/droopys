@@ -8,6 +8,7 @@ import { ProductRail } from "@/components/sections/product-rail";
 import { Editorial } from "@/components/sections/editorial";
 import { Newsletter } from "@/components/sections/newsletter";
 import { KlarnaBand } from "@/components/sections/klarna-band";
+import { BabySetsBand } from "@/components/sections/baby-sets-band";
 import { SocialCard } from "@/components/sections/social-card";
 import { getHomeRails } from "@/lib/queries/rails";
 import { getShopSettings } from "@/lib/queries/settings";
@@ -38,6 +39,8 @@ export default async function HomePage() {
             <ProductRail rail={creators} />
           </div>
         )}
+
+        <BabySetsBand />
 
         {trends && <ProductRail rail={trends} />}
 

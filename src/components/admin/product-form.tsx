@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { startTransition, useActionState, useState } from "react";
 import Link from "next/link";
 import {
   saveProduct,
@@ -15,6 +15,7 @@ import {
 } from "@/components/admin/product-measurements-field";
 import { ProductPhotosField } from "@/components/admin/product-photos-field";
 import { ProductPlacementsField } from "@/components/admin/product-placements-field";
+import { uploadProductPhotos } from "@/lib/products/upload-photos";
 import {
   ProductSizesField,
   type SizeStock,
@@ -108,13 +109,44 @@ export function ProductForm({
   const [pendingImages, setPendingImages] = useState<UploadedImage[]>([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
+  // Photos déjà déposées dans le stockage, par identifiant d'image : après une
+  // erreur de saisie, le nouvel essai ne les renvoie pas une seconde fois.
+  const [uploadedById, setUploadedById] = useState<Record<string, string>>({});
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
   /**
    * Les fichiers vivent dans l'état React, pas dans un `<input type="file">` :
-   * ils ont été convertis en WebP dans le navigateur. On les rattache donc à
-   * la `FormData` juste avant l'envoi.
+   * ils ont été convertis en WebP dans le navigateur. Ils partent d'abord,
+   * chacun seul, vers le stockage (`uploadProductPhotos`) ; la fiche n'emporte
+   * ensuite que leurs adresses. Les joindre à la fiche faisait dépasser la
+   * limite de 4,5 Mo par requête de Vercel dès quatre photos.
    */
-  function submit(formData: FormData) {
-    for (const image of pendingImages) formData.append("photos", image.file);
+  async function submit(formData: FormData) {
+    setUploadError(null);
+    const missing = pendingImages.filter((image) => !uploadedById[image.id]);
+    let known = uploadedById;
+    if (missing.length > 0) {
+      setUploading(true);
+      try {
+        const urls = await uploadProductPhotos(missing.map((image) => image.file));
+        known = { ...uploadedById };
+        missing.forEach((image, index) => {
+          known[image.id] = urls[index];
+        });
+        setUploadedById(known);
+      } catch (error) {
+        setUploadError(error instanceof Error ? error.message : "Envoi des photos impossible.");
+        return;
+      } finally {
+        setUploading(false);
+      }
+    }
+
+    formData.set(
+      "uploadedImages",
+      JSON.stringify(pendingImages.map((image) => known[image.id])),
+    );
     formData.set("sizes", JSON.stringify(sizes));
     formData.set(
       "measurements",
@@ -123,25 +155,29 @@ export function ProductForm({
       ),
     );
     formData.set("keptImages", JSON.stringify(kept));
-    action(formData);
+    // Après un `await`, l'appel sort de la transition du formulaire : on l'y
+    // remet, sinon `pending` ne passerait pas à vrai pendant l'enregistrement.
+    startTransition(() => action(formData));
   }
+
+  const errors = [...(uploadError ? [uploadError] : []), ...(state.errors ?? [])];
 
   return (
     <form className="admin-form admin-form--wide" action={submit}>
       {product && <input type="hidden" name="productId" value={product.id} />}
 
-      {state.errors && state.errors.length > 0 && (
+      {errors.length > 0 && (
         /* Le récapitulatif est placé avant les champs, pas sous le bouton :
            un message sous le bouton n'est lu ni par un lecteur d'écran qui
            vient de remonter, ni par un œil pressé. */
         <div role="alert" className="admin-form__error">
           <p>
-            {state.errors.length > 1
+            {errors.length > 1
               ? "La fiche n'a pas été enregistrée :"
               : "La fiche n'a pas été enregistrée."}
           </p>
           <ul>
-            {state.errors.map((error) => (
+            {errors.map((error) => (
               <li key={error}>{error}</li>
             ))}
           </ul>
@@ -447,8 +483,12 @@ export function ProductForm({
       </fieldset>
 
       <div className="admin-form__actions">
-        <button type="submit" className="admin-button" disabled={pending}>
-          {pending ? "Enregistrement…" : "Enregistrer le produit"}
+        <button type="submit" className="admin-button" disabled={pending || uploading}>
+          {uploading
+            ? "Envoi des photos…"
+            : pending
+              ? "Enregistrement…"
+              : "Enregistrer le produit"}
         </button>
         <Link
           href="/admin/produits"

@@ -17,9 +17,10 @@ import {
 import { requireAdmin } from "@/lib/auth";
 import { CACHE_TAGS } from "@/lib/cache";
 import {
-  ImageUploadError,
+  createProductPhotoUploads,
   deleteProductImages,
-  uploadProductImages,
+  isProductPhotoUrl,
+  type PhotoUpload,
 } from "@/lib/products/images";
 import { productInputSchema, productIssues } from "@/lib/products/schema";
 import { slugify, uniqueSlug } from "@/lib/slug";
@@ -50,6 +51,34 @@ const measurementsField = z.array(
 const keptImagesField = z.array(
   z.string().refine((value) => value.startsWith("/") || URL.canParse(value), "Photo invalide."),
 );
+
+const uploadedImagesField = z.array(
+  z.string().refine(isProductPhotoUrl, "Photo envoyée invalide."),
+);
+
+/**
+ * Étape 1 de l'enregistrement : des adresses de dépôt pour les nouvelles
+ * photos. Le navigateur y envoie les fichiers lui-même, puis enregistre la
+ * fiche avec leurs seules adresses (voir `createProductPhotoUploads`).
+ */
+export async function prepareProductPhotoUploads(
+  files: { type: string; size: number }[],
+): Promise<{ status: "ok"; uploads: PhotoUpload[] } | { status: "error"; message: string }> {
+  await requireAdmin();
+  const parsed = z
+    .array(z.object({ type: z.string(), size: z.number().int().nonnegative() }))
+    .safeParse(files);
+  if (!parsed.success) return { status: "error", message: "Photos invalides." };
+  try {
+    return { status: "ok", uploads: await createProductPhotoUploads(parsed.data) };
+  } catch (error) {
+    console.error("Dépôt de photos non préparé :", error);
+    return {
+      status: "error",
+      message: error instanceof Error ? error.message : "Envoi des photos impossible.",
+    };
+  }
+}
 
 function readJson<T>(formData: FormData, key: string, schema: z.ZodType<T>, fallback: T): T {
   const raw = formData.get(key);
@@ -137,11 +166,18 @@ export async function saveProduct(
   const isUpdate = typeof productId === "string" && productId !== "";
 
   const kept = readJson(formData, "keptImages", keptImagesField, []);
-  const files = formData
-    .getAll("photos")
-    .filter((entry): entry is File => entry instanceof File && entry.size > 0);
+  // Déjà déposées par le navigateur (`prepareProductPhotoUploads`) : on ne
+  // reçoit que leurs adresses, et seulement celles de notre bucket.
+  // Pas de repli silencieux ici, contrairement à `readJson` : une liste
+  // refusée ferait disparaître sans bruit des photos déjà déposées.
+  const uploadedRaw = formData.get("uploadedImages");
+  const uploadedParsed = uploadedImagesField.safeParse(
+    typeof uploadedRaw === "string" && uploadedRaw !== "" ? JSON.parse(uploadedRaw) : [],
+  );
+  if (!uploadedParsed.success) return { errors: ["Les photos envoyées n'ont pas été reconnues. Réessayez."] };
+  const uploaded = uploadedParsed.data;
 
-  if (!isUpdate && kept.length === 0 && files.length === 0) {
+  if (!isUpdate && kept.length === 0 && uploaded.length === 0) {
     return { errors: ["Ajoutez au moins une photo : une fiche sans visuel ne se vend pas."] };
   }
 
@@ -191,16 +227,6 @@ export async function saveProduct(
       .values({ ...values, slug })
       .returning({ id: products.id });
     id = row.id;
-  }
-
-  // Les photos partent après l'enregistrement : le chemin de stockage porte
-  // le slug, qui n'existe qu'une fois la ligne écrite.
-  let uploaded: string[] = [];
-  try {
-    uploaded = await uploadProductImages(files, slug);
-  } catch (error) {
-    if (error instanceof ImageUploadError) return { errors: [error.message] };
-    throw error;
   }
 
   const gallery = [...kept, ...uploaded];

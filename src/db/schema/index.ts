@@ -7,6 +7,7 @@
  * le seul à résoudre l'alias de façon fiable dans un `export *`.
  */
 export * from "./catalog";
+export * from "./contact-messages";
 export * from "./content";
 export * from "./customers";
 export * from "./generated-photos";

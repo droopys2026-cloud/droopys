@@ -1,23 +1,38 @@
-/**
- * Formulaire de contact.
- *
- * Aucune action serveur n'est branchée : la validation est celle du
- * navigateur, et le bouton d'envoi reste inactif. Un formulaire qui semble
- * partir sans rien envoyer est pire qu'un formulaire visiblement inactif —
- * le visiteur attend une réponse qui ne viendra jamais.
- */
-const SUBJECTS = [
-  "Ma commande",
-  "Un retour ou un remboursement",
-  "Une question sur un article",
-  "La boutique de Marseille",
-  "Presse et partenariats",
-  "Autre",
-];
+"use client";
 
+import { useActionState } from "react";
+import { sendContactMessage, type ContactState } from "@/app/contact/actions";
+import { FormAlert } from "@/components/account/form-alert";
+import { CONTACT_SUBJECTS } from "@/lib/contact";
+
+/**
+ * Formulaire de contact. Le message part par e-mail à la boutique (voir
+ * `sendContactMessage`) ; en cas d'erreur, les champs sont réaffichés tels
+ * que saisis — personne ne retape un long message.
+ */
 export function ContactForm() {
+  const [state, action, pending] = useActionState<ContactState, FormData>(
+    sendContactMessage,
+    { status: "idle" },
+  );
+
+  if (state.status === "sent") {
+    return (
+      <p role="status" className="text-paragraph m-0">
+        Merci, votre message est bien parti. Nous vous répondons par e-mail,
+        en général sous 48 heures ouvrées.
+      </p>
+    );
+  }
+
+  const values = state.status === "error" ? state.values : null;
+
   return (
-    <form className="content-form">
+    // La clé remonte le formulaire à chaque erreur : les `defaultValue`
+    // reprennent alors les valeurs renvoyées par le serveur.
+    <form action={action} className="content-form" key={values ? JSON.stringify(values) : "vide"}>
+      <FormAlert errors={state.status === "error" ? state.errors : []} />
+
       <div className="content-form__grid">
         <div className="content-field">
           <label className="content-field__label" htmlFor="contact-nom">
@@ -25,9 +40,10 @@ export function ContactForm() {
           </label>
           <input
             id="contact-nom"
-            name="nom"
+            name="name"
             required
             autoComplete="name"
+            defaultValue={values?.name}
             className="content-field__input"
           />
         </div>
@@ -42,8 +58,26 @@ export function ContactForm() {
             type="email"
             required
             autoComplete="email"
+            defaultValue={values?.email}
             className="content-field__input"
           />
+        </div>
+
+        <div className="content-field">
+          <label className="content-field__label" htmlFor="contact-telephone">
+            Téléphone
+          </label>
+          <input
+            id="contact-telephone"
+            name="phone"
+            type="tel"
+            autoComplete="tel"
+            defaultValue={values?.phone}
+            className="content-field__input"
+          />
+          <span className="content-field__hint">
+            Facultatif, si vous préférez qu&apos;on vous rappelle.
+          </span>
         </div>
 
         <div className="content-field">
@@ -52,24 +86,25 @@ export function ContactForm() {
           </label>
           <select
             id="contact-sujet"
-            name="sujet"
+            name="subject"
             className="content-field__input"
-            defaultValue={SUBJECTS[0]}
+            defaultValue={values?.subject ?? CONTACT_SUBJECTS[0]}
           >
-            {SUBJECTS.map((subject) => (
+            {CONTACT_SUBJECTS.map((subject) => (
               <option key={subject}>{subject}</option>
             ))}
           </select>
         </div>
 
-        <div className="content-field">
+        <div className="content-field content-field--full">
           <label className="content-field__label" htmlFor="contact-commande">
             Numéro de commande
           </label>
           <input
             id="contact-commande"
-            name="commande"
+            name="orderReference"
             placeholder="DRP-000000"
+            defaultValue={values?.orderReference}
             className="content-field__input"
           />
           <span className="content-field__hint">
@@ -86,20 +121,22 @@ export function ContactForm() {
             name="message"
             rows={6}
             required
+            defaultValue={values?.message}
             className="content-field__input"
           />
         </div>
+
+        {/* Piège à robots : hors écran et hors tabulation, un humain ne le
+            remplit jamais. Pas `display: none`, que certains robots sautent. */}
+        <div aria-hidden className="absolute -left-[9999px]">
+          <label htmlFor="contact-site">Ne pas remplir</label>
+          <input id="contact-site" name="site" tabIndex={-1} autoComplete="off" />
+        </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-9">
-        <button type="submit" className="link-cta-block mt-0" disabled>
-          Envoyer
-        </button>
-        <p className="content-field__hint m-0">
-          L&apos;envoi n&apos;est pas encore branché : le service de messagerie
-          reste à choisir.
-        </p>
-      </div>
+      <button type="submit" className="link-cta-block mt-0 self-start" disabled={pending}>
+        {pending ? "Envoi…" : "Envoyer"}
+      </button>
     </form>
   );
 }

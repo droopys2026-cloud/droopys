@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { AdminPageTransition } from "@/components/admin/admin-page-transition";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { requireAdmin } from "@/lib/auth";
+import { countPendingContactMessages } from "@/lib/queries/contact-messages";
 
 export const metadata: Metadata = {
   title: "Admin | Droopy's",
@@ -23,10 +24,11 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const user = await requireAdmin();
+  const pendingMessages = await countPendingContactMessages();
 
   return (
     <div className="admin-shell">
-      <AdminSidebar email={user.email ?? ""} />
+      <AdminSidebar email={user.email ?? ""} pendingMessages={pendingMessages} />
       <main className="admin-main">
         <AdminPageTransition>{children}</AdminPageTransition>
       </main>

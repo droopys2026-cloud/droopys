@@ -11,6 +11,7 @@ import {
   IconMenu,
   IconSparkleImage,
   IconMail,
+  IconMessage,
   IconOrders,
   IconPages,
   IconSettings,
@@ -44,6 +45,7 @@ const SECTIONS = [
       { href: "/admin/commandes", label: "Commandes", Icon: IconOrders },
       { href: "/admin/paiements", label: "Paiements", Icon: IconWallet },
       { href: "/admin/clients", label: "Clients", Icon: IconUsers },
+      { href: "/admin/messages", label: "Messages clients", Icon: IconMessage },
       { href: "/admin/newsletter", label: "Newsletter", Icon: IconMail },
     ],
   },
@@ -56,7 +58,14 @@ const SECTIONS = [
   },
 ];
 
-export function AdminSidebar({ email }: { email: string }) {
+export function AdminSidebar({
+  email,
+  pendingMessages,
+}: {
+  email: string;
+  /** Messages de contact non traités : une pastille les signale dans le menu. */
+  pendingMessages: number;
+}) {
   const pathname = usePathname();
 
   return (
@@ -85,6 +94,12 @@ export function AdminSidebar({ email }: { email: string }) {
                   >
                     <Icon />
                     <span>{label}</span>
+                    {href === "/admin/messages" && pendingMessages > 0 && (
+                      <span className="admin-nav__count">
+                        {pendingMessages}
+                        <span className="sr-only"> en attente</span>
+                      </span>
+                    )}
                   </Link>
                 </li>
               ))}

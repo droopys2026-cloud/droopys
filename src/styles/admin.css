@@ -92,6 +92,19 @@
   line-height: 1;
 }
 
+/* Bouton du menu replié : téléphone seulement (voir plus bas). */
+.admin-sidebar__toggle {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--admin-rule);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
 /* Le corps défile seul : l'en-tête et le pied restent en place. */
 .admin-sidebar__body {
   display: flex;
@@ -2044,4 +2057,52 @@
 /* Rétractation en attente, à côté de l'état dans la liste des commandes. */
 .admin-withdrawal-badge {
   margin-left: 6px;
+}
+
+/* Téléphone : la barre latérale devient une barre du haut, menu replié
+   derrière un bouton ; la page prend toute la largeur. */
+@media (max-width: 768px) {
+  .admin-shell {
+    flex-direction: column;
+  }
+
+  .admin-sidebar {
+    width: 100%;
+    height: auto;
+    max-height: 100svh;
+    padding: 12px 16px;
+    overflow-y: auto;
+  }
+
+  .admin-sidebar__header {
+    height: auto;
+    padding-bottom: 0;
+  }
+
+  .admin-sidebar__toggle {
+    display: flex;
+  }
+
+  .admin-sidebar[data-open="true"] .admin-sidebar__header {
+    padding-bottom: 16px;
+  }
+
+  /* Sur ordinateur, le corps prend la hauteur restante (`flex: 1 1 0`) ; dans
+     une barre à hauteur libre, il n'en reste aucune, et le menu s'écrasait. */
+  .admin-sidebar__body {
+    flex: none;
+  }
+
+  .admin-sidebar:not([data-open="true"]) .admin-sidebar__body,
+  .admin-sidebar:not([data-open="true"]) .admin-sidebar__footer {
+    display: none;
+  }
+
+  .admin-main {
+    margin: 0 8px 8px;
+  }
+
+  .admin-page {
+    padding: 20px 16px;
+  }
 }

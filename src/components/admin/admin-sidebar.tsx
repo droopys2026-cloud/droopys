@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 import { signOut } from "@/app/admin/connexion/actions";
 import {
   IconBolt,
@@ -67,16 +68,40 @@ export function AdminSidebar({
   pendingMessages: number;
 }) {
   const pathname = usePathname();
+  // Sur téléphone, le menu est replié derrière un bouton : déplié en
+  // permanence, il prenait les deux tiers de l'écran et écrasait la page.
+  const [open, setOpen] = useState(false);
+  // Replié à chaque changement de page : on a choisi où aller, on veut la voir.
+  const [lastPath, setLastPath] = useState(pathname);
+  if (pathname !== lastPath) {
+    setLastPath(pathname);
+    setOpen(false);
+  }
 
   return (
-    <aside className="admin-sidebar">
+    <aside className="admin-sidebar" data-open={open ? "true" : undefined}>
       <div className="admin-sidebar__header">
         <Link href="/admin" className="admin-sidebar__logo">
           Droopy&apos;s
         </Link>
+        <button
+          type="button"
+          className="admin-sidebar__toggle"
+          aria-expanded={open}
+          aria-controls="admin-sidebar-menu"
+          onClick={() => setOpen((value) => !value)}
+        >
+          {open ? "Fermer" : "Menu"}
+          {!open && pendingMessages > 0 && (
+            <span className="admin-nav__count">
+              {pendingMessages}
+              <span className="sr-only"> messages en attente</span>
+            </span>
+          )}
+        </button>
       </div>
 
-      <div className="admin-sidebar__body">
+      <div className="admin-sidebar__body" id="admin-sidebar-menu">
         {SECTIONS.map((section) => (
           <nav
             key={section.label}

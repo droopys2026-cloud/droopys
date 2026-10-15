@@ -25,13 +25,74 @@ export type ModelAge = {
   stands: boolean;
 };
 
+/**
+ * Origine du mannequin, choisie à l'admin. La boutique habille des enfants
+ * de toutes origines ; un seul visage sur tout le catalogue ne leur ressemble
+ * pas.
+ *
+ * Peau et cheveux sont écrits ensemble, par rayon : laissés à l'IA, ils
+ * dérivent vers le même enfant d'une photo à l'autre, quelle que soit
+ * l'origine demandée.
+ */
+export type ModelLook = {
+  id: string;
+  label: string;
+  /** Tel qu'écrit dans le prompt : « a Black girl ». */
+  people: string;
+  skin: string;
+  /** Par rayon : écrit à part de `PhotoSubject`, qui dépend de ce type. */
+  hair: Record<"bebe" | "fille" | "garcon", string>;
+};
+
+export const MODEL_LOOKS: ModelLook[] = [
+  {
+    id: "europeen",
+    label: "Européen",
+    people: "white European",
+    skin: "light skin",
+    hair: { bebe: "fine light hair", fille: "long brown hair", garcon: "short light brown hair" },
+  },
+  {
+    id: "noir",
+    label: "Noir",
+    people: "Black",
+    skin: "deep brown skin",
+    hair: {
+      bebe: "short soft black curls",
+      fille: "natural black hair in neat braids",
+      garcon: "short black coily hair",
+    },
+  },
+  {
+    id: "metis",
+    label: "Métis",
+    people: "mixed-race (Black and white)",
+    skin: "warm light brown skin",
+    hair: { bebe: "soft dark curls", fille: "long dark curly hair", garcon: "short dark curly hair" },
+  },
+  {
+    id: "maghrebin",
+    label: "Maghrébin",
+    people: "North African",
+    skin: "olive skin",
+    hair: {
+      bebe: "fine dark hair",
+      fille: "long wavy dark brown hair",
+      garcon: "short dark brown hair",
+    },
+  },
+];
+
+/** Origine retenue quand aucune n'est choisie : le rendu d'avant le choix. */
+export const DEFAULT_LOOK = "europeen";
+
 type SubjectSpec = {
   label: string;
   ages: ModelAge[];
   /** Âge proposé d'office quand on choisit ce mannequin. */
   defaultAge: string;
-  /** Le mannequin, à l'âge choisi. */
-  person: (age: string) => string;
+  /** Le mannequin, à l'âge et à l'origine choisis. */
+  person: (age: string, look: ModelLook) => string;
   pose: string;
   /** Pose de la photo portée pour un bébé qui ne tient pas debout. */
   seatedPose: string;
@@ -57,7 +118,7 @@ export const PHOTO_SUBJECTS = {
       { id: "24-mois", label: "24 mois", words: "around 2 years old", stands: true },
     ],
     defaultAge: "18-mois",
-    person: (age) => `a white European baby, ${age}, light skin and fine light hair`,
+    person: (age, look) => `a ${look.people} baby, ${age}, ${look.skin} and ${look.hair.bebe}`,
     pose: "Standing on their own, feet slightly apart, arms relaxed, genuinely smiling at the camera with a natural open baby smile — happy, unposed, candid.",
     seatedPose:
       "Sitting on the floor the way a baby sits, legs loosely in front, steady and upright, looking at the camera with a natural open baby smile — happy, unposed, candid.",
@@ -68,7 +129,7 @@ export const PHOTO_SUBJECTS = {
     label: "Fille 2-16 ans",
     ages: CHILD_AGES,
     defaultAge: "10-ans",
-    person: (age) => `a white European girl, ${age}, light skin and long brown hair`,
+    person: (age, look) => `a ${look.people} girl, ${age}, ${look.skin} and ${look.hair.fille}`,
     pose: "Standing relaxed facing the camera, weight on one leg, arms loose, calm natural expression with a faint easy smile. Age-appropriate and unforced — a child standing naturally, not posing like an adult model.",
     seatedPose: "",
     closePose:
@@ -78,7 +139,7 @@ export const PHOTO_SUBJECTS = {
     label: "Garçon 2-16 ans",
     ages: CHILD_AGES,
     defaultAge: "10-ans",
-    person: (age) => `a white European boy, ${age}, light skin and short light brown hair`,
+    person: (age, look) => `a ${look.people} boy, ${age}, ${look.skin} and ${look.hair.garcon}`,
     pose: "Standing relaxed facing the camera, weight on one leg, hands loose or one in pocket, calm natural expression looking slightly off-camera. Age-appropriate and unforced.",
     seatedPose: "",
     closePose:
@@ -148,6 +209,8 @@ export type PromptInput = {
   subject: PhotoSubject;
   /** Identifiant d'âge (« 6-ans ») ; absent ou inconnu : l'âge par défaut. */
   age?: string;
+  /** Identifiant d'origine (« metis ») ; absent ou inconnu : `DEFAULT_LOOK`. */
+  look?: string;
   garment: PhotoGarment;
   /** Vide pour un article sans marque : la phrase s'écrit alors sans elle. */
   brand: string;
@@ -164,15 +227,19 @@ function subjectOf(brand: string, productName: string, generic = "item"): string
   return brand ? `${brand} ${name}` : name;
 }
 
-/** Le mannequin à l'âge choisi, et la pose qu'il peut tenir. */
-function modelOf(subject: PhotoSubject, ageId: string | undefined) {
+/** Le mannequin à l'âge et à l'origine choisis, et la pose qu'il peut tenir. */
+function modelOf(subject: PhotoSubject, ageId: string | undefined, lookId: string | undefined) {
   const spec: SubjectSpec = PHOTO_SUBJECTS[subject];
   const age =
     spec.ages.find((entry) => entry.id === ageId) ??
     spec.ages.find((entry) => entry.id === spec.defaultAge) ??
     spec.ages[0];
+  const look =
+    MODEL_LOOKS.find((entry) => entry.id === lookId) ??
+    MODEL_LOOKS.find((entry) => entry.id === DEFAULT_LOOK) ??
+    MODEL_LOOKS[0];
   return {
-    person: spec.person(age.words),
+    person: spec.person(age.words, look),
     stands: age.stands,
     pose: age.stands ? spec.pose : spec.seatedPose,
     closePose: spec.closePose,
@@ -183,11 +250,12 @@ function modelOf(subject: PhotoSubject, ageId: string | undefined) {
 export function buildFullShotPrompt({
   subject,
   age,
+  look,
   garment,
   brand,
   productName,
 }: PromptInput): string {
-  const s = modelOf(subject, age);
+  const s = modelOf(subject, age, look);
   const g = PHOTO_GARMENTS[garment];
 
   return [
@@ -202,11 +270,12 @@ export function buildFullShotPrompt({
 export function buildCloseShotPrompt({
   subject,
   age,
+  look,
   garment,
   brand,
   productName,
 }: PromptInput): string {
-  const s = modelOf(subject, age);
+  const s = modelOf(subject, age, look);
   const g = PHOTO_GARMENTS[garment];
 
   // Les chaussures se photographient sans modèle : le cadrage rapproché est un
@@ -236,11 +305,12 @@ export function buildCloseShotPrompt({
 export function buildThreeQuarterShotPrompt({
   subject,
   age,
+  look,
   garment,
   brand,
   productName,
 }: PromptInput): string {
-  const s = modelOf(subject, age);
+  const s = modelOf(subject, age, look);
   const g = PHOTO_GARMENTS[garment];
 
   // Un bébé qui ne marche pas encore ne passe pas devant l'objectif : il est

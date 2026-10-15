@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/auth";
 import {
+  MODEL_LOOKS,
   PHOTO_GARMENTS,
   PHOTO_SUBJECTS,
   SHOT_LABELS,
@@ -61,6 +62,8 @@ const inputSchema = z.discriminatedUnion("mode", [
     // Vérifié contre la liste du mannequin dans `@/lib/photo-prompts` : un âge
     // inconnu y retombe sur l'âge par défaut.
     age: z.string().max(20).optional(),
+    // Même règle : une origine inconnue retombe sur l'origine par défaut.
+    look: z.string().max(20).optional(),
     garment: garmentField,
   }),
 ]);
@@ -113,6 +116,7 @@ export async function generateProductPhoto(
     subject: formData.get("subject") ?? undefined,
     garment: formData.get("garment") ?? undefined,
     age: formData.get("age") ?? undefined,
+    look: formData.get("look") ?? undefined,
   });
   if (!input.success)
     return { status: "error", message: "Mode de génération inconnu." };
@@ -165,7 +169,8 @@ function shotDescription(mode: z.infer<typeof inputSchema>): string {
   }
   const subject = PHOTO_SUBJECTS[mode.subject];
   const age = subject.ages.find((entry) => entry.id === mode.age)?.label;
-  return `${SHOT_LABELS[mode.mode]} — ${subject.label.split(" ")[0]}${age ? `, ${age}` : ""}`;
+  const look = MODEL_LOOKS.find((entry) => entry.id === mode.look)?.label.toLowerCase();
+  return `${SHOT_LABELS[mode.mode]} — ${subject.label.split(" ")[0]}${age ? `, ${age}` : ""}${look ? `, ${look}` : ""}`;
 }
 
 /** Le prompt de chaque prise de vue — voir `@/lib/photo-prompts`. */
@@ -181,6 +186,7 @@ function promptFor(
         ...product,
         subject: mode.subject,
         age: mode.age,
+        look: mode.look,
         garment: mode.garment,
       });
     case "porte-trois-quarts":
@@ -188,6 +194,7 @@ function promptFor(
         ...product,
         subject: mode.subject,
         age: mode.age,
+        look: mode.look,
         garment: mode.garment,
       });
     case "gros-plan":
@@ -195,6 +202,7 @@ function promptFor(
         ...product,
         subject: mode.subject,
         age: mode.age,
+        look: mode.look,
         garment: mode.garment,
       });
     case "detail":

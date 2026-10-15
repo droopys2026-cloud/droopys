@@ -49,3 +49,31 @@ describe("âge du mannequin", () => {
     expect(prompt).not.toContain("Standing on their own");
   });
 });
+
+describe("origine du mannequin", () => {
+  const base = { garment: "haut", brand: "", productName: "" } as const;
+
+  it("garde le mannequin européen par défaut", () => {
+    expect(buildOnModelPrompt({ ...base, subject: "fille" })).toContain(
+      "a white European girl, around 10 years old, light skin",
+    );
+  });
+
+  it("écrit l'origine, la peau et les cheveux choisis", () => {
+    expect(buildOnModelPrompt({ ...base, subject: "fille", look: "noir" })).toContain(
+      "a Black girl, around 10 years old, deep brown skin and natural black hair in neat braids",
+    );
+    expect(buildOnModelPrompt({ ...base, subject: "garcon", look: "maghrebin" })).toContain(
+      "a North African boy, around 10 years old, olive skin",
+    );
+    expect(buildOnModelPrompt({ ...base, subject: "bebe", look: "metis" })).toContain(
+      "a mixed-race (Black and white) baby",
+    );
+  });
+
+  it("retombe sur l'origine par défaut quand elle est inconnue", () => {
+    expect(buildOnModelPrompt({ ...base, subject: "garcon", look: "inconnue" })).toContain(
+      "a white European boy",
+    );
+  });
+});

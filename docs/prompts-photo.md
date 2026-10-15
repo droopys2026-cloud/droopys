@@ -17,6 +17,12 @@ l'autre. Ne le reformule pas, même pour l'améliorer.
   accentué doit être encodé dans l'URL et se comporte mal selon les serveurs).
 - À ne jamais demander : `harsh flash, dark grading, busy background, props,
 toys, text overlay, other brand logos, sunglasses, makeup`.
+- Mannequins de toutes origines — européenne, noire, métisse, maghrébine —,
+  demandé par la boutique. Les exemples ci-dessous sont écrits pour un enfant
+  européen : remplacer l'origine, la peau et les cheveux par ceux de
+  `MODEL_LOOKS` dans `@/lib/photo-prompts` (par exemple « a Black girl, …,
+  deep brown skin and natural black hair in neat braids »). Le générateur de
+  l'admin le fait de lui-même avec le menu « Origine ».
 
 ## Paragraphe de décor (à recopier tel quel)
 

@@ -6,6 +6,8 @@ import type { UploadedImage } from "@/components/admin/image-uploader";
 import { toWebp } from "@/lib/images/to-webp";
 import {
   PHOTO_GARMENTS,
+  DEFAULT_LOOK,
+  MODEL_LOOKS,
   PHOTO_SUBJECTS,
   SHOT_LABELS,
   aloneShot,
@@ -26,7 +28,13 @@ export type GenerationReference =
 export type GeneratedPhoto = { image: UploadedImage; replaces?: string };
 
 /** Une photo à produire : un angle, et pour les photos portées, qui la porte. */
-type Shot = { mode: GenerationMode; subject?: PhotoSubject; age?: string };
+type Shot = {
+  mode: GenerationMode;
+  subject?: PhotoSubject;
+  age?: string;
+  /** Origine du mannequin (voir `MODEL_LOOKS`). */
+  look?: string;
+};
 
 /** Les angles proposés pour chaque photo de la série. */
 type Angle =
@@ -86,7 +94,7 @@ function angleFits(angle: Angle, garment: PhotoGarment | ""): boolean {
 }
 
 /** Une ligne « Photo n » : son angle et, si elle est portée, son mannequin. */
-type Row = { angle: Angle; subject: PhotoSubject | ""; age: string };
+type Row = { angle: Angle; subject: PhotoSubject | ""; age: string; look: string };
 
 const MAX_PHOTOS = 5;
 
@@ -97,11 +105,11 @@ const MAX_PHOTOS = 5;
  * change d'un clic.
  */
 const DEFAULT_ROWS: Row[] = [
-  { angle: "produit", subject: "", age: "" },
-  { angle: "scene", subject: "", age: "" },
-  { angle: "detail", subject: "", age: "" },
-  { angle: "face", subject: "", age: "" },
-  { angle: "trois-quarts", subject: "", age: "" },
+  { angle: "produit", subject: "", age: "", look: "" },
+  { angle: "scene", subject: "", age: "", look: "" },
+  { angle: "detail", subject: "", age: "", look: "" },
+  { angle: "face", subject: "", age: "", look: "" },
+  { angle: "trois-quarts", subject: "", age: "", look: "" },
 ];
 
 /** Case affichée pendant la génération, là où la photo va apparaître. */
@@ -183,7 +191,9 @@ export function PhotoGenerator({
     setRows((current) =>
       current.map((row, i) =>
         i === index || (subject && isWorn(row.angle) && row.subject === "")
-          ? { ...row, subject, age }
+          ? // L'origine déjà choisie sur la ligne est gardée : changer de
+            // rayon ne doit pas changer d'enfant.
+            { ...row, subject, age, look: subject ? row.look || DEFAULT_LOOK : "" }
           : row,
       ),
     );
@@ -197,7 +207,7 @@ export function PhotoGenerator({
         i !== index
           ? row
           : isWorn(angle) && row.subject === "" && known
-            ? { ...row, angle, subject: known.subject, age: known.age }
+            ? { ...row, angle, subject: known.subject, age: known.age, look: known.look }
             : { ...row, angle },
       );
     });
@@ -235,6 +245,7 @@ export function PhotoGenerator({
           data.set("productName", productName);
           if (shot.subject) data.set("subject", shot.subject);
           if (shot.age) data.set("age", shot.age);
+          if (shot.look) data.set("look", shot.look);
           const result = await generateProductPhoto(data);
           setStatus((current) =>
             current.kind === "busy"
@@ -430,6 +441,22 @@ export function PhotoGenerator({
                     ))}
                   </select>
                 )}
+                {row.subject && (
+                  <select
+                    className="admin-field__input"
+                    aria-label={`Origine du mannequin de la photo ${index + 1}`}
+                    value={row.look}
+                    onChange={(event) =>
+                      updateRow(index, { look: event.target.value })
+                    }
+                  >
+                    {MODEL_LOOKS.map((entry) => (
+                      <option key={entry.id} value={entry.id}>
+                        {entry.label}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </>
             )}
           </li>
@@ -566,7 +593,7 @@ function toShot(row: Row, garment: PhotoGarment): Shot {
             ? "porte-trois-quarts"
             : "gros-plan";
       return row.subject
-        ? { mode, subject: row.subject, age: row.age }
+        ? { mode, subject: row.subject, age: row.age, look: row.look }
         : { mode };
     }
   }
@@ -583,7 +610,8 @@ function shotLabel(shot: Shot): string {
   }
   const spec = PHOTO_SUBJECTS[shot.subject];
   const age = spec.ages.find((entry) => entry.id === shot.age)?.label;
-  return `${SHOT_LABELS[shot.mode]} (${spec.label.split(" ")[0].toLowerCase()}${age ? `, ${age}` : ""})`;
+  const look = MODEL_LOOKS.find((entry) => entry.id === shot.look)?.label.toLowerCase();
+  return `${SHOT_LABELS[shot.mode]} (${spec.label.split(" ")[0].toLowerCase()}${age ? `, ${age}` : ""}${look ? `, ${look}` : ""})`;
 }
 
 function isSubject(value: string): value is PhotoSubject {

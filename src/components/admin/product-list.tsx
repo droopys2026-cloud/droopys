@@ -2,11 +2,31 @@ import Link from "next/link";
 import Image from "next/image";
 import {
   deleteProduct,
+  deleteProductColor,
   togglePublished,
 } from "@/app/admin/(back-office)/produits/actions";
 import { AdminEmpty } from "@/components/admin/admin-empty";
 import { formatPrice } from "@/lib/format";
-import type { AdminProductRow } from "@/lib/queries/admin-catalog";
+import type {
+  AdminColorRow,
+  AdminProductRow,
+} from "@/lib/queries/admin-catalog";
+
+/**
+ * Une ligne du tableau : un article, ou l'une de ses couleurs. Un article en
+ * couleurs s'affiche couleur par couleur, chacune avec sa photo et son stock,
+ * et se supprime couleur par couleur — c'est ainsi que la boutique les voit en
+ * rayon.
+ */
+type Line = { key: string; row: AdminProductRow; color?: AdminColorRow };
+
+function toLines(rows: AdminProductRow[]): Line[] {
+  return rows.flatMap((row) =>
+    row.colors.length > 0
+      ? row.colors.map((color) => ({ key: color.id, row, color }))
+      : [{ key: row.id, row }],
+  );
+}
 
 /**
  * Catalogue en tableau.
@@ -54,6 +74,8 @@ export function ProductList({
     <div className="admin-table-wrap">
       <p className="admin-field__hint">
         {rows.length} produit{rows.length > 1 ? "s" : ""}
+        {rows.some((row) => row.colors.length > 0) &&
+          " — un article en couleurs a une ligne par couleur"}
       </p>
 
       <table className="admin-table">
@@ -81,111 +103,150 @@ export function ProductList({
         </thead>
 
         <tbody>
-          {rows.map((row) => (
-            <tr key={row.id}>
-              <td className="admin-table__thumb">
-                {row.imageUrl ? (
-                  <Image
-                    src={row.imageUrl}
-                    alt=""
-                    width={36}
-                    height={48}
-                    className="admin-row__image"
-                  />
-                ) : (
-                  /* Un cadre vide plutôt que rien : la ligne garde sa hauteur,
+          {toLines(rows).map(({ key, row, color }) => {
+            const imageUrl = color
+              ? (color.imageUrl ?? row.imageUrl)
+              : row.imageUrl;
+            const stock = color ? color.stock : row.stock;
+            const label = color ? `${row.name} — ${color.name}` : row.name;
+            return (
+              <tr key={key}>
+                <td className="admin-table__thumb">
+                  {imageUrl ? (
+                    <Image
+                      src={imageUrl}
+                      alt=""
+                      width={36}
+                      height={48}
+                      className="admin-row__image"
+                    />
+                  ) : (
+                    /* Un cadre vide plutôt que rien : la ligne garde sa hauteur,
                      et l'absence de photo se voit — c'est une fiche à finir. */
+                    <span
+                      className="admin-row__image admin-row__image--empty"
+                      aria-hidden
+                    />
+                  )}
+                </td>
+
+                <th scope="row" className="admin-table__name">
+                  <Link href={`/admin/produits/${row.id}`}>{row.name}</Link>
+                  {color && (
+                    <span className="admin-table__color">
+                      {/* Teinte saisie à l'admin : une donnée, d'où le style en ligne. */}
+                      <span
+                        className="admin-table__swatch"
+                        style={{ backgroundColor: color.hex }}
+                        aria-hidden
+                      />
+                      {color.name}
+                    </span>
+                  )}
+                </th>
+
+                <td>{row.brandName}</td>
+                <td className="admin-table__muted">
+                  {row.categorySlug ?? "—"}
+                </td>
+
+                <td className="admin-table__num">
+                  {formatPrice(row.priceCents)}
+                  {row.compareAtPriceCents && (
+                    <span className="admin-table__was">
+                      {formatPrice(row.compareAtPriceCents)}
+                    </span>
+                  )}
+                </td>
+
+                <td className="admin-table__num">
                   <span
-                    className="admin-row__image admin-row__image--empty"
-                    aria-hidden
-                  />
-                )}
-              </td>
-
-              <th scope="row" className="admin-table__name">
-                <Link href={`/admin/produits/${row.id}`}>{row.name}</Link>
-              </th>
-
-              <td>{row.brandName}</td>
-              <td className="admin-table__muted">{row.categorySlug ?? "—"}</td>
-
-              <td className="admin-table__num">
-                {formatPrice(row.priceCents)}
-                {row.compareAtPriceCents && (
-                  <span className="admin-table__was">
-                    {formatPrice(row.compareAtPriceCents)}
+                    className={
+                      stock > 0
+                        ? "admin-stock__state"
+                        : "admin-stock__state admin-stock__state--out"
+                    }
+                  >
+                    {stock > 0 ? stock : "rupture"}
                   </span>
-                )}
-              </td>
+                </td>
 
-              <td className="admin-table__num">
-                <span
-                  className={
-                    row.stock > 0
-                      ? "admin-stock__state"
-                      : "admin-stock__state admin-stock__state--out"
-                  }
-                >
-                  {row.stock > 0 ? row.stock : "rupture"}
-                </span>
-              </td>
+                <td>
+                  <span
+                    className={
+                      row.published
+                        ? "admin-badge admin-badge--live"
+                        : "admin-badge"
+                    }
+                  >
+                    {row.published ? "Publié" : "Brouillon"}
+                  </span>
+                </td>
 
-              <td>
-                <span
-                  className={
-                    row.published
-                      ? "admin-badge admin-badge--live"
-                      : "admin-badge"
-                  }
-                >
-                  {row.published ? "Publié" : "Brouillon"}
-                </span>
-              </td>
+                <td className="admin-table__actions">
+                  <div className="admin-row__actions">
+                    <form action={togglePublished}>
+                      <input type="hidden" name="productId" value={row.id} />
+                      <button
+                        type="submit"
+                        className="admin-button admin-button--ghost admin-button--small"
+                      >
+                        {row.published ? "Dépublier" : "Publier"}
+                      </button>
+                    </form>
 
-              <td className="admin-table__actions">
-                <div className="admin-row__actions">
-                  <form action={togglePublished}>
-                    <input type="hidden" name="productId" value={row.id} />
-                    <button
-                      type="submit"
+                    <Link
+                      href={`/admin/produits/${row.id}`}
                       className="admin-button admin-button--ghost admin-button--small"
                     >
-                      {row.published ? "Dépublier" : "Publier"}
-                    </button>
-                  </form>
-
-                  <Link
-                    href={`/admin/produits/${row.id}`}
-                    className="admin-button admin-button--ghost admin-button--small"
-                  >
-                    Modifier
-                  </Link>
-
-                  {row.published && (
-                    <Link
-                      href={`/produits/${row.slug}`}
-                      className="admin-row__link"
-                      target="_blank"
-                    >
-                      Voir
+                      Modifier
                     </Link>
-                  )}
 
-                  <form action={deleteProduct}>
-                    <input type="hidden" name="productId" value={row.id} />
-                    <button
-                      type="submit"
-                      className="admin-row__delete"
-                      aria-label={`Supprimer ${row.name}`}
-                      title={`Supprimer ${row.name}`}
-                    >
-                      ×
-                    </button>
-                  </form>
-                </div>
-              </td>
-            </tr>
-          ))}
+                    {row.published && (
+                      <Link
+                        href={`/produits/${row.slug}${color ? `?couleur=${color.slug}` : ""}`}
+                        className="admin-row__link"
+                        target="_blank"
+                      >
+                        Voir
+                      </Link>
+                    )}
+
+                    {color ? (
+                      /* Supprime la couleur seule ; la dernière emporte la fiche. */
+                      <form action={deleteProductColor}>
+                        <input type="hidden" name="colorId" value={color.id} />
+                        <button
+                          type="submit"
+                          className="admin-row__delete"
+                          aria-label={`Supprimer ${label}`}
+                          title={
+                            row.colors.length > 1
+                              ? `Supprimer la couleur ${color.name}`
+                              : `Supprimer ${row.name} (dernière couleur)`
+                          }
+                        >
+                          ×
+                        </button>
+                      </form>
+                    ) : (
+                      <form action={deleteProduct}>
+                        <input type="hidden" name="productId" value={row.id} />
+                        <button
+                          type="submit"
+                          className="admin-row__delete"
+                          aria-label={`Supprimer ${row.name}`}
+                          title={`Supprimer ${row.name}`}
+                        >
+                          ×
+                        </button>
+                      </form>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

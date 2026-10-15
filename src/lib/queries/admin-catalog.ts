@@ -37,7 +37,21 @@ export type AdminProductRow = {
   imageUrl: string | null;
   /** Somme des quantités de toutes les tailles. */
   stock: number;
+  /** Couleurs de la fiche, dans l'ordre de l'admin ; vide sans couleur. */
+  colors: AdminColorRow[];
   updatedAt: Date;
+};
+
+/** Une couleur, telle que la liste de l'admin l'affiche sur sa propre ligne. */
+export type AdminColorRow = {
+  id: string;
+  name: string;
+  slug: string;
+  hex: string;
+  /** Première photo de la couleur ; `null` si elle n'en a aucune à elle. */
+  imageUrl: string | null;
+  /** Somme des quantités de la couleur, toutes tailles. */
+  stock: number;
 };
 
 export type AdminProductFilters = {
@@ -101,6 +115,28 @@ export const listAdminProducts = cache(
           from product_variants v
           where v.product_id = "products"."id"
         )`,
+        // Une ligne par couleur dans la liste : leur photo et leur stock
+        // viennent avec, en un seul aller-retour.
+        colors: sql<AdminColorRow[]>`coalesce((
+          select json_agg(json_build_object(
+            'id', c.id,
+            'name', c.name,
+            'slug', c.slug,
+            'hex', c.hex,
+            'imageUrl', (
+              select i.url from product_images i
+              where i.color_id = c.id
+              order by i.position asc limit 1
+            ),
+            'stock', (
+              select coalesce(sum(v.quantity), 0)::int
+              from product_variants v
+              where v.color_id = c.id
+            )
+          ) order by c.position)
+          from product_colors c
+          where c.product_id = "products"."id"
+        ), '[]'::json)`,
       })
       .from(products)
       .innerJoin(brands, eq(products.brandId, brands.id))

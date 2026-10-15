@@ -143,12 +143,15 @@ type Status =
 export function PhotoGenerator({
   enabled,
   references,
+  emptyHint,
   onGenerated,
 }: {
   /** Faux sans clé Gemini : les boutons restent visibles mais inactifs. */
   enabled: boolean;
   /** Une ou deux photos de l'article, dans l'ordre où l'IA doit les lire. */
   references: GenerationReference[];
+  /** Ce qu'il faut faire quand aucune photo ne peut servir de modèle. */
+  emptyHint?: string;
   onGenerated: (photos: GeneratedPhoto[]) => void;
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -314,7 +317,8 @@ export function PhotoGenerator({
           ? "La clé Google Gemini n'est pas configurée : la génération est désactivée."
           : references.length > 0
             ? `L'IA part de : ${references.map((reference) => reference.label).join(" et ")}. Une ou deux photos de l'article suffisent — face et dos, par exemple.`
-            : "Déposez d'abord une ou deux photos de l'article ci-dessus (face et dos, par exemple) : l'IA s'en sert comme modèle."}
+            : (emptyHint ??
+              "Déposez d'abord une ou deux photos de l'article ci-dessus (face et dos, par exemple) : l'IA s'en sert comme modèle.")}
       </p>
 
       <label className="admin-generate__option">

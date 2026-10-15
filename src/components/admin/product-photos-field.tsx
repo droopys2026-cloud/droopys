@@ -92,6 +92,11 @@ export function ProductPhotosField({
                   <span className="admin-thumb__rank" aria-hidden>
                     {index + 1}
                   </span>
+                  {selectedKey === photo.key && (
+                    <span className="admin-thumb__model" aria-hidden>
+                      Modèle IA
+                    </span>
+                  )}
                   {/* La vignette choisit la photo dont part l'IA ; on la
                       glisse pour la ranger. Alt + flèches au clavier. */}
                   <button
@@ -177,8 +182,20 @@ export function ProductPhotosField({
 
       <PhotoGenerator
         enabled={generationEnabled}
-        references={generationReferences(photos, selectedKey)}
+        references={
+          colors.length > 0
+            ? colorReferences(photos, selectedKey, photoColors, colors)
+            : generationReferences(photos, selectedKey)
+        }
+        emptyHint={
+          colors.length > 0 && photos.length > 0
+            ? "Cliquez sur la photo de la couleur à générer : l'IA ne part que de celle-là, et les photos obtenues sont rangées dans sa couleur."
+            : undefined
+        }
         onGenerated={(generated) => {
+          // Avec des couleurs, les photos obtenues prennent celle du modèle :
+          // c'est la même pièce, vue autrement.
+          const sourceColor = selectedKey ? photoColors[selectedKey] : undefined;
           let next = [...photos];
           const added: ProductPhoto[] = [];
           for (const { image, replaces } of generated) {
@@ -192,6 +209,7 @@ export function ProductPhotosField({
               if (colorKey) onPhotoColorChange(image.id, colorKey);
             } else {
               added.push(pendingPhoto(image));
+              if (colors.length > 0 && sourceColor) onPhotoColorChange(image.id, sourceColor);
             }
           }
           // Les photos du studio passent en tête : la première fait la carte,
@@ -204,7 +222,30 @@ export function ProductPhotosField({
 }
 
 /**
- * Les photos dont l'IA part, deux au plus (face et dos, typiquement), par
+ * Avec des couleurs, l'IA ne part que de la photo cliquée : une seconde
+ * référence pourrait être d'une autre couleur, et l'IA mélangerait les deux.
+ * Sans photo cliquée, rien — c'est le clic qui dit quelle couleur générer.
+ */
+function colorReferences(
+  photos: ProductPhoto[],
+  selectedKey: string | null,
+  photoColors: Record<string, string>,
+  colors: ColorDraft[],
+): GenerationReference[] {
+  const index = photos.findIndex((photo) => photo.key === selectedKey);
+  if (index === -1) return [];
+  const photo = photos[index];
+  const color = colors.find((entry) => entry.key === photoColors[photo.key]);
+  const label = `${index === 0 ? "la photo principale" : `la photo ${index + 1}`}${color ? ` (${color.name || "couleur sans nom"})` : ""}`;
+  return [
+    photo.kind === "online"
+      ? { kind: "url", url: photo.url, label }
+      : { kind: "file", file: photo.image.file, label },
+  ];
+}
+
+/**
+ * Sans couleur : les photos dont l'IA part, deux au plus (face et dos, typiquement), par
  * ordre de préférence :
  * 1. celle qu'on a cliquée ;
  * 2. les photos réelles déposées ;

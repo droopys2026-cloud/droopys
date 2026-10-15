@@ -437,6 +437,49 @@ export async function deleteProduct(formData: FormData) {
 }
 
 /**
+ * Supprime une couleur d'une fiche : ses photos et son stock partent avec
+ * elle (`on delete cascade`), le reste de l'article reste en vente.
+ *
+ * La dernière couleur emporte la fiche entière : sans elle, l'article
+ * n'aurait plus ni taille ni photo, donc plus rien à vendre.
+ */
+export async function deleteProductColor(formData: FormData) {
+  await requireAdmin();
+
+  const id = z.string().uuid().safeParse(formData.get("colorId"));
+  if (!id.success) return;
+
+  const color = await db.query.productColors.findFirst({
+    where: eq(productColors.id, id.data),
+    columns: { productId: true },
+    with: { product: { columns: { slug: true } } },
+  });
+  if (!color) return;
+
+  const siblings = await db
+    .select({ id: productColors.id })
+    .from(productColors)
+    .where(eq(productColors.productId, color.productId));
+
+  const images = await db.query.productImages.findMany({
+    where:
+      siblings.length <= 1
+        ? eq(productImages.productId, color.productId)
+        : eq(productImages.colorId, id.data),
+    columns: { url: true },
+  });
+
+  if (siblings.length <= 1) {
+    await db.delete(products).where(eq(products.id, color.productId));
+  } else {
+    await db.delete(productColors).where(eq(productColors.id, id.data));
+  }
+  await deleteProductImages(images.map((image) => image.url));
+
+  revalidateCatalog(color.product.slug);
+}
+
+/**
  * Rafraîchit tout ce qui est construit à partir du catalogue.
  *
  * L'étiquette vide le cache de données — sans elle, les lectures mémorisées

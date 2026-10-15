@@ -19,11 +19,18 @@ export type Product = {
    */
   images?: string[];
   /**
-   * Tailles proposées et stock de chacune. `variantId` est ce que le panier
-   * enregistre : il porte à la fois le produit et la taille, là où le couple
-   * (slug, libellé de taille) demanderait une recherche à chaque geste.
+   * Couleurs proposées, dans l'ordre de l'admin. Absent pour une pièce sans
+   * couleur. `images` vient déjà composé : photos de la couleur, puis photos
+   * communes — la fiche n'a qu'à l'afficher.
    */
-  sizes?: { variantId: string; size: string; quantity: number }[];
+  colors?: ProductColor[];
+  /**
+   * Déclinaisons proposées (taille, et couleur s'il y en a) et stock de
+   * chacune. `variantId` est ce que le panier enregistre : il porte à la fois
+   * le produit, la couleur et la taille, là où le triplet de libellés
+   * demanderait une recherche à chaque geste.
+   */
+  sizes?: ProductSize[];
   /** Descriptif en points, une ligne par point. */
   description?: string[];
   composition?: string;
@@ -48,6 +55,32 @@ export type Product = {
   sizeAdvice?: string;
   /** Étiquette affichée en pastille sur l'image (« Nouveau », « -30 % »). */
   badge?: string;
+};
+
+export type ProductColor = {
+  id: string;
+  /** Forme d'URL du nom : `?couleur=rose-poudre`. */
+  slug: string;
+  name: string;
+  /** Teinte de la pastille, `#rrggbb`. */
+  hex: string;
+  images: string[];
+};
+
+export type ProductSize = {
+  variantId: string;
+  size: string;
+  quantity: number;
+  /** Couleur de la déclinaison ; absente pour une pièce sans couleur. */
+  colorId?: string;
+  /** Prix effectif en centimes — déjà résolu, propre ou hérité du produit. */
+  priceCents: number;
+  /**
+   * Vrai quand la déclinaison a son propre prix. Le prix barré du produit
+   * ne s'y applique pas : il a été fixé contre le prix du produit, pas
+   * contre celui-ci.
+   */
+  ownPrice: boolean;
 };
 
 /** Regroupement éditorial affiché en carrousel horizontal. */

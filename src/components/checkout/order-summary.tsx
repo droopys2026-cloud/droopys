@@ -1,5 +1,6 @@
 import { FrameImage } from "@/components/ui/frame-image";
 import { formatPrice } from "@/lib/format";
+import { variantLabel } from "@/lib/products/variants";
 import type { CartLine } from "@/types/cart";
 
 /**
@@ -16,7 +17,7 @@ export function OrderSummary({
   shippingCents: number | null;
 }) {
   const itemsCents = lines.reduce(
-    (total, line) => total + line.product.priceCents * line.quantity,
+    (total, line) => total + line.unitPriceCents * line.quantity,
     0,
   );
 
@@ -39,11 +40,11 @@ export function OrderSummary({
               <span className="text-caption-muted block">{line.product.brand}</span>
               {line.product.name}
               <span className="account-card__muted block">
-                Taille {line.size} · ×{line.quantity}
+                {variantLabel(line)} · ×{line.quantity}
               </span>
             </span>
             <span className="text-strong">
-              {formatPrice(line.product.priceCents * line.quantity)}
+              {formatPrice(line.unitPriceCents * line.quantity)}
             </span>
           </li>
         ))}

@@ -3,7 +3,7 @@ import "server-only";
 import { asc, eq, inArray } from "drizzle-orm";
 import { Resend } from "resend";
 import { db } from "@/db";
-import { orderLines, orders, productImages } from "@/db/schema";
+import { orderLines, orders, productImages, productVariants } from "@/db/schema";
 import { renderOrderConfirmation } from "@/lib/email/order-confirmation";
 import { publicEnv, serverEnv } from "@/lib/env";
 import { SERVICES } from "@/lib/shipping/services";
@@ -39,26 +39,42 @@ export async function sendOrderConfirmation(orderId: string): Promise<void> {
     return;
   }
 
-  // La première photo de chaque produit, en adresse absolue : l'e-mail est
-  // lu hors du site, un chemin « /imgdress/… » n'y mène nulle part.
+  // Une photo par ligne, en adresse absolue : l'e-mail est lu hors du site,
+  // un chemin « /imgdress/… » n'y mène nulle part. Pour une pièce en
+  // couleurs, c'est la photo de la couleur achetée qui compte.
   const productIds = order.lines
     .map((line) => line.productId)
     .filter((id): id is string => id !== null);
-  const images = productIds.length
-    ? await db.query.productImages.findMany({
-        where: inArray(productImages.productId, productIds),
-        orderBy: [asc(productImages.position)],
-        columns: { productId: true, url: true },
-      })
-    : [];
-  const imageByProduct = new Map<string, string>();
-  for (const image of images) {
-    if (!imageByProduct.has(image.productId)) {
-      imageByProduct.set(
-        image.productId,
-        image.url.startsWith("http") ? image.url : `${publicEnv.NEXT_PUBLIC_SITE_URL}${image.url}`,
-      );
-    }
+  const variantIds = order.lines
+    .map((line) => line.variantId)
+    .filter((id): id is string => id !== null);
+  const [images, variants] = await Promise.all([
+    productIds.length
+      ? db.query.productImages.findMany({
+          where: inArray(productImages.productId, productIds),
+          orderBy: [asc(productImages.position)],
+          columns: { productId: true, colorId: true, url: true },
+        })
+      : [],
+    variantIds.length
+      ? db.query.productVariants.findMany({
+          where: inArray(productVariants.id, variantIds),
+          columns: { id: true, colorId: true },
+        })
+      : [],
+  ]);
+  const colorByVariant = new Map(variants.map((variant) => [variant.id, variant.colorId]));
+
+  function lineImage(line: { productId: string | null; variantId: string | null }) {
+    if (!line.productId) return null;
+    const own = images.filter((image) => image.productId === line.productId);
+    const colorId = line.variantId ? colorByVariant.get(line.variantId) : null;
+    const image =
+      own.find((entry) => colorId && entry.colorId === colorId) ??
+      own.find((entry) => entry.colorId === null) ??
+      own[0];
+    if (!image) return null;
+    return image.url.startsWith("http") ? image.url : `${publicEnv.NEXT_PUBLIC_SITE_URL}${image.url}`;
   }
 
   const shop = SHOPS[0];
@@ -71,7 +87,7 @@ export async function sendOrderConfirmation(orderId: string): Promise<void> {
     shippingCents: order.shippingCents,
     lines: order.lines.map((line) => ({
       ...line,
-      imageUrl: line.productId ? (imageByProduct.get(line.productId) ?? null) : null,
+      imageUrl: lineImage(line),
     })),
     shop: { name: shop.name, address: shop.address },
     siteUrl: publicEnv.NEXT_PUBLIC_SITE_URL,

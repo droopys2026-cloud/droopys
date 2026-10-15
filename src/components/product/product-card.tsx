@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { FrameImage } from "@/components/ui/frame-image";
 import { WishlistButton } from "@/components/product/wishlist-button";
 import { formatPrice } from "@/lib/format";
+import { displayPrice } from "@/lib/products/variants";
 import type { Product } from "@/types/product";
 
 /**
@@ -11,8 +12,12 @@ import type { Product } from "@/types/product";
  * principal — deux zones cliquables imbriquées seraient invalides en HTML
  * et impossibles à atteindre au clavier.
  */
+/** Au-delà, « +n » : une rangée de pastilles qui passe à la ligne casse la grille. */
+const MAX_SWATCHES = 5;
+
 export function ProductCard({ product }: { product: Product }) {
-  const onSale = product.compareAtPriceCents !== undefined;
+  const price = displayPrice(product, product.sizes ?? []);
+  const colors = product.colors ?? [];
 
   // Le stock se dit sur la carte, pas seulement sur la fiche : découvrir
   // qu'un article est épuisé après avoir cliqué est la petite déception qui
@@ -57,13 +62,37 @@ export function ProductCard({ product }: { product: Product }) {
           <span className="text-brand-label">{product.name}</span>
         </Link>
         <p className="text-strong m-0">
-          {formatPrice(product.priceCents)}
-          {onSale && (
+          {price.from && "dès "}
+          {formatPrice(price.cents)}
+          {price.compareAtCents !== undefined && (
             <span className="text-caption-muted ml-2 inline line-through">
-              {formatPrice(product.compareAtPriceCents!)}
+              {formatPrice(price.compareAtCents)}
             </span>
           )}
         </p>
+
+        {/* Pastilles décoratives : la carte mène à la fiche, où l'on choisit.
+            Leur nom reste dit aux lecteurs d'écran, en une phrase. */}
+        {colors.length > 1 && (
+          <p className="product-card__swatches m-0">
+            <span className="sr-only">
+              {`${colors.length} couleurs : ${colors.map((color) => color.name).join(", ")}`}
+            </span>
+            {colors.slice(0, MAX_SWATCHES).map((color) => (
+              <span
+                key={color.id}
+                aria-hidden
+                className="product-card__swatch"
+                style={{ backgroundColor: color.hex }}
+              />
+            ))}
+            {colors.length > MAX_SWATCHES && (
+              <span aria-hidden className="text-caption-muted">
+                +{colors.length - MAX_SWATCHES}
+              </span>
+            )}
+          </p>
+        )}
 
         {/* Dit seulement quand il y a urgence ou impossibilité : afficher
             « 42 en stock » sur chaque carte n'aide personne à choisir. */}

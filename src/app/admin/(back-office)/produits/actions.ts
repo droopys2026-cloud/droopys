@@ -8,6 +8,7 @@ import { db } from "@/db";
 import {
   brands,
   categories,
+  productColors,
   productImages,
   productPlacements,
   products,
@@ -22,7 +23,13 @@ import {
   isProductPhotoUrl,
   type PhotoUpload,
 } from "@/lib/products/images";
-import { productInputSchema, productIssues } from "@/lib/products/schema";
+import {
+  colorInputSchema,
+  colorPhotoIssues,
+  productInputSchema,
+  productIssues,
+  stockInputSchema,
+} from "@/lib/products/schema";
 import { slugify, uniqueSlug } from "@/lib/slug";
 
 /**
@@ -36,9 +43,13 @@ import { slugify, uniqueSlug } from "@/lib/slug";
 export type ProductFormState = { errors?: string[] };
 
 /** Les listes JSON viennent du formulaire : elles sont relues, pas crues. */
-const sizesField = z.array(
-  z.object({ size: z.string().trim().min(1), quantity: z.number().int().min(0) }),
+const colorsField = z.array(colorInputSchema.extend({ name: z.string(), hex: z.string() }));
+const sizesField = z.array(z.string());
+const stockField = z.array(
+  stockInputSchema.extend({ size: z.string(), price: z.string() }),
 );
+/** Couleur de chaque photo, dans l'ordre de la galerie ; `null` = commune. */
+const imageColorsField = z.array(z.string().nullable());
 const measurementsField = z.array(
   z.object({ label: z.string().trim().min(1), value: z.string().trim().min(1) }),
 );
@@ -122,7 +133,11 @@ export async function saveProduct(
     modelNote: formData.get("modelNote") ?? "",
     sizeAdvice: formData.get("sizeAdvice") ?? "",
     badge: formData.get("badge") ?? "",
+    // Lus en JSON brut, puis validés par `productInputSchema` : un nom de
+    // couleur vide doit produire son message, pas faire tomber la liste.
+    colors: readJson(formData, "colors", colorsField, []),
     sizes: readJson(formData, "sizes", sizesField, []),
+    stock: readJson(formData, "stock", stockField, []),
     measurements: readJson(formData, "measurements", measurementsField, []),
     published: formData.get("published") === "on",
   });
@@ -181,6 +196,20 @@ export async function saveProduct(
     return { errors: ["Ajoutez au moins une photo : une fiche sans visuel ne se vend pas."] };
   }
 
+  const gallery = [...kept, ...uploaded];
+  const imageColors = readJson(formData, "imageColors", imageColorsField, []);
+  // Une liste qui ne colle pas à la galerie rattacherait les photos aux
+  // mauvaises couleurs : on refuse plutôt que de deviner.
+  if (imageColors.length !== gallery.length) {
+    return { errors: ["Les couleurs des photos n'ont pas été reconnues. Rechargez la page et recommencez."] };
+  }
+  const colorKeys = new Set(input.colors.map((color) => color.key));
+  if (imageColors.some((key) => key !== null && !colorKeys.has(key))) {
+    return { errors: ["Une photo est rattachée à une couleur qui n'existe plus."] };
+  }
+  const photoIssues = colorPhotoIssues(input.colors, imageColors);
+  if (photoIssues.length > 0) return { errors: photoIssues };
+
   const values = {
     brandId: brand.id,
     name: input.name,
@@ -229,31 +258,71 @@ export async function saveProduct(
     id = row.id;
   }
 
-  const gallery = [...kept, ...uploaded];
+  // Couleurs, images et déclinaisons sont réécrites en entier : leur seule
+  // identité est leur rang, un rapprochement ligne à ligne coûterait plus à
+  // lire qu'à exécuter. En une transaction : une erreur à mi-chemin laisserait
+  // sinon une fiche sans tailles, donc invendable.
+  await db.transaction(async (tx) => {
+    // Les couleurs partent en cascade avec leurs photos et leurs déclinaisons ;
+    // les autres sont effacées explicitement.
+    await tx.delete(productImages).where(eq(productImages.productId, id));
+    await tx.delete(productVariants).where(eq(productVariants.productId, id));
+    await tx.delete(productColors).where(eq(productColors.productId, id));
 
-  // Images et tailles sont réécrites en entier : leur seule identité est leur
-  // rang, un rapprochement ligne à ligne coûterait plus à lire qu'à exécuter.
-  await db.delete(productImages).where(eq(productImages.productId, id));
-  if (gallery.length > 0) {
-    await db.insert(productImages).values(
-      gallery.map((url, index) => ({
-        productId: id,
-        url,
-        alt: `${input.name}`,
-        position: index,
-      })),
+    // Clé du formulaire → identifiant réel, pour rattacher photos et stock.
+    const colorIds = new Map<string, string>();
+    if (input.colors.length > 0) {
+      const inserted = await tx
+        .insert(productColors)
+        .values(
+          input.colors.map((color, index) => ({
+            productId: id,
+            name: color.name,
+            slug: slugify(color.name),
+            hex: color.hex,
+            position: index,
+          })),
+        )
+        .returning({ id: productColors.id });
+      input.colors.forEach((color, index) => colorIds.set(color.key, inserted[index].id));
+    }
+    const colorIdOf = (key: string | null) => (key === null ? null : (colorIds.get(key) ?? null));
+
+    if (gallery.length > 0) {
+      await tx.insert(productImages).values(
+        gallery.map((url, index) => ({
+          productId: id,
+          colorId: colorIdOf(imageColors[index]),
+          url,
+          alt: `${input.name}`,
+          position: index,
+        })),
+      );
+    }
+
+    // Rangées couleur par couleur, puis dans l'ordre des tailles : c'est
+    // l'ordre que la fiche affiche.
+    const stockByCell = new Map(
+      input.stock.map((entry) => [`${entry.colorKey ?? ""}|${entry.size}`, entry]),
     );
-  }
-
-  await db.delete(productVariants).where(eq(productVariants.productId, id));
-  await db.insert(productVariants).values(
-    input.sizes.map((entry, index) => ({
-      productId: id,
-      size: entry.size,
-      quantity: entry.quantity,
-      position: index,
-    })),
-  );
+    const colorOrder: (string | null)[] =
+      input.colors.length > 0 ? input.colors.map((color) => color.key) : [null];
+    const rows = colorOrder.flatMap((colorKey) =>
+      input.sizes.map((size) => {
+        const entry = stockByCell.get(`${colorKey ?? ""}|${size}`);
+        return {
+          productId: id,
+          colorId: colorIdOf(colorKey),
+          size,
+          quantity: entry?.quantity ?? 0,
+          priceCents: entry?.price ?? null,
+        };
+      }),
+    );
+    await tx
+      .insert(productVariants)
+      .values(rows.map((row, index) => ({ ...row, position: index })));
+  });
 
   await savePlacements(id, input.subcategoryId ?? null, formData.getAll("placements"));
 

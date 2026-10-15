@@ -99,7 +99,7 @@ export default async function AdminCommandePage({ params }: PageProps) {
             <thead>
               <tr>
                 <th scope="col">Article</th>
-                <th scope="col">Taille</th>
+                <th scope="col">Déclinaison</th>
                 <th scope="col">Qté</th>
                 <th scope="col">Prix</th>
               </tr>
@@ -111,7 +111,7 @@ export default async function AdminCommandePage({ params }: PageProps) {
                     {line.brand ? `${line.brand} — ` : ""}
                     {line.productName}
                   </td>
-                  <td>{line.size}</td>
+                  <td>{line.color ? `${line.color} · ${line.size}` : line.size}</td>
                   <td>{line.quantity}</td>
                   <td>{formatPrice(line.unitPriceCents * line.quantity)}</td>
                 </tr>

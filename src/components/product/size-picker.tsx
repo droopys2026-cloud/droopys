@@ -1,12 +1,14 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState } from "react";
 import Link from "next/link";
 import {
   addToCart,
   type CartActionState,
 } from "@/app/actions/cart";
 import { useCartDrawer } from "@/components/layout/cart-drawer-context";
+import { ColorPicker } from "@/components/product/color-picker";
+import { useProductVariant } from "@/components/product/product-variant-context";
 import { WishlistButton } from "@/components/product/wishlist-button";
 
 /**
@@ -21,19 +23,19 @@ import { WishlistButton } from "@/components/product/wishlist-button";
  * produit dont le bouton ne réagit pas.
  */
 export function SizePicker({
-  sizes,
   productId,
   productName,
   sizeAdvice,
 }: {
-  sizes: { variantId: string; size: string; quantity: number }[];
   productId: string;
   productName: string;
   /** Conseil propre à la pièce, saisi à l'admin. */
   sizeAdvice?: string;
 }) {
-  const [chosen, setChosen] = useState<string | null>(null);
-  const selected = sizes.find((entry) => entry.variantId === chosen);
+  // Tailles de la couleur choisie, et la déclinaison retenue : partagées avec
+  // le prix et la galerie (voir `ProductVariantProvider`).
+  const { sizes, chosen: selected, chooseSize } = useProductVariant();
+  const chosen = selected?.variantId ?? null;
   const { open: openCart } = useCartDrawer();
   // Après un ajout réussi, le tiroir du panier s'ouvre : la cliente voit ce
   // qu'elle vient d'ajouter, le total, et le chemin vers la commande, sans
@@ -51,8 +53,10 @@ export function SizePicker({
   return (
     <form action={action} className="size-picker">
       {/* La taille choisie voyage par son identifiant de variante : c'est lui
-          qui porte à la fois le produit et la taille, donc le stock. */}
+          qui porte à la fois le produit, la couleur et la taille, donc le
+          stock et le prix. */}
       <input type="hidden" name="variantId" value={chosen ?? ""} />
+      <ColorPicker />
       <div className="size-picker__head">
         <span className="text-caption-muted">Taille</span>
         <Link href="/aide/tailles" className="link-underline-sm">
@@ -70,7 +74,7 @@ export function SizePicker({
                 className="size-chip"
                 aria-pressed={chosen === variantId}
                 disabled={soldOut}
-                onClick={() => setChosen(variantId)}
+                onClick={() => chooseSize(variantId)}
               >
                 {size}
                 {soldOut && <span className="size-chip__out">épuisé</span>}

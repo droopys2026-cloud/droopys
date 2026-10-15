@@ -13,13 +13,12 @@ import {
   ProductMeasurementsField,
   type Measurement,
 } from "@/components/admin/product-measurements-field";
+import { ProductColorsField } from "@/components/admin/product-colors-field";
 import { ProductPhotosField } from "@/components/admin/product-photos-field";
 import { ProductPlacementsField } from "@/components/admin/product-placements-field";
 import { uploadProductPhotos } from "@/lib/products/upload-photos";
-import {
-  ProductSizesField,
-  type SizeStock,
-} from "@/components/admin/product-sizes-field";
+import { ProductSizesField } from "@/components/admin/product-sizes-field";
+import { alignStock, type ColorDraft, type StockCell } from "@/lib/products/stock-grid";
 
 /** Ce que le formulaire sait déjà en modification. Absent en création. */
 export type ProductFormValues = {
@@ -41,9 +40,13 @@ export type ProductFormValues = {
   sizeAdvice: string | null;
   badge: string | null;
   published: boolean;
-  sizes: SizeStock[];
+  colors: ColorDraft[];
+  sizes: string[];
+  stock: StockCell[];
   measurements: Measurement[];
   images: string[];
+  /** Couleur des photos en ligne, par adresse ; absente = photo commune. */
+  imageColors: Record<string, string>;
 };
 
 type Option = { id: string; label: string };
@@ -101,7 +104,37 @@ export function ProductForm({
     (entry) => entry.categorySlug === categorySlug,
   );
 
-  const [sizes, setSizes] = useState<SizeStock[]>(product?.sizes ?? []);
+  const [colors, setColors] = useState<ColorDraft[]>(product?.colors ?? []);
+  const [sizes, setSizes] = useState<string[]>(product?.sizes ?? []);
+  const [stock, setStock] = useState<StockCell[]>(product?.stock ?? []);
+  const [photoColors, setPhotoColors] = useState<Record<string, string>>(
+    product?.imageColors ?? {},
+  );
+
+  // Le stock suit les couleurs et les tailles : chaque changement des unes
+  // ou des autres le réaligne, en gardant ce qui était saisi.
+  function changeColors(next: ColorDraft[]) {
+    setColors(next);
+    setStock(alignStock(next, sizes, stock));
+    // Une photo d'une couleur retirée redevient commune, plutôt que de
+    // pointer vers une couleur qui n'existe plus.
+    const keys = new Set(next.map((color) => color.key));
+    setPhotoColors((current) =>
+      Object.fromEntries(Object.entries(current).filter(([, key]) => keys.has(key))),
+    );
+  }
+  function changeSizes(next: string[]) {
+    setSizes(next);
+    setStock(alignStock(colors, next, stock));
+  }
+  function changePhotoColor(photoKey: string, colorKey: string | null) {
+    setPhotoColors((current) => {
+      const next = { ...current };
+      if (colorKey) next[photoKey] = colorKey;
+      else delete next[photoKey];
+      return next;
+    });
+  }
   const [measurements, setMeasurements] = useState<Measurement[]>(
     product?.measurements?.length ? product.measurements : DEFAULT_MEASUREMENTS,
   );
@@ -147,7 +180,18 @@ export function ProductForm({
       "uploadedImages",
       JSON.stringify(pendingImages.map((image) => known[image.id])),
     );
+    formData.set("colors", JSON.stringify(colors));
     formData.set("sizes", JSON.stringify(sizes));
+    formData.set("stock", JSON.stringify(stock));
+    // Alignée sur la galerie telle que le serveur la recompose : photos en
+    // ligne, puis photos déposées.
+    formData.set(
+      "imageColors",
+      JSON.stringify([
+        ...kept.map((url) => photoColors[url] ?? null),
+        ...pendingImages.map((image) => photoColors[image.id] ?? null),
+      ]),
+    );
     formData.set(
       "measurements",
       JSON.stringify(
@@ -381,7 +425,15 @@ export function ProductForm({
         </div>
       </fieldset>
 
-      <ProductSizesField value={sizes} onChange={setSizes} />
+      <ProductColorsField value={colors} onChange={changeColors} />
+
+      <ProductSizesField
+        sizes={sizes}
+        onSizesChange={changeSizes}
+        colors={colors}
+        stock={stock}
+        onStockChange={setStock}
+      />
 
       {/* ---- descriptif ---- */}
       <fieldset className="admin-fieldset">
@@ -463,6 +515,9 @@ export function ProductForm({
         selectedId={selectedImage}
         onSelect={setSelectedImage}
         generationEnabled={photoGeneration}
+        colors={colors}
+        photoColors={photoColors}
+        onPhotoColorChange={changePhotoColor}
       />
 
       {/* ---- publication ---- */}

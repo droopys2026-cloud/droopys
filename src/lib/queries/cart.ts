@@ -5,6 +5,7 @@ import { cache } from "react";
 import { db } from "@/db";
 import { productVariants } from "@/db/schema";
 import { readCart } from "@/lib/cart/cookie";
+import { variantPriceCents } from "@/lib/products/variants";
 import type { CartLine } from "@/types/cart";
 
 /**
@@ -29,6 +30,7 @@ export const getCart = cache(async (): Promise<CartLine[]> => {
       wanted.map((line) => line.variantId),
     ),
     with: {
+      color: true,
       product: {
         with: {
           brand: true,
@@ -51,16 +53,23 @@ export const getCart = cache(async (): Promise<CartLine[]> => {
     const quantity = Math.min(line.quantity, variant.quantity);
     if (quantity <= 0) return [];
 
-    const gallery = [...variant.product.images]
-      .sort((a, b) => a.position - b.position)
-      .map((image) => image.url);
+    // La vignette montre la couleur achetée : ses photos d'abord, puis les
+    // communes, comme sur la fiche.
+    const images = [...variant.product.images].sort((a, b) => a.position - b.position);
+    const gallery = [
+      ...images.filter((image) => variant.colorId !== null && image.colorId === variant.colorId),
+      ...images.filter((image) => image.colorId === null),
+    ].map((image) => image.url);
+    const ownPrice = variant.priceCents !== null;
 
     return [
       {
         // L'identifiant de ligne est celui de la variante : le même produit
         // en deux tailles fait deux variantes, donc deux lignes distinctes.
         id: variant.id,
+        color: variant.color?.name,
         size: variant.size,
+        unitPriceCents: variantPriceCents(variant, variant.product.priceCents),
         quantity,
         stock: variant.quantity,
         product: {
@@ -69,8 +78,11 @@ export const getCart = cache(async (): Promise<CartLine[]> => {
           brand: variant.product.brand.name,
           name: variant.product.name,
           priceCents: variant.product.priceCents,
-          compareAtPriceCents:
-            variant.product.compareAtPriceCents ?? undefined,
+          // Le prix barré vaut contre le prix du produit : sur une taille au
+          // prix propre, il mentirait.
+          compareAtPriceCents: ownPrice
+            ? undefined
+            : (variant.product.compareAtPriceCents ?? undefined),
           imageUrl: gallery[0],
           hoverImageUrl: gallery[1],
           categorySlug: variant.product.category?.slug,
@@ -96,6 +108,7 @@ export async function getCartForCheckout() {
       wanted.map((line) => line.variantId),
     ),
     with: {
+      color: true,
       product: {
         with: {
           brand: true,
@@ -114,6 +127,12 @@ export async function getCartForCheckout() {
     if (!variant || !variant.product.published) return [];
     const quantity = Math.min(line.quantity, variant.quantity);
     if (quantity <= 0) return [];
-    return [{ variant, quantity }];
+    return [
+      {
+        variant,
+        quantity,
+        unitPriceCents: variantPriceCents(variant, variant.product.priceCents),
+      },
+    ];
   });
 }

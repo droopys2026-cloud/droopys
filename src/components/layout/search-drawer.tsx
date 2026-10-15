@@ -19,6 +19,8 @@ type Suggestion = {
   brand: string;
   name: string;
   priceCents: number;
+  /** Vrai quand les tailles n'ont pas toutes le même prix : « dès … ». */
+  fromPrice: boolean;
   imageUrl?: string;
 };
 
@@ -202,6 +204,7 @@ export function SearchDrawer() {
                       </span>
                       <span className="text-brand-label">{product.name}</span>
                       <span className="text-strong">
+                        {product.fromPrice && "dès "}
                         {formatPrice(product.priceCents)}
                       </span>
                     </span>

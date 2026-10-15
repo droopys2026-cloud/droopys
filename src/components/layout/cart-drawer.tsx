@@ -6,6 +6,7 @@ import { FrameImage } from "@/components/ui/frame-image";
 import { CartLineControls } from "@/components/sections/cart-line-controls";
 import { useCartDrawer } from "@/components/layout/cart-drawer-context";
 import { formatPrice } from "@/lib/format";
+import { variantLabel } from "@/lib/products/variants";
 import {
   cartItemCount,
   cartSubtotalCents,
@@ -153,10 +154,10 @@ export function CartDrawer({ lines: serverLines }: { lines: CartLine[] }) {
                       </span>
                     </Link>
                     <span className="text-caption-muted">
-                      Taille {line.size}
+                      {variantLabel(line)}
                     </span>
                     <span className="text-strong">
-                      {formatPrice(line.product.priceCents * line.quantity)}
+                      {formatPrice(line.unitPriceCents * line.quantity)}
                     </span>
                     {/* Les mêmes contrôles que la page panier : retirer un
                         article ne doit pas obliger à quitter la page. */}
@@ -164,7 +165,7 @@ export function CartDrawer({ lines: serverLines }: { lines: CartLine[] }) {
                       variantId={line.id}
                       quantity={line.quantity}
                       stock={line.stock}
-                      label={`${line.product.brand} — ${line.product.name}, taille ${line.size}`}
+                      label={`${line.product.brand} — ${line.product.name}, ${variantLabel(line)}`}
                       onRemove={() => applyChange({ kind: "retrait", id: line.id })}
                       onQuantity={(quantity) =>
                         applyChange({ kind: "quantite", id: line.id, quantity })

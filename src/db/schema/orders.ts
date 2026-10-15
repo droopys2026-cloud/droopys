@@ -121,6 +121,8 @@ export const orderLines = pgTable("order_lines", {
 
   productName: text("product_name").notNull(),
   brand: text("brand"),
+  /** Nom de la couleur au moment de l'achat ; vide pour une pièce sans couleur. */
+  color: text("color"),
   size: text("size").notNull(),
   quantity: integer("quantity").notNull(),
   unitPriceCents: integer("unit_price_cents").notNull(),

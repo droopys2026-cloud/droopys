@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { displayPrice } from "@/lib/products/variants";
 import { searchProducts } from "@/lib/queries/catalog";
 
 /**
@@ -32,13 +33,19 @@ export async function GET(request: Request) {
   const results = await searchProducts(parsed.data.q);
 
   return NextResponse.json({
-    results: results.slice(0, MAX_RESULTS).map((product) => ({
-      id: product.id,
-      slug: product.slug,
-      brand: product.brand,
-      name: product.name,
-      priceCents: product.priceCents,
-      imageUrl: product.imageUrl,
-    })),
+    results: results.slice(0, MAX_RESULTS).map((product) => {
+      // Même prix que la carte : « dès … » quand les tailles n'ont pas toutes
+      // le même. Calculé ici, le tiroir n'a pas les déclinaisons.
+      const price = displayPrice(product, product.sizes ?? []);
+      return {
+        id: product.id,
+        slug: product.slug,
+        brand: product.brand,
+        name: product.name,
+        priceCents: price.cents,
+        fromPrice: price.from,
+        imageUrl: product.imageUrl,
+      };
+    }),
   });
 }

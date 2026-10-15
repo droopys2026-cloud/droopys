@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { CUSTOMER_STATUS_LABELS } from "@/components/account/order-status";
 import { requireCustomer } from "@/lib/auth";
 import { formatDate, formatPrice } from "@/lib/format";
+import { inlineVariantLabel } from "@/lib/products/variants";
 import { getCustomerOrder } from "@/lib/queries/customer-orders";
 
 type PageProps = { params: Promise<{ reference: string }> };
@@ -70,7 +71,7 @@ export default async function CustomerOrderPage({ params }: PageProps) {
             <li key={line.id} className="account-order__line">
               <span>
                 {line.brand && <span className="account-card__muted">{line.brand} — </span>}
-                {line.productName} · taille {line.size} · ×{line.quantity}
+                {line.productName} · {inlineVariantLabel(line)} · ×{line.quantity}
               </span>
               <span className="text-strong">
                 {formatPrice(line.unitPriceCents * line.quantity)}

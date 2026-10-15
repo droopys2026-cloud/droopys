@@ -1,3 +1,5 @@
+import { inlineVariantLabel } from "@/lib/products/variants";
+
 /**
  * Règles de la rétractation, sans base ni réseau.
  *
@@ -16,10 +18,11 @@ export function isLate(placedAt: Date, now: Date, days = WITHDRAWAL_DAYS): boole
 export function lineLabel(line: {
   brand: string | null;
   productName: string;
+  color?: string | null;
   size: string;
   quantity: number;
 }): string {
-  return `${line.brand ? `${line.brand} — ` : ""}${line.productName}, taille ${line.size}, ×${line.quantity}`;
+  return `${line.brand ? `${line.brand} — ` : ""}${line.productName}, ${inlineVariantLabel(line)}, ×${line.quantity}`;
 }
 
 /** « DR-2026-0001 », quelle que soit la casse ou les espaces saisis. */

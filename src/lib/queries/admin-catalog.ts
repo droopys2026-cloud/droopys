@@ -6,6 +6,7 @@ import { db } from "@/db";
 import {
   brands,
   categories,
+  productColors,
   productImages,
   productPlacements,
   products,
@@ -123,6 +124,7 @@ export const getAdminProduct = cache(async (id: string) => {
       category: true,
       images: { orderBy: [asc(productImages.position)] },
       variants: { orderBy: [asc(productVariants.position)] },
+      colors: { orderBy: [asc(productColors.position)] },
     },
   });
 });

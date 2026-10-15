@@ -4,12 +4,14 @@ import { asc } from "drizzle-orm";
 import {
   brands,
   categories,
+  productColors,
   productImages,
   products,
   productVariants,
   subcategories,
 } from "@/db/schema";
-import type { Product } from "@/types/product";
+import { variantPriceCents } from "@/lib/products/variants";
+import type { Product, ProductColor } from "@/types/product";
 
 /**
  * Traduction d'une ligne de `products` vers `@/types/product`.
@@ -26,6 +28,7 @@ export type ProductRow = typeof products.$inferSelect & {
   subcategory: typeof subcategories.$inferSelect | null;
   images: (typeof productImages.$inferSelect)[];
   variants: (typeof productVariants.$inferSelect)[];
+  colors: (typeof productColors.$inferSelect)[];
 };
 
 /**
@@ -40,10 +43,14 @@ export const WITH_RELATIONS = {
   subcategory: true as const,
   images: { orderBy: [asc(productImages.position)] },
   variants: { orderBy: [asc(productVariants.position)] },
+  colors: { orderBy: [asc(productColors.position)] },
 };
 
 export function toProduct(row: ProductRow): Product {
-  const gallery = row.images.map((image) => image.url);
+  const colors = toColors(row);
+  // Avec des couleurs, la carte et la fiche ouvrent sur la première : ses
+  // photos passent devant, comme si on l'avait choisie.
+  const gallery = colors[0]?.images ?? row.images.map((image) => image.url);
 
   return {
     id: row.id,
@@ -57,10 +64,14 @@ export function toProduct(row: ProductRow): Product {
     imageUrl: gallery[0],
     hoverImageUrl: gallery[1],
     images: gallery.length > 0 ? gallery : undefined,
+    colors: colors.length > 0 ? colors : undefined,
     sizes: row.variants.map((variant) => ({
       variantId: variant.id,
       size: variant.size,
       quantity: variant.quantity,
+      colorId: variant.colorId ?? undefined,
+      priceCents: variantPriceCents(variant, row.priceCents),
+      ownPrice: variant.priceCents !== null,
     })),
     description: row.description.length > 0 ? row.description : undefined,
     composition: row.composition ?? undefined,
@@ -76,4 +87,28 @@ export function toProduct(row: ProductRow): Product {
     sizeAdvice: row.sizeAdvice ?? undefined,
     badge: row.badge ?? undefined,
   };
+}
+
+/**
+ * Galerie de chaque couleur : ses photos, puis les photos communes (sans
+ * couleur). Une couleur montre d'abord ce qu'on a choisi ; le détail de
+ * matière, valable pour toutes, vient après.
+ */
+function toColors(row: ProductRow): ProductColor[] {
+  const common = row.images
+    .filter((image) => image.colorId === null)
+    .map((image) => image.url);
+
+  return row.colors.map((color) => ({
+    id: color.id,
+    slug: color.slug,
+    name: color.name,
+    hex: color.hex,
+    images: [
+      ...row.images
+        .filter((image) => image.colorId === color.id)
+        .map((image) => image.url),
+      ...common,
+    ],
+  }));
 }

@@ -68,14 +68,34 @@ export default async function AdminProduitPage({ params }: PageProps) {
           sizeAdvice: product.sizeAdvice,
           badge: product.badge,
           published: product.published,
-          sizes: product.variants.map((variant) => ({
+          colors: product.colors.map((color) => ({
+            key: color.id,
+            name: color.name,
+            hex: color.hex,
+          })),
+          // Les tailles sont communes à toutes les couleurs : on les relit
+          // une fois chacune, dans l'ordre enregistré.
+          sizes: [...new Set(product.variants.map((variant) => variant.size))],
+          stock: product.variants.map((variant) => ({
+            colorKey: variant.colorId,
             size: variant.size,
             quantity: variant.quantity,
+            price: euros(variant.priceCents),
           })),
           measurements: product.measurements,
           images: product.images.map((image) => image.url),
+          imageColors: Object.fromEntries(
+            product.images.flatMap((image) =>
+              image.colorId ? [[image.url, image.colorId]] : [],
+            ),
+          ),
         }}
       />
     </div>
   );
+}
+
+/** Centimes → « 52,00 », la forme que le champ attend ; vide sans prix propre. */
+function euros(cents: number | null): string {
+  return cents === null ? "" : (cents / 100).toFixed(2).replace(".", ",");
 }

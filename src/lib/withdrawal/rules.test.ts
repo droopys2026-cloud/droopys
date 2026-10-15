@@ -23,4 +23,10 @@ describe("lineLabel", () => {
       "Moncler — Doudoune, taille 8 ans, ×1",
     );
   });
+
+  it("nomme la couleur quand la pièce en a une", () => {
+    expect(
+      lineLabel({ brand: null, productName: "Robe", color: "Bleu nuit", size: "6 ans", quantity: 2 }),
+    ).toBe("Robe, Bleu nuit, taille 6 ans, ×2");
+  });
 });

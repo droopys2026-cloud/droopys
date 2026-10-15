@@ -3,6 +3,7 @@ import { CartLineControls } from "@/components/sections/cart-line-controls";
 import { CheckoutButton } from "@/components/sections/checkout-button";
 import { FrameImage } from "@/components/ui/frame-image";
 import { formatPrice } from "@/lib/format";
+import { variantLabel } from "@/lib/products/variants";
 import {
   cartItemCount,
   cartSubtotalCents,
@@ -66,18 +67,18 @@ export function CartDetail({ lines }: { lines: CartLine[] }) {
                 >
                   <span className="text-brand-label">{line.product.name}</span>
                 </Link>
-                <span className="text-caption-muted">Taille {line.size}</span>
+                <span className="text-caption-muted">{variantLabel(line)}</span>
 
                 <CartLineControls
                   variantId={line.id}
                   quantity={line.quantity}
                   stock={line.stock}
-                  label={`${line.product.name}, taille ${line.size}`}
+                  label={`${line.product.name}, ${variantLabel(line)}`}
                 />
               </div>
 
               <span className="text-strong shrink-0">
-                {formatPrice(line.product.priceCents * line.quantity)}
+                {formatPrice(line.unitPriceCents * line.quantity)}
               </span>
             </li>
           ))}

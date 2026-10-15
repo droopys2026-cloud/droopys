@@ -10,6 +10,7 @@ import {
   PhotoGenerator,
   type GenerationReference,
 } from "@/components/admin/photo-generator";
+import type { ColorDraft } from "@/lib/products/stock-grid";
 
 /**
  * Photos d'une fiche.
@@ -26,6 +27,9 @@ export function ProductPhotosField({
   selectedId,
   onSelect,
   generationEnabled,
+  colors,
+  photoColors,
+  onPhotoColorChange,
 }: {
   kept: string[];
   onKeptChange: (urls: string[]) => void;
@@ -35,7 +39,33 @@ export function ProductPhotosField({
   onSelect: (id: string) => void;
   /** Vrai quand la clé Gemini est configurée. */
   generationEnabled: boolean;
+  colors: ColorDraft[];
+  /**
+   * Couleur de chaque photo, par adresse (photo en ligne) ou identifiant
+   * (photo en attente). Absente : photo commune à toutes les couleurs.
+   */
+  photoColors: Record<string, string>;
+  onPhotoColorChange: (photoKey: string, colorKey: string | null) => void;
 }) {
+  // Le menu n'apparaît qu'avec des couleurs : sans elles, toutes les photos
+  // sont communes et la question ne se pose pas.
+  const colorSelect = (photoKey: string, label: string) =>
+    colors.length > 0 && (
+      <select
+        className="admin-thumb__color"
+        aria-label={`Couleur de ${label}`}
+        value={photoColors[photoKey] ?? ""}
+        onChange={(event) => onPhotoColorChange(photoKey, event.target.value || null)}
+      >
+        <option value="">Toutes les couleurs</option>
+        {colors.map((color, index) => (
+          <option key={color.key} value={color.key}>
+            {color.name || `Couleur ${index + 1}`}
+          </option>
+        ))}
+      </select>
+    );
+
   const keptDragProps = useDragReorder((from, to) => onKeptChange(moveItem(kept, from, to)));
 
   return (
@@ -66,6 +96,7 @@ export function ProductPhotosField({
                     {index === 0 ? "Photo principale" : `Photo ${index + 1}`}
                   </span>
                   <span className="admin-thumb__size">déjà en ligne</span>
+                  {colorSelect(url, index === 0 ? "la photo principale" : `la photo ${index + 1}`)}
                 </div>
                 <div className="admin-thumb__actions">
                   <button
@@ -110,6 +141,7 @@ export function ProductPhotosField({
         onChange={onPendingChange}
         selectedId={selectedId}
         onSelect={onSelect}
+        extra={(image) => colorSelect(image.id, image.name)}
       />
 
       <PhotoGenerator
@@ -124,6 +156,9 @@ export function ProductPhotosField({
               // Refaite : la nouvelle prend la place de l'ancienne, au même
               // rang, et l'aperçu de l'ancienne est libéré.
               URL.revokeObjectURL(old.previewUrl);
+              // Refaite d'après la même pièce : elle garde sa couleur.
+              const colorKey = photoColors[old.id];
+              if (colorKey) onPhotoColorChange(image.id, colorKey);
               next = next.map((entry) =>
                 entry.id === replaces ? image : entry,
               );

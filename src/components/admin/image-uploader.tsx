@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { moveItem, useDragReorder } from "@/components/admin/use-drag-reorder";
 import { MAX_EDGE, toWebp } from "@/lib/images/to-webp";
 
@@ -31,12 +31,15 @@ export function ImageUploader({
   onChange,
   selectedId,
   onSelect,
+  extra,
 }: {
   images: UploadedImage[];
   onChange: (images: UploadedImage[]) => void;
   /** Photo sur laquelle portent les actions de génération. */
   selectedId?: string | null;
   onSelect?: (id: string) => void;
+  /** Réglage propre à chaque photo (sa couleur), sous son nom. */
+  extra?: (image: UploadedImage) => ReactNode;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
@@ -161,6 +164,7 @@ export function ImageUploader({
                   {formatBytes(image.originalBytes)} →{" "}
                   {formatBytes(image.webpBytes)} en WebP
                 </span>
+                {extra?.(image)}
               </div>
 
               <div className="admin-thumb__actions">

@@ -12,6 +12,7 @@ import {
 import { getServicePoint } from "@/lib/shipping/sendcloud";
 import { parcelWeightKg, quoteParcel } from "@/lib/shipping/quote";
 import { SERVICES } from "@/lib/shipping/services";
+import { variantLabel } from "@/lib/products/variants";
 import { publicEnv } from "@/lib/env";
 import { CURRENCY, stripe } from "@/lib/stripe";
 import { getCurrentUser } from "@/lib/supabase/server";
@@ -61,7 +62,7 @@ export async function createPaymentSession(
   }
 
   const itemsCents = lines.reduce(
-    (total, line) => total + line.variant.product.priceCents * line.quantity,
+    (total, line) => total + line.unitPriceCents * line.quantity,
     0,
   );
   const weightKg = parcelWeightKg(
@@ -121,14 +122,14 @@ export async function createPaymentSession(
     mode: "payment",
     integration_identifier: INTEGRATION_ID,
     customer_email: details.contact.email,
-    line_items: lines.map(({ variant, quantity }) => ({
+    line_items: lines.map(({ variant, quantity, unitPriceCents }) => ({
       quantity,
       price_data: {
         currency: CURRENCY,
-        unit_amount: variant.product.priceCents,
+        unit_amount: unitPriceCents,
         product_data: {
           name: `${variant.product.brand.name} — ${variant.product.name}`,
-          description: `Taille ${variant.size}`,
+          description: variantLabel({ color: variant.color?.name, size: variant.size }),
           images: variant.product.images
             .slice(0, 1)
             .map((image) => image.url)

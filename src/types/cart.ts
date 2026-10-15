@@ -8,8 +8,15 @@ import type { Product } from "@/types/product";
 export type CartLine = {
   id: string;
   product: Product;
+  /** Couleur choisie (« Rose poudré ») ; absente pour une pièce sans couleur. */
+  color?: string;
   /** Taille choisie, telle qu'affichée (« 4 ans », « 38 »…). */
   size: string;
+  /**
+   * Prix unitaire de la déclinaison, en centimes. C'est lui qui fait les
+   * totaux, pas `product.priceCents` : une taille peut avoir son propre prix.
+   */
+  unitPriceCents: number;
   quantity: number;
   /**
    * Stock restant de cette taille. Il accompagne la ligne plutôt que d'être

@@ -869,6 +869,7 @@
 
 .admin-stock__size {
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .admin-stock__cell {
@@ -886,6 +887,78 @@
    colonne, pas la quantité exacte. */
 .admin-stock__state--out {
   color: rgb(180, 40, 40);
+}
+
+/* Un tableau par couleur, empilés : lisible sur téléphone, où une grille
+   couleur × taille déborderait dès trois teintes. */
+.admin-stock-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-stock-group__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.admin-stock-group__swatch {
+  width: 16px;
+  height: 16px;
+  border: 1px solid rgb(216, 216, 216);
+  border-radius: 50%;
+}
+
+.admin-size__input--price {
+  width: 76px;
+}
+
+/* ---- couleurs ------------------------------------------------------------ */
+
+.admin-colors {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-color {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Le carré natif du sélecteur, sans la marge grise que lui donne le
+   navigateur : on doit y voir la teinte, pas un bouton. */
+.admin-color__swatch {
+  width: 44px;
+  height: 44px;
+  padding: 2px;
+  border: 1px solid rgb(216, 216, 216);
+  border-radius: 8px;
+  background: none;
+  cursor: pointer;
+}
+
+.admin-colors__add {
+  align-self: flex-start;
+}
+
+.admin-thumb__color {
+  max-width: 100%;
+  margin-top: 4px;
+  padding: 4px 8px;
+  border: 1px solid rgb(216, 216, 216);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 13px;
 }
 
 /* ---- génération de photos ------------------------------------------------ */

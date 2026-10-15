@@ -9,8 +9,8 @@ const order: ConfirmationOrder = {
   shippingAddress: ["1 rue de Rome", "13001 Marseille", "FR"],
   shippingCents: 690,
   lines: [
-    { brand: "Moncler", productName: "Doudoune Maya", size: "8 ans", quantity: 1, unitPriceCents: 45000, imageUrl: "https://droopys.fr/imgdress/maya.webp" },
-    { brand: null, productName: "Bonnet <script>", size: "TU", quantity: 2, unitPriceCents: 3500, imageUrl: null },
+    { brand: "Moncler", productName: "Doudoune Maya", color: "Rose poudré", size: "8 ans", quantity: 1, unitPriceCents: 45000, imageUrl: "https://droopys.fr/imgdress/maya.webp" },
+    { brand: null, productName: "Bonnet <script>", color: null, size: "TU", quantity: 2, unitPriceCents: 3500, imageUrl: null },
   ],
   shop: { name: "Droopy's Marseille — Grand Littoral", address: ["139 avenue de la Viste", "13015 Marseille"] },
   siteUrl: "https://droopys.fr",
@@ -32,6 +32,12 @@ describe("renderOrderConfirmation", () => {
   it("montre la photo d'un article, et un cadre vide sans photo", () => {
     expect(email.html).toContain('src="https://droopys.fr/imgdress/maya.webp"');
     expect(email.html.match(/<img /g)).toHaveLength(1);
+  });
+
+  it("nomme la couleur achetée, et rien pour une pièce sans couleur", () => {
+    expect(email.text).toContain("Doudoune Maya, Rose poudré, taille 8 ans");
+    expect(email.text).toContain("Bonnet <script>, taille TU");
+    expect(email.html).toContain("Rose poudré · taille 8 ans");
   });
 
   it("échappe ce qui vient de la base", () => {

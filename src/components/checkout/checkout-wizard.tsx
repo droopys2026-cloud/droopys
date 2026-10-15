@@ -125,7 +125,7 @@ export function CheckoutWizard({
     });
 
   const itemsCents = lines.reduce(
-    (total, line) => total + line.product.priceCents * line.quantity,
+    (total, line) => total + line.unitPriceCents * line.quantity,
     0,
   );
   const freeShipping = freeFromCents !== null && itemsCents >= freeFromCents;

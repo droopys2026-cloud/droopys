@@ -7,6 +7,7 @@ import {
   real,
   text,
   timestamp,
+  unique,
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
@@ -164,11 +165,51 @@ export const products = pgTable(
   ],
 );
 
+/**
+ * Couleurs d'une fiche. Facultatives : une pièce sans couleur n'en a aucune
+ * ligne, et tout le reste fonctionne comme avant.
+ *
+ * Une table plutôt qu'un libellé répété sur chaque déclinaison : la couleur a
+ * ses propres photos et sa teinte de pastille, et la renommer ne doit pas
+ * obliger à retoucher chaque taille.
+ */
+export const productColors = pgTable(
+  "product_colors",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    productId: uuid("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+    /** Nom affiché : « Rose poudré ». */
+    name: text("name").notNull(),
+    /** Forme d'URL du nom, pour `?couleur=rose-poudre`. */
+    slug: text("slug").notNull(),
+    /** Teinte de la pastille, `#rrggbb`. */
+    hex: text("hex").notNull(),
+    position: integer("position").notNull().default(0),
+  },
+  (table) => [
+    // Deux « Rose » sur une fiche : la cliente ne saurait pas lequel choisir,
+    // et l'adresse `?couleur=rose` désignerait deux couleurs.
+    uniqueIndex("product_colors_product_slug_key").on(
+      table.productId,
+      table.slug,
+    ),
+  ],
+);
+
 export const productImages = pgTable("product_images", {
   id: uuid("id").primaryKey().defaultRandom(),
   productId: uuid("product_id")
     .notNull()
     .references(() => products.id, { onDelete: "cascade" }),
+  /**
+   * Couleur que la photo montre. Vide : photo commune, affichée quelle que
+   * soit la couleur choisie (détail de matière, étiquette…).
+   */
+  colorId: uuid("color_id").references(() => productColors.id, {
+    onDelete: "cascade",
+  }),
   url: text("url").notNull(),
   /** Texte alternatif. Vide, le rendu retombe sur « marque — nom ». */
   alt: text("alt"),
@@ -186,19 +227,29 @@ export const productVariants = pgTable(
     productId: uuid("product_id")
       .notNull()
       .references(() => products.id, { onDelete: "cascade" }),
+    /** Couleur de la déclinaison ; vide pour une pièce sans couleur. */
+    colorId: uuid("color_id").references(() => productColors.id, {
+      onDelete: "cascade",
+    }),
     /** Taille telle qu'affichée : « 4 ans », « 38 », « 6 mois ». */
     size: text("size").notNull(),
     /** Quantité en stock. 0 = taille affichée mais indisponible. */
     quantity: integer("quantity").notNull().default(0),
+    /**
+     * Prix propre à cette déclinaison, en centimes. Vide : prix du produit.
+     * Lire le prix par `variantPriceCents`, jamais ce champ seul.
+     */
+    priceCents: integer("price_cents"),
     position: integer("position").notNull().default(0),
   },
   (table) => [
-    // Une taille ne peut apparaître qu'une fois par produit, sinon le stock
-    // se répartit sur deux lignes et aucune n'est la vérité.
-    uniqueIndex("product_variants_product_size_key").on(
-      table.productId,
-      table.size,
-    ),
+    // Une taille ne peut apparaître qu'une fois par couleur, sinon le stock
+    // se répartit sur deux lignes et aucune n'est la vérité. `nulls not
+    // distinct` : sans lui, deux « 8 ans » sans couleur passeraient, Postgres
+    // tenant deux vides pour différents.
+    unique("product_variants_product_color_size_key")
+      .on(table.productId, table.colorId, table.size)
+      .nullsNotDistinct(),
   ],
 );
 
@@ -244,6 +295,14 @@ export const productsRelations = relations(products, ({ one, many }) => ({
   }),
   images: many(productImages),
   variants: many(productVariants),
+  colors: many(productColors),
+}));
+
+export const productColorsRelations = relations(productColors, ({ one }) => ({
+  product: one(products, {
+    fields: [productColors.productId],
+    references: [products.id],
+  }),
 }));
 
 export const productImagesRelations = relations(productImages, ({ one }) => ({
@@ -259,6 +318,10 @@ export const productVariantsRelations = relations(
     product: one(products, {
       fields: [productVariants.productId],
       references: [products.id],
+    }),
+    color: one(productColors, {
+      fields: [productVariants.colorId],
+      references: [productColors.id],
     }),
   }),
 );

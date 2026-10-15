@@ -143,6 +143,13 @@
     margin-right: var(--spacing-5);
   }
 
+  /* « dès » : plus léger que le montant, qui reste ce qu'on lit d'abord. */
+  .product-price__from {
+    font-family: var(--font-body);
+    font-size: var(--text-lg);
+    font-weight: 400;
+  }
+
   /* Bouton discret : partager, disponibilité en boutique. */
   .product-textlink {
     display: inline-flex;
@@ -326,6 +333,20 @@
   /* Rareté et rupture sur la carte produit. Même rouge que
      `.size-picker__warning` de la fiche : c'est la même information, elle ne
      doit pas changer d'aspect selon l'endroit où on la lit. */
+  .product-card__swatches {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+  }
+
+  /* Bord gris : une pastille blanche disparaîtrait sur le fond de la carte. */
+  .product-card__swatch {
+    width: 12px;
+    height: 12px;
+    border: 1px solid var(--color-border-muted);
+    border-radius: 50%;
+  }
+
   .product-card__scarce {
     font-family: var(--font-medium);
     font-size: var(--text-md);

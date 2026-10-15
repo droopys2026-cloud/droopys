@@ -1,4 +1,5 @@
 import { formatPrice } from "@/lib/format";
+import { inlineVariantLabel, variantLabel } from "@/lib/products/variants";
 
 /**
  * E-mail de confirmation de commande, envoyé à la cliente par le webhook.
@@ -20,6 +21,7 @@ export type ConfirmationOrder = {
   lines: {
     brand: string | null;
     productName: string;
+    color: string | null;
     size: string;
     quantity: number;
     unitPriceCents: number;
@@ -90,7 +92,7 @@ export function renderOrderConfirmation(order: ConfirmationOrder): {
     "",
     ...order.lines.map(
       (line) =>
-        `- ${line.brand ? `${line.brand} — ` : ""}${line.productName}, taille ${line.size}, ×${line.quantity} : ${formatPrice(line.unitPriceCents * line.quantity)}`,
+        `- ${line.brand ? `${line.brand} — ` : ""}${line.productName}, ${inlineVariantLabel(line)}, ×${line.quantity} : ${formatPrice(line.unitPriceCents * line.quantity)}`,
     ),
     "",
     `Sous-total : ${formatPrice(itemsCents)}`,
@@ -122,7 +124,7 @@ export function renderOrderConfirmation(order: ConfirmationOrder): {
           <td style="${cell}padding-left:12px;">
             ${line.brand ? `<span style="color:${INK_SECONDARY};font-size:12px;text-transform:uppercase;">${escapeHtml(line.brand)}</span><br>` : ""}
             ${escapeHtml(line.productName)}<br>
-            <span style="color:${INK_SECONDARY};">Taille ${escapeHtml(line.size)} · ×${line.quantity}</span>
+            <span style="color:${INK_SECONDARY};">${escapeHtml(variantLabel(line))} · ×${line.quantity}</span>
           </td>
           <td style="${cell}text-align:right;white-space:nowrap;vertical-align:top;">
             ${formatPrice(line.unitPriceCents * line.quantity)}

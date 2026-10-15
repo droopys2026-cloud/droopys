@@ -10,6 +10,7 @@ import { readSessionMetadata } from "@/lib/checkout/details";
 import { sendOrderConfirmation } from "@/lib/email/send-order-confirmation";
 import { serverEnv } from "@/lib/env";
 import { stripe } from "@/lib/stripe";
+import { variantPriceCents } from "@/lib/products/variants";
 
 /**
  * Webhook Stripe : c'est **ici**, et nulle part ailleurs, qu'une commande naît.
@@ -115,7 +116,7 @@ async function recordOrder(session: Stripe.Checkout.Session) {
         variant.id,
         parsed.data.map((line) => line.v),
       ),
-    with: { product: { with: { brand: true } } },
+    with: { color: true, product: { with: { brand: true } } },
   });
   const byId = new Map(variants.map((variant) => [variant.id, variant]));
 
@@ -176,11 +177,15 @@ async function recordOrder(session: Stripe.Checkout.Session) {
         variantId: variant.id,
         productName: variant.product.name,
         brand: variant.product.brand.name,
+        // Le nom et non l'identifiant : la couleur peut être renommée ou
+        // retirée de la fiche, la commande doit dire ce qui a été acheté.
+        color: variant.color?.name ?? null,
         size: variant.size,
         quantity: line.q,
         // Le prix payé est figé ici : le catalogue peut changer demain, la
-        // commande d'aujourd'hui ne changera pas avec lui.
-        unitPriceCents: variant.product.priceCents,
+        // commande d'aujourd'hui ne changera pas avec lui. Même calcul qu'au
+        // tunnel, pour que la commande dise ce que Stripe a débité.
+        unitPriceCents: variantPriceCents(variant, variant.product.priceCents),
       });
 
       // Décrément borné à zéro : deux paiements simultanés sur la dernière

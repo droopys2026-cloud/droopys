@@ -5,7 +5,9 @@ import { SiteAnnouncement } from "@/components/layout/site-announcement";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { ProductAccordion } from "@/components/product/product-accordion";
-import { ProductGallery } from "@/components/product/product-gallery";
+import { ProductVariantProvider } from "@/components/product/product-variant-context";
+import { ProductVariantGallery } from "@/components/product/product-variant-gallery";
+import { ProductVariantPrice } from "@/components/product/product-variant-price";
 import { ShareButton } from "@/components/product/share-button";
 import { SizePicker } from "@/components/product/size-picker";
 import { ProductRail } from "@/components/sections/product-rail";
@@ -53,9 +55,6 @@ export default async function ProductPage({ params }: PageProps) {
     ? await getCategoryBySlug(product.categorySlug)
     : undefined;
   const images = galleryImages(product);
-  const onSale =
-    product.compareAtPriceCents !== undefined &&
-    product.compareAtPriceCents > product.priceCents;
 
   return (
     <>
@@ -81,163 +80,164 @@ export default async function ProductPage({ params }: PageProps) {
           />
         </div>
 
-        <div className="container-page grid grid-cols-1 gap-13 pb-14 lg:grid-cols-[1.15fr_1fr] lg:gap-17">
-          <ProductGallery
-            images={images}
-            alt={`${product.brand} — ${product.name}`}
-          />
+        {/* Galerie, prix et sélecteur suivent la couleur et la taille
+            choisies : le fournisseur les relie, le reste de la fiche reste
+            rendu au serveur. */}
+        <ProductVariantProvider colors={product.colors} sizes={product.sizes ?? []}>
+          <div className="container-page grid grid-cols-1 gap-13 pb-14 lg:grid-cols-[1.15fr_1fr] lg:gap-17">
+            <ProductVariantGallery
+              images={images}
+              alt={`${product.brand} — ${product.name}`}
+            />
 
-          {/* La colonne d'achat suit le défilement des photos : c'est elle qui
-              porte la décision, elle ne doit pas sortir de l'écran. */}
-          <div className="product-buy lg:sticky lg:top-9 lg:h-fit">
-            {product.madeIn && (
-              <p className="product-origin">Fabriqué en {product.madeIn}</p>
-            )}
+            {/* La colonne d'achat suit le défilement des photos : c'est elle qui
+                porte la décision, elle ne doit pas sortir de l'écran. */}
+            <div className="product-buy lg:sticky lg:top-9 lg:h-fit">
+              {product.madeIn && (
+                <p className="product-origin">Fabriqué en {product.madeIn}</p>
+              )}
 
-            <div className="product-head">
-              <span className="product-head__brand">{product.brand}</span>
-              <ShareButton title={`${product.brand} — ${product.name}`} />
-            </div>
+              <div className="product-head">
+                <span className="product-head__brand">{product.brand}</span>
+                <ShareButton title={`${product.brand} — ${product.name}`} />
+              </div>
 
-            <div className="product-title-row">
-              <h1 className="m-0">{product.name}</h1>
-              <p className="product-price m-0">
-                {onSale && (
-                  <span className="product-price__was">
-                    {formatPrice(product.compareAtPriceCents!)}
-                  </span>
+              <div className="product-title-row">
+                <h1 className="m-0">{product.name}</h1>
+                <ProductVariantPrice
+                  priceCents={product.priceCents}
+                  compareAtPriceCents={product.compareAtPriceCents}
+                />
+              </div>
+
+              {product.sizes && (
+                <SizePicker
+                  productId={product.id}
+                  productName={product.name}
+                  sizeAdvice={product.sizeAdvice}
+                />
+              )}
+
+              <Link href="/boutiques" className="product-textlink self-center">
+                Voir la disponibilité en boutique
+              </Link>
+
+              <ul className="product-reassure-grid">
+                {livraison.freeFromCents !== null && (
+                  <li className="product-reassure">
+                    Livraison offerte dès {formatPrice(livraison.freeFromCents)}
+                  </li>
                 )}
-                {formatPrice(product.priceCents)}
-              </p>
-            </div>
-
-            {product.sizes && (
-              <SizePicker
-                sizes={product.sizes}
-                productId={product.id}
-                productName={product.name}
-                sizeAdvice={product.sizeAdvice}
-              />
-            )}
-
-            <Link href="/boutiques" className="product-textlink self-center">
-              Voir la disponibilité en boutique
-            </Link>
-
-            <ul className="product-reassure-grid">
-              {livraison.freeFromCents !== null && (
                 <li className="product-reassure">
-                  Livraison offerte dès {formatPrice(livraison.freeFromCents)}
+                  Retour offert sous {retours.days} jours
                 </li>
-              )}
-              <li className="product-reassure">
-                Retour offert sous {retours.days} jours
-              </li>
-              <li className="product-reassure">Paiement en 3 fois</li>
-            </ul>
+                <li className="product-reassure">Paiement en 3 fois</li>
+              </ul>
 
-            <div>
-              {hasDescription(product) && (
-                <ProductAccordion title="Description" defaultOpen>
-                  {product.description?.map((line) => (
-                    <p key={line} className="m-0">
-                      {line}
-                    </p>
-                  ))}
+              <div>
+                {hasDescription(product) && (
+                  <ProductAccordion title="Description" defaultOpen>
+                    {product.description?.map((line) => (
+                      <p key={line} className="m-0">
+                        {line}
+                      </p>
+                    ))}
 
-                  {product.madeIn && (
-                    <p className="product-spec m-0">
-                      <b>Fabriqué en :</b> {product.madeIn}.
-                    </p>
-                  )}
+                    {product.madeIn && (
+                      <p className="product-spec m-0">
+                        <b>Fabriqué en :</b> {product.madeIn}.
+                      </p>
+                    )}
 
-                  {(product.modelNote || product.measurements) && (
-                    <div className="product-spec">
-                      <b>Taille et coupe :</b>
-                      {product.modelNote && ` ${product.modelNote}`}
-                      {product.measurements && (
-                        <ul className="product-list">
-                          {product.measurements.map((measure) => (
-                            <li key={measure.label}>
-                              {measure.label} : {measure.value}
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  )}
+                    {(product.modelNote || product.measurements) && (
+                      <div className="product-spec">
+                        <b>Taille et coupe :</b>
+                        {product.modelNote && ` ${product.modelNote}`}
+                        {product.measurements && (
+                          <ul className="product-list">
+                            {product.measurements.map((measure) => (
+                              <li key={measure.label}>
+                                {measure.label} : {measure.value}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    )}
 
-                  {product.composition && (
-                    <p className="product-spec m-0">
-                      <b>Composition :</b> {product.composition}
-                    </p>
-                  )}
+                    {product.composition && (
+                      <p className="product-spec m-0">
+                        <b>Composition :</b> {product.composition}
+                      </p>
+                    )}
 
-                  {product.care && (
-                    <p className="product-spec m-0">
-                      <b>Conseil d&apos;entretien :</b> {product.care}
-                    </p>
-                  )}
+                    {product.care && (
+                      <p className="product-spec m-0">
+                        <b>Conseil d&apos;entretien :</b> {product.care}
+                      </p>
+                    )}
 
-                  {product.reference && (
-                    <p className="text-caption-muted m-0">
-                      réf. {product.reference}
-                    </p>
-                  )}
+                    {product.reference && (
+                      <p className="text-caption-muted m-0">
+                        réf. {product.reference}
+                      </p>
+                    )}
+                  </ProductAccordion>
+                )}
+
+                {/* Les conditions ne sont pas recopiées ici : elles vivent sur
+                    leurs pages, et deux versions d'un délai de retour finissent
+                    toujours par se contredire. */}
+                <ProductAccordion title="Livraison et retour">
+                  <p className="m-0">
+                    Livraison en point relais ou à domicile — {livraison.delay}
+                    {livraison.freeFromCents !== null &&
+                      `, offerte dès ${formatPrice(livraison.freeFromCents)} d'achat`}
+                    . Retrait en boutique gratuit, souvent disponible dans la
+                    journée.
+                  </p>
+                  <p className="m-0">{retours.terms}</p>
+                  <p className="m-0">
+                    <Link href="/aide/livraison">Délais et frais détaillés</Link>
+                    {" · "}
+                    <Link href="/aide/retours">Conditions de retour</Link>
+                  </p>
                 </ProductAccordion>
+
+                <ProductAccordion title="Disponibilité en boutique">
+                  <p className="m-0">
+                    La disponibilité en rayon n&apos;est pas encore reliée au
+                    stock de la boutique. En attendant, appelez-nous ou
+                    passez-nous voir à Marseille — Grand Littoral.
+                  </p>
+                  <p className="m-0">
+                    <Link href="/boutiques">Adresse et horaires</Link>
+                  </p>
+                </ProductAccordion>
+              </div>
+
+              {(category || product.subcategory) && (
+                <p className="product-related m-0">
+                  <span>Collections similaires :</span>
+                  {category && (
+                    <Link href={`/${category.slug}`}>
+                      {category.headline ?? category.title}
+                    </Link>
+                  )}
+                  {/* Le sous-rayon a désormais sa page : on y mène, au lieu
+                      d'afficher son nom au milieu de liens cliquables. */}
+                  {product.subcategory && category && (
+                    <Link href={`/${category.slug}/${product.subcategory.slug}`}>
+                      {product.subcategory.title}
+                    </Link>
+                  )}
+                  <Link href="/marques">{product.brand}</Link>
+                </p>
               )}
-
-              {/* Les conditions ne sont pas recopiées ici : elles vivent sur
-                  leurs pages, et deux versions d'un délai de retour finissent
-                  toujours par se contredire. */}
-              <ProductAccordion title="Livraison et retour">
-                <p className="m-0">
-                  Livraison en point relais ou à domicile — {livraison.delay}
-                  {livraison.freeFromCents !== null &&
-                    `, offerte dès ${formatPrice(livraison.freeFromCents)} d'achat`}
-                  . Retrait en boutique gratuit, souvent disponible dans la
-                  journée.
-                </p>
-                <p className="m-0">{retours.terms}</p>
-                <p className="m-0">
-                  <Link href="/aide/livraison">Délais et frais détaillés</Link>
-                  {" · "}
-                  <Link href="/aide/retours">Conditions de retour</Link>
-                </p>
-              </ProductAccordion>
-
-              <ProductAccordion title="Disponibilité en boutique">
-                <p className="m-0">
-                  La disponibilité en rayon n&apos;est pas encore reliée au
-                  stock de la boutique. En attendant, appelez-nous ou
-                  passez-nous voir à Marseille — Grand Littoral.
-                </p>
-                <p className="m-0">
-                  <Link href="/boutiques">Adresse et horaires</Link>
-                </p>
-              </ProductAccordion>
             </div>
-
-            {(category || product.subcategory) && (
-              <p className="product-related m-0">
-                <span>Collections similaires :</span>
-                {category && (
-                  <Link href={`/${category.slug}`}>
-                    {category.headline ?? category.title}
-                  </Link>
-                )}
-                {/* Le sous-rayon a désormais sa page : on y mène, au lieu
-                    d'afficher son nom au milieu de liens cliquables. */}
-                {product.subcategory && category && (
-                  <Link href={`/${category.slug}/${product.subcategory.slug}`}>
-                    {product.subcategory.title}
-                  </Link>
-                )}
-                <Link href="/marques">{product.brand}</Link>
-              </p>
-            )}
           </div>
-        </div>
+
+        </ProductVariantProvider>
 
         {/* D'autres pièces sous la fiche : la cliente qui hésite repart vers
             un article voisin plutôt que vers le bouton « Retour ». */}

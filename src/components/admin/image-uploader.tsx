@@ -1,14 +1,14 @@
 "use client";
 
-import { useRef, useState, type ReactNode } from "react";
-import { moveItem, useDragReorder } from "@/components/admin/use-drag-reorder";
+import { useRef, useState } from "react";
 import { MAX_EDGE, toWebp } from "@/lib/images/to-webp";
 
 /**
- * Dépôt d'images d'un produit.
+ * Zone de dépôt des photos d'un produit.
  *
- * Chaque fichier est converti en WebP dans le navigateur avant tout envoi —
- * voir `@/lib/images/to-webp`.
+ * Elle ne fait qu'ajouter : chaque fichier est converti en WebP dans le
+ * navigateur avant tout envoi (voir `@/lib/images/to-webp`), puis rejoint la
+ * liste unique des photos de la fiche, où il se range comme les autres.
  */
 export type UploadedImage = {
   id: string;
@@ -20,26 +20,17 @@ export type UploadedImage = {
   webpBytes: number;
 };
 
-function formatBytes(bytes: number): string {
+export function formatBytes(bytes: number): string {
   return bytes > 1_000_000
     ? `${(bytes / 1_000_000).toFixed(1)} Mo`
     : `${Math.round(bytes / 1000)} ko`;
 }
 
 export function ImageUploader({
-  images,
-  onChange,
-  selectedId,
-  onSelect,
-  extra,
+  onAdd,
 }: {
-  images: UploadedImage[];
-  onChange: (images: UploadedImage[]) => void;
-  /** Photo sur laquelle portent les actions de génération. */
-  selectedId?: string | null;
-  onSelect?: (id: string) => void;
-  /** Réglage propre à chaque photo (sa couleur), sous son nom. */
-  extra?: (image: UploadedImage) => ReactNode;
+  /** Photos converties, à ajouter en fin de liste. */
+  onAdd: (images: UploadedImage[]) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
@@ -57,7 +48,9 @@ export function ImageUploader({
           .map(async (file) => {
             const webp = await toWebp(file);
             return {
-              id: `${file.name}-${file.size}-${images.length}-${Math.round(webp.size)}`,
+              // Aléatoire et non dérivé du fichier : le même fichier déposé
+              // deux fois doit donner deux vignettes distinctes.
+              id: `${file.name}-${crypto.randomUUID()}`,
               name: webp.name,
               previewUrl: URL.createObjectURL(webp),
               file: webp,
@@ -66,7 +59,7 @@ export function ImageUploader({
             };
           }),
       );
-      onChange([...images, ...converted]);
+      onAdd(converted);
     } catch {
       setError(
         "Une image n'a pas pu être convertie. Réessayez avec un autre fichier.",
@@ -76,18 +69,6 @@ export function ImageUploader({
       if (inputRef.current) inputRef.current.value = "";
     }
   }
-
-  function remove(id: string) {
-    const image = images.find((item) => item.id === id);
-    if (image) URL.revokeObjectURL(image.previewUrl);
-    onChange(images.filter((item) => item.id !== id));
-  }
-
-  function move(from: number, to: number) {
-    onChange(moveItem(images, from, to));
-  }
-
-  const dragProps = useDragReorder(move);
 
   return (
     <div className="admin-uploader">
@@ -126,77 +107,6 @@ export function ImageUploader({
 
       {busy && <p className="admin-form__note">Conversion en cours…</p>}
       {error && <p className="admin-uploader__error">{error}</p>}
-
-      {images.length > 0 && (
-        <ul className="admin-uploader__list">
-          {images.map((image, index) => (
-            <li
-              key={image.id}
-              className="admin-thumb"
-              aria-current={selectedId === image.id ? "true" : undefined}
-              {...dragProps(index)}
-            >
-              {/* La vignette sélectionne la photo : les boutons de génération
-                  agissent sur celle qui est choisie. Grand aperçu — on juge
-                  une photo de fiche produit sur ce qu'on en voit. */}
-              <button
-                type="button"
-                className="admin-thumb__pick"
-                aria-label={`Choisir la photo ${index + 1} comme référence`}
-                onClick={() => onSelect?.(image.id)}
-              >
-                {/* `next/image` n'apporte rien sur un blob local, et
-                    exigerait de déclarer un domaine. */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={image.previewUrl}
-                  alt=""
-                  draggable={false}
-                  className="admin-thumb__image"
-                />
-              </button>
-
-              <div className="admin-thumb__meta">
-                <span className="admin-thumb__name">
-                  {index === 0 ? "Photo principale" : `Photo ${index + 1}`}
-                </span>
-                <span className="admin-thumb__size">
-                  {formatBytes(image.originalBytes)} →{" "}
-                  {formatBytes(image.webpBytes)} en WebP
-                </span>
-                {extra?.(image)}
-              </div>
-
-              <div className="admin-thumb__actions">
-                <button
-                  type="button"
-                  className="admin-thumb__icon"
-                  aria-label="Monter"
-                  onClick={() => move(index, index - 1)}
-                >
-                  ↑
-                </button>
-                <button
-                  type="button"
-                  className="admin-thumb__icon"
-                  aria-label="Descendre"
-                  onClick={() => move(index, index + 1)}
-                >
-                  ↓
-                </button>
-                <button
-                  type="button"
-                  className="admin-thumb__icon"
-                  aria-label="Retirer"
-                  onClick={() => remove(image.id)}
-                >
-                  ×
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
     </div>
   );
 }

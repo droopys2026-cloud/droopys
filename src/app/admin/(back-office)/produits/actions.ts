@@ -48,25 +48,30 @@ const sizesField = z.array(z.string());
 const stockField = z.array(
   stockInputSchema.extend({ size: z.string(), price: z.string() }),
 );
-/** Couleur de chaque photo, dans l'ordre de la galerie ; `null` = commune. */
-const imageColorsField = z.array(z.string().nullable());
 const measurementsField = z.array(
   z.object({ label: z.string().trim().min(1), value: z.string().trim().min(1) }),
 );
 /**
- * Photos gardées : une URL du stockage, ou un chemin du site (`/imgdress/…`)
- * pour les photos livrées avec le code. N'accepter que les URL complètes
- * faisait échouer toute la liste en silence, et l'enregistrement effaçait
- * alors toutes les photos de la fiche.
+ * Photos de la fiche, dans l'ordre affiché à l'admin, chacune avec sa
+ * couleur (`null` : commune).
+ *
+ * Une photo déjà en ligne est une URL du stockage, ou un chemin du site
+ * (`/imgdress/…`) pour les photos livrées avec le code — n'accepter que les
+ * URL complètes faisait échouer toute la liste, et l'enregistrement effaçait
+ * alors toutes les photos de la fiche. Une photo tout juste déposée
+ * (`uploaded`) doit, elle, venir de notre bucket.
  */
-const keptImagesField = z.array(
-  z.string().refine((value) => value.startsWith("/") || URL.canParse(value), "Photo invalide."),
+const photosField = z.array(
+  z
+    .object({ url: z.string(), uploaded: z.boolean(), color: z.string().nullable() })
+    .refine(
+      (photo) =>
+        photo.uploaded
+          ? isProductPhotoUrl(photo.url)
+          : photo.url.startsWith("/") || URL.canParse(photo.url),
+      "Photo invalide.",
+    ),
 );
-
-const uploadedImagesField = z.array(
-  z.string().refine(isProductPhotoUrl, "Photo envoyée invalide."),
-);
-
 /**
  * Étape 1 de l'enregistrement : des adresses de dépôt pour les nouvelles
  * photos. Le navigateur y envoie les fichiers lui-même, puis enregistre la
@@ -180,29 +185,26 @@ export async function saveProduct(
   const productId = formData.get("productId");
   const isUpdate = typeof productId === "string" && productId !== "";
 
-  const kept = readJson(formData, "keptImages", keptImagesField, []);
-  // Déjà déposées par le navigateur (`prepareProductPhotoUploads`) : on ne
-  // reçoit que leurs adresses, et seulement celles de notre bucket.
   // Pas de repli silencieux ici, contrairement à `readJson` : une liste
-  // refusée ferait disparaître sans bruit des photos déjà déposées.
-  const uploadedRaw = formData.get("uploadedImages");
-  const uploadedParsed = uploadedImagesField.safeParse(
-    typeof uploadedRaw === "string" && uploadedRaw !== "" ? JSON.parse(uploadedRaw) : [],
-  );
-  if (!uploadedParsed.success) return { errors: ["Les photos envoyées n'ont pas été reconnues. Réessayez."] };
-  const uploaded = uploadedParsed.data;
+  // refusée ferait disparaître sans bruit toutes les photos de la fiche.
+  const photosRaw = formData.get("photos");
+  let photosJson: unknown;
+  try {
+    photosJson = typeof photosRaw === "string" && photosRaw !== "" ? JSON.parse(photosRaw) : [];
+  } catch {
+    photosJson = null;
+  }
+  const photosParsed = photosField.safeParse(photosJson);
+  if (!photosParsed.success) {
+    return { errors: ["Les photos n'ont pas été reconnues. Rechargez la page et recommencez."] };
+  }
+  const gallery = photosParsed.data.map((photo) => photo.url);
+  const imageColors = photosParsed.data.map((photo) => photo.color);
 
-  if (!isUpdate && kept.length === 0 && uploaded.length === 0) {
+  if (!isUpdate && gallery.length === 0) {
     return { errors: ["Ajoutez au moins une photo : une fiche sans visuel ne se vend pas."] };
   }
 
-  const gallery = [...kept, ...uploaded];
-  const imageColors = readJson(formData, "imageColors", imageColorsField, []);
-  // Une liste qui ne colle pas à la galerie rattacherait les photos aux
-  // mauvaises couleurs : on refuse plutôt que de deviner.
-  if (imageColors.length !== gallery.length) {
-    return { errors: ["Les couleurs des photos n'ont pas été reconnues. Rechargez la page et recommencez."] };
-  }
   const colorKeys = new Set(input.colors.map((color) => color.key));
   if (imageColors.some((key) => key !== null && !colorKeys.has(key))) {
     return { errors: ["Une photo est rattachée à une couleur qui n'existe plus."] };

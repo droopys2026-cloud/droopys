@@ -491,9 +491,12 @@
   gap: 32px;
 }
 
+/* `min-width: 0` : un fieldset prend par défaut la largeur de son contenu le
+   plus large, et la grille de photos débordait alors de l'écran du téléphone. */
 .admin-fieldset {
   display: flex;
   flex-direction: column;
+  min-width: 0;
   gap: 16px;
   padding: 20px;
   border: 1px solid rgb(232, 232, 232);
@@ -616,9 +619,19 @@
   gap: 16px;
 }
 
+/* Deux vignettes de front sur un téléphone, pour qu'une photo se glisse
+   jusqu'à sa voisine sans faire défiler l'écran. */
+@media (max-width: 768px) {
+  .admin-uploader__list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+}
+
 .admin-thumb {
   display: flex;
   flex-direction: column;
+  min-width: 0;
   gap: 8px;
   padding: 8px;
   border: 1px solid rgb(232, 232, 232);
@@ -930,7 +943,7 @@
 
 .admin-color {
   display: grid;
-  grid-template-columns: 44px 1fr auto;
+  grid-template-columns: 24px 44px 1fr auto;
   gap: 8px;
   align-items: center;
 }
@@ -947,12 +960,32 @@
   cursor: pointer;
 }
 
+.admin-color__grip {
+  font-size: 18px;
+  line-height: 1;
+  text-align: center;
+  color: rgb(105, 105, 105);
+  cursor: grab;
+  touch-action: none;
+}
+
+.admin-color[data-dragging="true"] {
+  opacity: 0.4;
+}
+
+.admin-color[data-drop-target="true"] {
+  outline: 1px dashed rgb(24, 24, 24);
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+
 .admin-colors__add {
   align-self: flex-start;
 }
 
 .admin-thumb__color {
-  max-width: 100%;
+  width: 100%;
+  min-width: 0;
   margin-top: 4px;
   padding: 4px 8px;
   border: 1px solid rgb(216, 216, 216);
@@ -990,15 +1023,62 @@
 }
 
 .admin-generate__hint {
+  /* Le récapitulatif de la série peut être long : il passe à la ligne au
+     lieu de pousser le bouton hors de l'écran du téléphone. */
+  min-width: 0;
+  white-space: normal;
   font-size: 11px;
   font-weight: 400;
   opacity: 0.7;
 }
 
-/* Vignettes déplaçables à la souris (voir `use-drag-reorder`) : la main dit
-   qu'on peut saisir, la vignette saisie s'efface, la place visée s'encadre. */
-.admin-thumb[draggable="true"] {
+/* Vignettes déplaçables (voir `use-drag-reorder`) : la vignette saisie
+   s'efface, la place visée s'encadre. Toute la vignette se glisse. Pas de sélection de texte ni de menu
+   « Enregistrer l'image » pendant l'appui long au doigt. */
+.admin-thumb[data-reorder-index] {
+  position: relative;
   cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Le rang de la photo, en pastille : on voit d'un coup laquelle fait la
+   carte (1) et laquelle le survol (2). */
+.admin-thumb__rank {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 6px;
+  border-radius: 13px;
+  background-color: rgb(24, 24, 24);
+  font-size: 13px;
+  font-weight: 600;
+  color: rgb(255, 255, 255);
+}
+
+.admin-thumb__remove {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: rgb(255, 255, 255);
+  font-size: 18px;
+  line-height: 1;
+  color: rgb(24, 24, 24);
+  cursor: pointer;
 }
 
 .admin-thumb[data-dragging="true"] {

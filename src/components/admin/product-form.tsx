@@ -7,14 +7,17 @@ import {
   type ProductFormState,
 } from "@/app/admin/(back-office)/produits/actions";
 import { CarePicker } from "@/components/admin/care-picker";
-import type { UploadedImage } from "@/components/admin/image-uploader";
 import {
   DEFAULT_MEASUREMENTS,
   ProductMeasurementsField,
   type Measurement,
 } from "@/components/admin/product-measurements-field";
 import { ProductColorsField } from "@/components/admin/product-colors-field";
-import { ProductPhotosField } from "@/components/admin/product-photos-field";
+import {
+  ProductPhotosField,
+  onlinePhoto,
+  type ProductPhoto,
+} from "@/components/admin/product-photos-field";
 import { ProductPlacementsField } from "@/components/admin/product-placements-field";
 import { uploadProductPhotos } from "@/lib/products/upload-photos";
 import { ProductSizesField } from "@/components/admin/product-sizes-field";
@@ -138,9 +141,10 @@ export function ProductForm({
   const [measurements, setMeasurements] = useState<Measurement[]>(
     product?.measurements?.length ? product.measurements : DEFAULT_MEASUREMENTS,
   );
-  const [kept, setKept] = useState<string[]>(product?.images ?? []);
-  const [pendingImages, setPendingImages] = useState<UploadedImage[]>([]);
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [photos, setPhotos] = useState<ProductPhoto[]>(
+    (product?.images ?? []).map(onlinePhoto),
+  );
+  const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
 
   // Photos déjà déposées dans le stockage, par identifiant d'image : après une
   // erreur de saisie, le nouvel essai ne les renvoie pas une seconde fois.
@@ -157,6 +161,9 @@ export function ProductForm({
    */
   async function submit(formData: FormData) {
     setUploadError(null);
+    const pendingImages = photos.flatMap((photo) =>
+      photo.kind === "pending" ? [photo.image] : [],
+    );
     const missing = pendingImages.filter((image) => !uploadedById[image.id]);
     let known = uploadedById;
     if (missing.length > 0) {
@@ -176,29 +183,28 @@ export function ProductForm({
       }
     }
 
+    // Une seule liste, dans l'ordre affiché : c'est cet ordre que la boutique
+    // reprend. `uploaded` dit au serveur quelles adresses vérifier comme
+    // dépôts récents de notre stockage.
     formData.set(
-      "uploadedImages",
-      JSON.stringify(pendingImages.map((image) => known[image.id])),
+      "photos",
+      JSON.stringify(
+        photos.map((photo) =>
+          photo.kind === "online"
+            ? { url: photo.url, uploaded: false, color: photoColors[photo.key] ?? null }
+            : { url: known[photo.image.id], uploaded: true, color: photoColors[photo.key] ?? null },
+        ),
+      ),
     );
     formData.set("colors", JSON.stringify(colors));
     formData.set("sizes", JSON.stringify(sizes));
     formData.set("stock", JSON.stringify(stock));
-    // Alignée sur la galerie telle que le serveur la recompose : photos en
-    // ligne, puis photos déposées.
-    formData.set(
-      "imageColors",
-      JSON.stringify([
-        ...kept.map((url) => photoColors[url] ?? null),
-        ...pendingImages.map((image) => photoColors[image.id] ?? null),
-      ]),
-    );
     formData.set(
       "measurements",
       JSON.stringify(
         measurements.filter((entry) => entry.label.trim() && entry.value.trim()),
       ),
     );
-    formData.set("keptImages", JSON.stringify(kept));
     // Après un `await`, l'appel sort de la transition du formulaire : on l'y
     // remet, sinon `pending` ne passerait pas à vrai pendant l'enregistrement.
     startTransition(() => action(formData));
@@ -508,12 +514,10 @@ export function ProductForm({
       />
 
       <ProductPhotosField
-        kept={kept}
-        onKeptChange={setKept}
-        pending={pendingImages}
-        onPendingChange={setPendingImages}
-        selectedId={selectedImage}
-        onSelect={setSelectedImage}
+        photos={photos}
+        onChange={setPhotos}
+        selectedKey={selectedPhoto}
+        onSelect={setSelectedPhoto}
         generationEnabled={photoGeneration}
         colors={colors}
         photoColors={photoColors}

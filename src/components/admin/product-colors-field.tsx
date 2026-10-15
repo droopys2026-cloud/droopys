@@ -1,6 +1,6 @@
 "use client";
 
-import { moveItem } from "@/components/admin/use-drag-reorder";
+import { moveItem, useDragReorder } from "@/components/admin/use-drag-reorder";
 import type { ColorDraft } from "@/lib/products/stock-grid";
 
 /**
@@ -18,6 +18,10 @@ export function ProductColorsField({
   value: ColorDraft[];
   onChange: (colors: ColorDraft[]) => void;
 }) {
+  const { listProps, itemProps } = useDragReorder((from, to) =>
+    onChange(moveItem(value, from, to)),
+  );
+
   function update(key: string, patch: Partial<ColorDraft>) {
     onChange(value.map((color) => (color.key === key ? { ...color, ...patch } : color)));
   }
@@ -29,9 +33,19 @@ export function ProductColorsField({
       </legend>
 
       {value.length > 0 && (
-        <ul className="admin-colors">
+        <ul className="admin-colors" {...listProps}>
           {value.map((color, index) => (
-            <li key={color.key} className="admin-color">
+            <li key={color.key} className="admin-color" {...itemProps(index)}>
+              {/* Poignée : la ligne se glisse par là, les champs gardant
+                  leur propre geste. Alt + flèches au clavier. */}
+              <span
+                className="admin-color__grip"
+                role="button"
+                tabIndex={0}
+                aria-label={`Déplacer ${color.name || `la couleur ${index + 1}`} (Alt + flèches)`}
+              >
+                ⠿
+              </span>
               <input
                 type="color"
                 className="admin-color__swatch"
@@ -46,32 +60,15 @@ export function ProductColorsField({
                 value={color.name}
                 onChange={(event) => update(color.key, { name: event.target.value })}
               />
-              <div className="admin-thumb__actions">
-                <button
-                  type="button"
-                  className="admin-thumb__icon"
-                  aria-label={`Monter ${color.name || `la couleur ${index + 1}`}`}
-                  onClick={() => onChange(moveItem(value, index, index - 1))}
-                >
-                  ↑
-                </button>
-                <button
-                  type="button"
-                  className="admin-thumb__icon"
-                  aria-label={`Descendre ${color.name || `la couleur ${index + 1}`}`}
-                  onClick={() => onChange(moveItem(value, index, index + 1))}
-                >
-                  ↓
-                </button>
-                <button
-                  type="button"
-                  className="admin-thumb__icon"
-                  aria-label={`Retirer ${color.name || `la couleur ${index + 1}`}`}
-                  onClick={() => onChange(value.filter((entry) => entry.key !== color.key))}
-                >
-                  ×
-                </button>
-              </div>
+              <button
+                type="button"
+                data-no-drag
+                className="admin-thumb__icon"
+                aria-label={`Retirer ${color.name || `la couleur ${index + 1}`}`}
+                onClick={() => onChange(value.filter((entry) => entry.key !== color.key))}
+              >
+                ×
+              </button>
             </li>
           ))}
         </ul>

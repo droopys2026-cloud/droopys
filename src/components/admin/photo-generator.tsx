@@ -626,19 +626,31 @@ function isGarment(value: string): value is PhotoGarment {
   return Object.hasOwn(PHOTO_GARMENTS, value);
 }
 
-/** La photo rendue par l'IA, traitée comme une photo déposée : WebP, 2000 px. */
+/** Photo d'une prise de vue de la série, nommée d'après elle. */
 async function toUploaded(
   photo: { mimeType: string; base64: string },
   shot: Shot,
 ): Promise<UploadedImage> {
+  return toUploadedImage(photo, shot.mode, `Photo IA — ${shotLabel(shot)}`);
+}
+
+/**
+ * La photo rendue par l'IA, traitée comme une photo déposée : WebP, 2000 px.
+ * L'identifiant commence par « ia- » : c'est ce qui la signale comme générée.
+ */
+export async function toUploadedImage(
+  photo: { mimeType: string; base64: string },
+  kind: string,
+  name: string,
+): Promise<UploadedImage> {
   const bytes = Uint8Array.from(atob(photo.base64), (char) =>
     char.charCodeAt(0),
   );
-  const raw = new File([bytes], `ia-${shot.mode}`, { type: photo.mimeType });
+  const raw = new File([bytes], `ia-${kind}`, { type: photo.mimeType });
   const webp = await toWebp(raw);
   return {
-    id: `ia-${shot.mode}-${crypto.randomUUID()}`,
-    name: `Photo IA — ${shotLabel(shot)}`,
+    id: `ia-${kind}-${crypto.randomUUID()}`,
+    name,
     previewUrl: URL.createObjectURL(webp),
     file: webp,
     originalBytes: raw.size,
@@ -647,7 +659,7 @@ async function toUploaded(
 }
 
 /** Une photo déjà en ligne est rechargée pour partir avec la demande. */
-async function referenceFile(reference: GenerationReference): Promise<File> {
+export async function referenceFile(reference: GenerationReference): Promise<File> {
   if (reference.kind === "file") return reference.file;
   const response = await fetch(reference.url);
   if (!response.ok)

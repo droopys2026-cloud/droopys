@@ -11,6 +11,7 @@ import {
   PhotoGenerator,
   type GenerationReference,
 } from "@/components/admin/photo-generator";
+import { PhotoRecolor } from "@/components/admin/photo-recolor";
 import type { ColorDraft } from "@/lib/products/stock-grid";
 
 /**
@@ -64,6 +65,14 @@ export function ProductPhotosField({
   const { listProps, itemProps } = useDragReorder((from, to) =>
     onChange(moveItem(photos, from, to)),
   );
+
+  // Couleur de départ de « Générer en … » : celle de la photo cliquée.
+  const sourceColor = colors.find(
+    (color) => selectedKey !== null && color.key === photoColors[selectedKey],
+  );
+  const sourcePhotos = sourceColor
+    ? photos.filter((photo) => photoColors[photo.key] === sourceColor.key)
+    : [];
 
   function remove(photo: ProductPhoto) {
     if (photo.kind === "pending") URL.revokeObjectURL(photo.image.previewUrl);
@@ -217,6 +226,21 @@ export function ProductPhotosField({
           onChange([...added, ...next]);
         }}
       />
+
+      {colors.length > 1 && (
+        <PhotoRecolor
+          enabled={generationEnabled}
+          source={sourceColor}
+          sources={sourcePhotos.map((photo) => toReference(photo, photos))}
+          targets={colors.filter((color) => color.key !== sourceColor?.key)}
+          onGenerated={(colorKey, images) => {
+            // À la suite de la liste : les photos de la fiche gardent leur
+            // place, la nouvelle couleur arrive après.
+            onChange([...photos, ...images.map(pendingPhoto)]);
+            for (const image of images) onPhotoColorChange(image.id, colorKey);
+          }}
+        />
+      )}
     </fieldset>
   );
 }
@@ -232,16 +256,22 @@ function colorReferences(
   photoColors: Record<string, string>,
   colors: ColorDraft[],
 ): GenerationReference[] {
-  const index = photos.findIndex((photo) => photo.key === selectedKey);
-  if (index === -1) return [];
-  const photo = photos[index];
+  const photo = photos.find((entry) => entry.key === selectedKey);
+  if (!photo) return [];
   const color = colors.find((entry) => entry.key === photoColors[photo.key]);
-  const label = `${index === 0 ? "la photo principale" : `la photo ${index + 1}`}${color ? ` (${color.name || "couleur sans nom"})` : ""}`;
+  const reference = toReference(photo, photos);
   return [
-    photo.kind === "online"
-      ? { kind: "url", url: photo.url, label }
-      : { kind: "file", file: photo.image.file, label },
+    { ...reference, label: `${reference.label}${color ? ` (${color.name || "couleur sans nom"})` : ""}` },
   ];
+}
+
+/** Une photo de la liste, telle que l'IA la reçoit. */
+function toReference(photo: ProductPhoto, photos: ProductPhoto[]): GenerationReference {
+  const index = photos.indexOf(photo);
+  const label = index === 0 ? "la photo principale" : `la photo ${index + 1}`;
+  return photo.kind === "online"
+    ? { kind: "url", url: photo.url, label }
+    : { kind: "file", file: photo.image.file, label };
 }
 
 /**
@@ -261,13 +291,6 @@ function generationReferences(
   photos: ProductPhoto[],
   selectedKey: string | null,
 ): GenerationReference[] {
-  const toReference = (photo: ProductPhoto): GenerationReference => {
-    const index = photos.indexOf(photo);
-    const label = index === 0 ? "la photo principale" : `la photo ${index + 1}`;
-    return photo.kind === "online"
-      ? { kind: "url", url: photo.url, label }
-      : { kind: "file", file: photo.image.file, label };
-  };
   const selected = photos.find((photo) => photo.key === selectedKey);
   const others = photos.filter((photo) => photo !== selected);
   const pending = others.flatMap((photo) => (photo.kind === "pending" ? [photo] : []));
@@ -279,7 +302,7 @@ function generationReferences(
     originals.length > 0 ? originals : online.length > 0 ? online : generated;
   return [...(selected ? [selected] : []), ...preferred]
     .slice(0, MAX_REFERENCES)
-    .map(toReference);
+    .map((photo) => toReference(photo, photos));
 }
 
 const MAX_REFERENCES = 2;

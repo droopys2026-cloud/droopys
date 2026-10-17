@@ -366,7 +366,8 @@ export type GenerationMode =
   | "invisible"
   | "cintre"
   | "plie"
-  | "scene";
+  | "scene"
+  | "recolor";
 
 /** Libellé de chaque prise de vue, y compris celles réservées à la série. */
 export const SHOT_LABELS: Record<GenerationMode, string> = {
@@ -382,6 +383,7 @@ export const SHOT_LABELS: Record<GenerationMode, string> = {
   cintre: "Sur cintre",
   plie: "Plié à plat",
   scene: "Posé dans le studio",
+  recolor: "Autre couleur",
 };
 
 /** La photo « produit seul » qui convient au type d'article. */
@@ -507,5 +509,27 @@ export function buildStudioScenePrompt({
     `Editorial still-life photograph of the ${subjectOf(brand, productName, garment === "chaussures" ? "shoes" : "item")} from the reference image, placed naturally on the floor against the wall, seen at a three-quarter angle slightly from above — reproduce it exactly, including ${g.detail}. No person, no hands, nothing else in frame.`,
     DECOR,
     `${STYLE} Vertical framing, the item in the lower half of the frame with the wall rising behind it. --ar 2:3`,
+  ].join("\n\n");
+}
+
+/**
+ * Même photo, autre couleur : l'image de référence est reprise telle quelle,
+ * seule la couleur de l'article change. C'est ce qui permet de décliner une
+ * série déjà faite dans chaque couleur de la fiche sans refaire les poses.
+ *
+ * Le logo garde ses couleurs : une marque ne change pas de teinte avec la
+ * pièce, et un logo recoloré serait un faux.
+ */
+export function buildRecolorPrompt({
+  brand,
+  productName,
+  colorName,
+  hex,
+}: Pick<PromptInput, "brand" | "productName"> & { colorName: string; hex: string }): string {
+  const item = subjectOf(brand, productName, "featured item");
+  return [
+    `Edit the reference photograph. Change only the colour of the ${item}: make it ${colorName} (${hex}), with a natural, realistic dye that follows the fabric's texture, folds and light.`,
+    "Keep everything else exactly as it is: the same framing and crop, the same pose, model, face, hair and expression, the same background, lighting and shadows, every other piece of clothing, and the same garment shape, fabric texture, stitching, seams, zips, buttons, hardware and proportions.",
+    "Logos, labels and brand patches keep their original colours, size and position. Do not add, remove or move anything. The result must read as the same photograph of the same item in another colourway.",
   ].join("\n\n");
 }

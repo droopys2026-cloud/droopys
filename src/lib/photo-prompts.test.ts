@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildGarmentPackshotPrompt,
+  buildRecolorPrompt,
   buildOnModelPrompt,
   buildShoePackshotPrompt,
 } from "@/lib/photo-prompts";
@@ -75,5 +76,22 @@ describe("origine du mannequin", () => {
     expect(buildOnModelPrompt({ ...base, subject: "garcon", look: "inconnue" })).toContain(
       "a white European boy",
     );
+  });
+});
+
+describe("même photo, autre couleur", () => {
+  const prompt = buildRecolorPrompt({
+    brand: "Moncler",
+    productName: "Doudoune Maya",
+    colorName: "Rouge",
+    hex: "#c0282d",
+  });
+
+  it("ne change que la couleur de l'article, vers la teinte choisie", () => {
+    expect(prompt).toContain("Change only the colour of the Moncler doudoune maya: make it Rouge (#c0282d)");
+  });
+
+  it("garde le logo dans ses couleurs d'origine", () => {
+    expect(prompt).toContain("Logos, labels and brand patches keep their original colours");
   });
 });

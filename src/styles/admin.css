@@ -948,6 +948,16 @@
   border-radius: 50%;
 }
 
+.admin-recolor__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-recolor__buttons .admin-button {
+  gap: 8px;
+}
+
 /* ---- couleurs ------------------------------------------------------------ */
 
 .admin-colors {

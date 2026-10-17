@@ -16,6 +16,7 @@ import {
   buildGhostMannequinPrompt,
   buildHangerPrompt,
   buildOnModelPrompt,
+  buildRecolorPrompt,
   buildStudioScenePrompt,
   buildThreeQuarterShotPrompt,
   buildOutletPackshotPrompt,
@@ -65,6 +66,12 @@ const inputSchema = z.discriminatedUnion("mode", [
     // Même règle : une origine inconnue retombe sur l'origine par défaut.
     look: z.string().max(20).optional(),
     garment: garmentField,
+  }),
+  // Même photo, autre couleur : la couleur visée suffit.
+  z.object({
+    mode: z.literal("recolor"),
+    colorName: z.string().trim().min(1).max(60),
+    hex: z.string().regex(/^#[0-9a-f]{6}$/i),
   }),
 ]);
 
@@ -117,6 +124,8 @@ export async function generateProductPhoto(
     garment: formData.get("garment") ?? undefined,
     age: formData.get("age") ?? undefined,
     look: formData.get("look") ?? undefined,
+    colorName: formData.get("colorName") ?? undefined,
+    hex: formData.get("hex") ?? undefined,
   });
   if (!input.success)
     return { status: "error", message: "Mode de génération inconnu." };
@@ -160,6 +169,7 @@ export async function generateProductPhoto(
 
 /** « Porté de face — Fille, 10 ans » : ce que la bibliothèque affiche. */
 function shotDescription(mode: z.infer<typeof inputSchema>): string {
+  if (mode.mode === "recolor") return `${SHOT_LABELS.recolor} — ${mode.colorName}`;
   if (
     mode.mode !== "porte" &&
     mode.mode !== "porte-trois-quarts" &&
@@ -223,5 +233,7 @@ function promptFor(
       return buildAccessoryPackshotPrompt(product);
     case "outlet":
       return buildOutletPackshotPrompt(product);
+    case "recolor":
+      return buildRecolorPrompt({ ...product, colorName: mode.colorName, hex: mode.hex });
   }
 }

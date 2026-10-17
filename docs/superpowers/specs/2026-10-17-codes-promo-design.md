@@ -8,7 +8,10 @@ code « tout le site » dans la bande noire à la place du message Klarna.
 
 - Remise en **pourcentage ou montant fixe**, au choix par code.
 - Limites facultatives : **date de fin**, **nombre max d'utilisations**,
-  **montant minimum**, **une fois par cliente** (par e-mail).
+  **montant minimum**, **une fois par cliente** — reconnue à son compte, son
+  e-mail, son téléphone ou son adresse de livraison à domicile
+  (`@/lib/promo/identity`, un seul point commun suffit ; les adresses de
+  point relais et de retrait ne comptent pas, elles sont partagées).
 - **Pas de remise sur les articles soldés** (déclinaison avec prix barré
   effectif).
 - Saisie du code **dans le panier** ; la remise suit jusqu'au paiement.
@@ -49,7 +52,7 @@ Table `promo_codes` :
 | `ends_at` | timestamptz null | fin de validité |
 | `max_uses` | integer null | plafond d'utilisations |
 | `min_subtotal_cents` | integer null | minimum d'achat (articles éligibles + non éligibles, avant remise) |
-| `once_per_customer` | boolean | une fois par e-mail |
+| `once_per_customer` | boolean | une fois par cliente (compte, e-mail, téléphone ou adresse à domicile) |
 | `uses` | integer default 0 | utilisations confirmées |
 | `active` | boolean | interrupteur de l'admin |
 | `announce` | boolean | annoncer dans la bande (scope `site` seulement) |

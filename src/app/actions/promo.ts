@@ -33,7 +33,10 @@ export async function applyPromoCode(
   const [lines, user] = await Promise.all([getCart(), getCurrentUser()]);
   if (lines.length === 0) return { error: "Votre panier est vide." };
 
-  const promo = await evaluateCode(parsed.data, promoLines(lines), user?.email ?? null);
+  const promo = await evaluateCode(parsed.data, promoLines(lines), {
+    customerId: user?.id,
+    email: user?.email,
+  });
   if (!promo.ok) return { error: promo.message };
 
   await writePromoCode(promo.code);

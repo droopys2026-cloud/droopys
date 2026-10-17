@@ -87,7 +87,14 @@ export async function createPaymentSession(
           variant.product.compareAtPriceCents !== null &&
           variant.product.compareAtPriceCents > unitPriceCents,
       })),
-      details.contact.email,
+      {
+        customerId: user?.id,
+        email: details.contact.email,
+        phone: details.contact.phone,
+        deliveryMethod: details.delivery.method,
+        addressLines:
+          details.delivery.method === "domicile" ? addressLines(details.delivery.address) : null,
+      },
     );
     if (!promo.ok) {
       return {

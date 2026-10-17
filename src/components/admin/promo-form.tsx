@@ -336,7 +336,10 @@ export function PromoForm({
             name="oncePerCustomer"
             defaultChecked={promo?.oncePerCustomer ?? false}
           />
-          <span>Une seule fois par cliente (vérifié sur son adresse e-mail)</span>
+          <span>
+            Une seule fois par cliente — reconnue à son compte, son e-mail, son téléphone ou son
+            adresse de livraison
+          </span>
         </label>
       </fieldset>
 

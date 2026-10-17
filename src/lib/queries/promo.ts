@@ -1,10 +1,11 @@
 import "server-only";
 
-import { and, count, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { orders, promoCodes } from "@/db/schema";
 import { formatPrice } from "@/lib/format";
 import { readPromoCode } from "@/lib/promo/cookie";
+import { isSameCustomer, type CustomerIdentity } from "@/lib/promo/identity";
 import {
   evaluatePromo,
   refusalMessage,
@@ -42,18 +43,25 @@ export async function getPromoRules(code: string): Promise<PromoRules | null> {
   };
 }
 
-/** Commandes déjà payées avec ce code par cette adresse e-mail. */
-export async function countCustomerUses(code: string, email: string): Promise<number> {
-  const [row] = await db
-    .select({ total: count() })
+/**
+ * Commandes déjà payées avec ce code par cette cliente — reconnue à son
+ * compte, son e-mail, son téléphone ou son adresse de livraison à domicile
+ * (`isSameCustomer`). Les commandes d'un code se comptent par dizaines : les
+ * comparer ici, plutôt qu'en SQL, garde une seule définition de « la même
+ * cliente », testée.
+ */
+export async function countCustomerUses(code: string, identity: CustomerIdentity): Promise<number> {
+  const previous = await db
+    .select({
+      customerId: orders.customerId,
+      email: orders.customerEmail,
+      phone: orders.customerPhone,
+      deliveryMethod: orders.deliveryMethod,
+      addressLines: orders.shippingAddress,
+    })
     .from(orders)
-    .where(
-      and(
-        eq(orders.promoCode, code),
-        sql`lower(${orders.customerEmail}) = lower(${email.trim()})`,
-      ),
-    );
-  return row?.total ?? 0;
+    .where(eq(orders.promoCode, code));
+  return previous.filter((order) => isSameCustomer(identity, order)).length;
 }
 
 /** Le code saisi au panier, évalué sur ce panier. */
@@ -62,19 +70,20 @@ export type CartPromo =
   | { code: string; ok: false; message: string };
 
 /**
- * Évalue un code sur des lignes de panier. `email` sert à « une fois par
- * cliente » : sans lui (visiteuse non connectée, au panier), la règle n'est
- * vérifiée qu'au paiement, quand l'e-mail est connu.
+ * Évalue un code sur des lignes de panier. `identity` sert à « une fois par
+ * cliente » : au panier on ne connaît que le compte connecté, s'il y en a un ;
+ * au paiement, e-mail, téléphone et adresse s'y ajoutent, et la règle est
+ * vérifiée en entier.
  */
 export async function evaluateCode(
   code: string,
   lines: PromoLine[],
-  email: string | null,
+  identity: CustomerIdentity,
 ): Promise<CartPromo> {
   const rules = await getPromoRules(code);
   if (!rules) return { code, ok: false, message: "Ce code n'existe pas." };
-  const usedByCustomer =
-    rules.oncePerCustomer && email ? await countCustomerUses(code, email) : 0;
+  const known = Boolean(identity.customerId || identity.email || identity.phone || identity.addressLines);
+  const usedByCustomer = rules.oncePerCustomer && known ? await countCustomerUses(code, identity) : 0;
   const result = evaluatePromo(rules, { lines, usedByCustomer, now: new Date() });
   return result.ok
     ? { code, ok: true, discountCents: result.discountCents }
@@ -84,11 +93,11 @@ export async function evaluateCode(
 /** Le code du cookie, évalué sur le panier ; `null` sans code saisi. */
 export async function getCartPromo(
   lines: PromoLine[],
-  email: string | null,
+  identity: CustomerIdentity,
 ): Promise<CartPromo | null> {
   const code = await readPromoCode();
   if (!code) return null;
-  return evaluateCode(code, lines, email);
+  return evaluateCode(code, lines, identity);
 }
 
 /**

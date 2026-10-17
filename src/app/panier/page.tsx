@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 
 export default async function CartPage() {
   const [lines, user] = await Promise.all([getCart(), getCurrentUser()]);
-  const promo = lines.length > 0 ? await getCartPromo(promoLines(lines), user?.email ?? null) : null;
+  const promo = lines.length > 0 ? await getCartPromo(promoLines(lines), { customerId: user?.id, email: user?.email }) : null;
 
   return (
     <>

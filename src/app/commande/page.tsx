@@ -85,7 +85,7 @@ export default async function CheckoutPage() {
   const optionsByCountry = Object.fromEntries(quotes);
 
   const shop = SHOPS[0];
-  const promo = await getCartPromo(promoLines(lines), user?.email ?? null);
+  const promo = await getCartPromo(promoLines(lines), { customerId: user?.id, email: user?.email });
 
   return (
     <>

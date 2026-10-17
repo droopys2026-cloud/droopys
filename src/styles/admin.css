@@ -948,14 +948,48 @@
   border-radius: 50%;
 }
 
+/* « Générer en rouge »… : juste sous le bouton principal, du même noir —
+   c'est le même geste, décliné par couleur. */
+.admin-recolor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-recolor:has(.admin-field__hint:empty) .admin-field__hint:empty {
+  display: none;
+}
+
 .admin-recolor__buttons {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
-.admin-recolor__buttons .admin-button {
-  gap: 8px;
+/* Grands et peints dans leur couleur : on les repère, et on sait laquelle on
+   génère sans lire. Le bord gris garde visible un bouton blanc ou crème. */
+.admin-recolor__button {
+  display: flex;
+  flex: 1 1 200px;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  padding: 12px 20px;
+  border: 1px solid rgb(216, 216, 216);
+  border-radius: 10px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-recolor__button:hover:not(:disabled) {
+  border-color: rgb(24, 24, 24);
+}
+
+.admin-recolor__button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 /* ---- couleurs ------------------------------------------------------------ */

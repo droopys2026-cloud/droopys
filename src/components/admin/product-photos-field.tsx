@@ -90,7 +90,8 @@ export function ProductPhotosField({
         <>
           <ul className="admin-uploader__list" {...listProps}>
             {photos.map((photo, index) => {
-              const label = index === 0 ? "Photo principale" : `Photo ${index + 1}`;
+              const label =
+                index === 0 ? "Photo principale" : `Photo ${index + 1}`;
               return (
                 <li
                   key={photo.key}
@@ -151,7 +152,10 @@ export function ProductPhotosField({
                         aria-label={`Couleur de la ${label.toLowerCase()}`}
                         value={photoColors[photo.key] ?? ""}
                         onChange={(event) =>
-                          onPhotoColorChange(photo.key, event.target.value || null)
+                          onPhotoColorChange(
+                            photo.key,
+                            event.target.value || null,
+                          )
                         }
                       >
                         <option value="">Toutes</option>
@@ -201,10 +205,29 @@ export function ProductPhotosField({
             ? "Cliquez sur la photo de la couleur à générer : l'IA ne part que de celle-là, et les photos obtenues sont rangées dans sa couleur."
             : undefined
         }
+        colorActions={
+          colors.length > 1 && (
+            <PhotoRecolor
+              enabled={generationEnabled}
+              source={sourceColor}
+              sources={sourcePhotos.map((photo) => toReference(photo, photos))}
+              targets={colors.filter((color) => color.key !== sourceColor?.key)}
+              onGenerated={(colorKey, images) => {
+                // À la suite de la liste : les photos de la fiche gardent leur
+                // place, la nouvelle couleur arrive après.
+                onChange([...photos, ...images.map(pendingPhoto)]);
+                for (const image of images)
+                  onPhotoColorChange(image.id, colorKey);
+              }}
+            />
+          )
+        }
         onGenerated={(generated) => {
           // Avec des couleurs, les photos obtenues prennent celle du modèle :
           // c'est la même pièce, vue autrement.
-          const sourceColor = selectedKey ? photoColors[selectedKey] : undefined;
+          const sourceColor = selectedKey
+            ? photoColors[selectedKey]
+            : undefined;
           let next = [...photos];
           const added: ProductPhoto[] = [];
           for (const { image, replaces } of generated) {
@@ -212,13 +235,17 @@ export function ProductPhotosField({
             if (old) {
               // Refaite : la nouvelle prend la place de l'ancienne, au même
               // rang et avec sa couleur, et l'aperçu de l'ancienne est libéré.
-              if (old.kind === "pending") URL.revokeObjectURL(old.image.previewUrl);
-              next = next.map((entry) => (entry.key === replaces ? pendingPhoto(image) : entry));
+              if (old.kind === "pending")
+                URL.revokeObjectURL(old.image.previewUrl);
+              next = next.map((entry) =>
+                entry.key === replaces ? pendingPhoto(image) : entry,
+              );
               const colorKey = photoColors[old.key];
               if (colorKey) onPhotoColorChange(image.id, colorKey);
             } else {
               added.push(pendingPhoto(image));
-              if (colors.length > 0 && sourceColor) onPhotoColorChange(image.id, sourceColor);
+              if (colors.length > 0 && sourceColor)
+                onPhotoColorChange(image.id, sourceColor);
             }
           }
           // Les photos du studio passent en tête : la première fait la carte,
@@ -226,21 +253,6 @@ export function ProductPhotosField({
           onChange([...added, ...next]);
         }}
       />
-
-      {colors.length > 1 && (
-        <PhotoRecolor
-          enabled={generationEnabled}
-          source={sourceColor}
-          sources={sourcePhotos.map((photo) => toReference(photo, photos))}
-          targets={colors.filter((color) => color.key !== sourceColor?.key)}
-          onGenerated={(colorKey, images) => {
-            // À la suite de la liste : les photos de la fiche gardent leur
-            // place, la nouvelle couleur arrive après.
-            onChange([...photos, ...images.map(pendingPhoto)]);
-            for (const image of images) onPhotoColorChange(image.id, colorKey);
-          }}
-        />
-      )}
     </fieldset>
   );
 }
@@ -261,12 +273,18 @@ function colorReferences(
   const color = colors.find((entry) => entry.key === photoColors[photo.key]);
   const reference = toReference(photo, photos);
   return [
-    { ...reference, label: `${reference.label}${color ? ` (${color.name || "couleur sans nom"})` : ""}` },
+    {
+      ...reference,
+      label: `${reference.label}${color ? ` (${color.name || "couleur sans nom"})` : ""}`,
+    },
   ];
 }
 
 /** Une photo de la liste, telle que l'IA la reçoit. */
-function toReference(photo: ProductPhoto, photos: ProductPhoto[]): GenerationReference {
+function toReference(
+  photo: ProductPhoto,
+  photos: ProductPhoto[],
+): GenerationReference {
   const index = photos.indexOf(photo);
   const label = index === 0 ? "la photo principale" : `la photo ${index + 1}`;
   return photo.kind === "online"
@@ -293,7 +311,9 @@ function generationReferences(
 ): GenerationReference[] {
   const selected = photos.find((photo) => photo.key === selectedKey);
   const others = photos.filter((photo) => photo !== selected);
-  const pending = others.flatMap((photo) => (photo.kind === "pending" ? [photo] : []));
+  const pending = others.flatMap((photo) =>
+    photo.kind === "pending" ? [photo] : [],
+  );
   const originals = pending.filter((photo) => !isGenerated(photo.image));
   const online = others.filter((photo) => photo.kind === "online");
   const generated = pending.filter((photo) => isGenerated(photo.image));

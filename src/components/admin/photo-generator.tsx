@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { generateProductPhoto } from "@/app/admin/(back-office)/produits/photo-actions";
 import type { UploadedImage } from "@/components/admin/image-uploader";
 import { toWebp } from "@/lib/images/to-webp";
@@ -145,6 +145,7 @@ export function PhotoGenerator({
   references,
   emptyHint,
   onGenerated,
+  colorActions,
 }: {
   /** Faux sans clé Gemini : les boutons restent visibles mais inactifs. */
   enabled: boolean;
@@ -152,6 +153,11 @@ export function PhotoGenerator({
   references: GenerationReference[];
   /** Ce qu'il faut faire quand aucune photo ne peut servir de modèle. */
   emptyHint?: string;
+  /**
+   * « Générer en rouge », « Générer en kaki »… : posés juste sous le bouton
+   * principal, parce que c'est le même geste — générer —, décliné par couleur.
+   */
+  colorActions?: ReactNode;
   onGenerated: (photos: GeneratedPhoto[]) => void;
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -486,6 +492,8 @@ export function PhotoGenerator({
               : plan.map(shotLabel).join(" · ")}
         </span>
       </button>
+
+      {colorActions}
 
       {tiles.length > 0 && (
         <ul

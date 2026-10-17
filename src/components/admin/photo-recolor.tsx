@@ -8,6 +8,7 @@ import {
   toUploadedImage,
   type GenerationReference,
 } from "@/components/admin/photo-generator";
+import { readableInk } from "@/lib/products/color";
 import type { ColorDraft } from "@/lib/products/stock-grid";
 
 type Status =
@@ -90,15 +91,20 @@ export function PhotoRecolor({
     }
   }
 
+  // Une seule photo ou plusieurs : la phrase s'accorde.
+  const many = sources.length > 1;
+  const sourceName = source?.name || "de la couleur choisie";
+
   return (
-    <div ref={rootRef} className="admin-generate">
-      <p className="admin-field__label">Mêmes photos dans une autre couleur</p>
+    <div ref={rootRef} className="admin-recolor">
       <p className="admin-field__hint">
         {!enabled
-          ? "La clé Google Gemini n'est pas configurée : la génération est désactivée."
+          ? ""
           : !source || sources.length === 0
-            ? "Cliquez sur une photo de la couleur de départ : ses photos seront refaites dans la couleur choisie."
-            : `Les ${sources.length} photo${sources.length > 1 ? "s" : ""} ${source.name || "de la couleur choisie"} sont refaites à l'identique, seule la couleur change. Elles s'ajoutent à la liste ; les photos d'origine restent.`}
+            ? "Pour les autres couleurs : cliquez sur une photo de la couleur de départ."
+            : many
+              ? `Ou les ${sources.length} photos ${sourceName}, refaites à l'identique dans une autre couleur (elles s'ajoutent, les photos d'origine restent) :`
+              : `Ou la photo ${sourceName}, refaite à l'identique dans une autre couleur (elle s'ajoute, la photo d'origine reste) :`}
       </p>
 
       <div className="admin-recolor__buttons">
@@ -106,16 +112,13 @@ export function PhotoRecolor({
           <button
             key={target.key}
             type="button"
-            className="admin-button admin-button--ghost admin-button--small"
+            className="admin-recolor__button"
+            // Le bouton prend la couleur visée : on voit d'un coup laquelle on
+            // génère. Teinte saisie à l'admin, donc style en ligne.
+            style={{ backgroundColor: target.hex, color: readableInk(target.hex) }}
             disabled={!enabled || busy || !source || sources.length === 0}
             onClick={() => void recolor(target)}
           >
-            {/* Teinte saisie à l'admin : une donnée, d'où le style en ligne. */}
-            <span
-              className="admin-table__swatch"
-              style={{ backgroundColor: target.hex }}
-              aria-hidden
-            />
             Générer en {target.name || "nouvelle couleur"}
           </button>
         ))}

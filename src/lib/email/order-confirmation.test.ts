@@ -8,6 +8,8 @@ const order: ConfirmationOrder = {
   serviceLabel: "Colissimo à domicile",
   shippingAddress: ["1 rue de Rome", "13001 Marseille", "FR"],
   shippingCents: 690,
+  promoCode: null,
+  discountCents: 0,
   lines: [
     { brand: "Moncler", productName: "Doudoune Maya", color: "Rose poudré", size: "8 ans", quantity: 1, unitPriceCents: 45000, imageUrl: "https://droopys.fr/imgdress/maya.webp" },
     { brand: null, productName: "Bonnet <script>", color: null, size: "TU", quantity: 2, unitPriceCents: 3500, imageUrl: null },
@@ -38,6 +40,14 @@ describe("renderOrderConfirmation", () => {
     expect(email.text).toContain("Doudoune Maya, Rose poudré, taille 8 ans");
     expect(email.text).toContain("Bonnet <script>, taille TU");
     expect(email.html).toContain("Rose poudré · taille 8 ans");
+  });
+
+  it("montre la remise du code promo et la retire du total", () => {
+    const withPromo = renderOrderConfirmation({ ...order, promoCode: "BLACK20", discountCents: 5000 });
+    expect(withPromo.text).toContain("Code promo BLACK20 : −50,00");
+    // 526,90 − 50 = 476,90 €
+    expect(withPromo.text).toContain("Total payé : 476,90");
+    expect(withPromo.html).toContain("476,90");
   });
 
   it("échappe ce qui vient de la base", () => {

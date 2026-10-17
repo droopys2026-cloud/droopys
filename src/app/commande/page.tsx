@@ -11,7 +11,9 @@ import { customerAddresses, customers } from "@/db/schema";
 import { COUNTRY_CODES } from "@/lib/account/schema";
 import { publicEnv, serverEnv } from "@/lib/env";
 import { parcelWeightKg, quoteParcel } from "@/lib/shipping/quote";
+import { promoLines } from "@/lib/cart/totals";
 import { getCart } from "@/lib/queries/cart";
+import { getCartPromo } from "@/lib/queries/promo";
 import { getShopSettings } from "@/lib/queries/settings";
 import { SHOPS } from "@/lib/shops";
 import { getCurrentUser } from "@/lib/supabase/server";
@@ -83,6 +85,7 @@ export default async function CheckoutPage() {
   const optionsByCountry = Object.fromEntries(quotes);
 
   const shop = SHOPS[0];
+  const promo = await getCartPromo(promoLines(lines), user?.email ?? null);
 
   return (
     <>
@@ -104,6 +107,7 @@ export default async function CheckoutPage() {
             prefill={prefill}
             savedAddresses={savedAddresses}
             publishableKey={publicEnv.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}
+            promo={promo}
           />
         </div>
       </main>

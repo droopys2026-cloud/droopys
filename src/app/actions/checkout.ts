@@ -13,6 +13,8 @@ import { getServicePoint } from "@/lib/shipping/sendcloud";
 import { parcelWeightKg, quoteParcel } from "@/lib/shipping/quote";
 import { SERVICES } from "@/lib/shipping/services";
 import { variantLabel } from "@/lib/products/variants";
+import { readPromoCode } from "@/lib/promo/cookie";
+import { evaluateCode } from "@/lib/queries/promo";
 import { publicEnv } from "@/lib/env";
 import { CURRENCY, stripe } from "@/lib/stripe";
 import { getCurrentUser } from "@/lib/supabase/server";
@@ -65,6 +67,36 @@ export async function createPaymentSession(
     (total, line) => total + line.unitPriceCents * line.quantity,
     0,
   );
+
+  // Code promo : revérifié ici avec l'e-mail saisi — c'est la seule étape où
+  // « une fois par cliente » peut l'être pour une visiteuse sans compte, et un
+  // code a pu expirer depuis le panier. Refusé, le paiement ne s'ouvre pas :
+  // débiter sans la remise annoncée serait pire.
+  const promoCode = await readPromoCode();
+  let discountCents = 0;
+  if (promoCode) {
+    const promo = await evaluateCode(
+      promoCode,
+      lines.map(({ variant, quantity, unitPriceCents }) => ({
+        productId: variant.product.id,
+        unitPriceCents,
+        quantity,
+        // Soldé : même règle que l'affichage du prix barré (`getCart`).
+        onSale:
+          variant.priceCents === null &&
+          variant.product.compareAtPriceCents !== null &&
+          variant.product.compareAtPriceCents > unitPriceCents,
+      })),
+      details.contact.email,
+    );
+    if (!promo.ok) {
+      return {
+        status: "error",
+        errors: [`Code ${promo.code} : ${promo.message} Retirez-le depuis le panier pour continuer.`],
+      };
+    }
+    discountCents = promo.discountCents;
+  }
   const weightKg = parcelWeightKg(
     lines.map(({ variant, quantity }) => ({
       categorySlug: variant.product.category?.slug ?? null,
@@ -103,7 +135,10 @@ export async function createPaymentSession(
   const options =
     delivery.method === "retrait" ? [] : await quoteParcel(country, weightKg);
   const shippingCents =
-    options === null ? null : shippingCentsFor(delivery, options, itemsCents, livraison.freeFromCents);
+    // Franchise de port sur le montant des articles après remise.
+    options === null
+      ? null
+      : shippingCentsFor(delivery, options, itemsCents - discountCents, livraison.freeFromCents);
   if (shippingCents === null) {
     return {
       status: "error",
@@ -116,6 +151,21 @@ export async function createPaymentSession(
     delivery.method === "retrait"
       ? null
       : (options ?? []).find((entry) => entry.key === delivery.service) ?? null;
+
+  // La remise part chez Stripe en coupon à usage unique, du montant exact
+  // calculé ici : Stripe l'affiche (« BLACK20 −35,00 € ») et ne l'applique
+  // qu'aux articles, jamais au port. Voir la spec des codes promo.
+  const coupon =
+    promoCode && discountCents > 0
+      ? await stripe.coupons.create({
+          amount_off: discountCents,
+          currency: CURRENCY,
+          duration: "once",
+          max_redemptions: 1,
+          name: promoCode,
+          metadata: { promo: promoCode },
+        })
+      : null;
 
   const session = await stripe.checkout.sessions.create({
     ui_mode: "elements",
@@ -138,6 +188,8 @@ export async function createPaymentSession(
       },
     })),
 
+    ...(coupon ? { discounts: [{ coupon: coupon.id }] } : {}),
+
     shipping_options: [
       {
         shipping_rate_data: {
@@ -158,6 +210,9 @@ export async function createPaymentSession(
       lignes: JSON.stringify(
         lines.map(({ variant, quantity }) => ({ v: variant.id, q: quantity })),
       ),
+      // Le code voyage jusqu'au webhook, qui l'inscrit sur la commande et
+      // compte l'utilisation. Le montant, lui, est relu chez Stripe.
+      ...(coupon && promoCode ? { promo: promoCode } : {}),
       ...toSessionMetadata(details, {
         addressLines: shippingAddress,
         methodId: option?.methodId ?? null,
@@ -179,6 +234,7 @@ export async function createPaymentSession(
   return {
     status: "ready",
     clientSecret: session.client_secret,
-    totalCents: itemsCents + shippingCents,
+    // Relu chez Stripe : ce qui s'affiche sur « Payer » est ce qui sera débité.
+    totalCents: session.amount_total ?? itemsCents - discountCents + shippingCents,
   };
 }

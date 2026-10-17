@@ -78,6 +78,13 @@ export const orders = pgTable("orders", {
     .default([]),
 
   shippingCents: integer("shipping_cents").notNull().default(0),
+  /** Code promo utilisé, tel que saisi une fois normalisé ; vide sans code. */
+  promoCode: text("promo_code"),
+  /**
+   * Remise accordée, en centimes — relue chez Stripe au paiement, elle fait
+   * foi. Le payé est `articles − remise + port` (`orderTotalCents`).
+   */
+  discountCents: integer("discount_cents").notNull().default(0),
   /** Moyen de paiement tel qu'annoncé au client. */
   payment: text("payment").notNull(),
 

@@ -4,7 +4,7 @@ import { revalidateTag } from "next/cache";
 import { z } from "zod";
 import type Stripe from "stripe";
 import { db, type Transaction } from "@/db";
-import { customers, orderLines, orders, productVariants } from "@/db/schema";
+import { customers, orderLines, orders, productVariants, promoCodes } from "@/db/schema";
 import { CACHE_TAGS } from "@/lib/cache";
 import { readSessionMetadata } from "@/lib/checkout/details";
 import { sendOrderConfirmation } from "@/lib/email/send-order-confirmation";
@@ -144,6 +144,11 @@ async function recordOrder(session: Stripe.Checkout.Session) {
 
   const customerId = await resolveCustomerId(session.client_reference_id);
 
+  // Code promo : le code vient de nos métadonnées, le montant de Stripe — c'est
+  // ce qui a réellement été déduit du paiement, il fait foi sur la commande.
+  const promoCode = session.metadata?.promo || null;
+  const discountCents = session.total_details?.amount_discount ?? 0;
+
   const orderId = await db.transaction(async (tx) => {
     const [order] = await tx
       .insert(orders)
@@ -162,6 +167,8 @@ async function recordOrder(session: Stripe.Checkout.Session) {
         servicePointId: delivery?.servicePointId ?? null,
         shippingAddress,
         shippingCents: shipping,
+        promoCode: discountCents > 0 ? promoCode : null,
+        discountCents,
         payment: "Carte bancaire (Stripe)",
         stripeSessionId: session.id,
       })
@@ -201,6 +208,15 @@ async function recordOrder(session: Stripe.Checkout.Session) {
             eq(productVariants.productId, variant.productId),
           ),
         );
+    }
+
+    // Une utilisation de plus, dans la même transaction que la commande : un
+    // code compté sans commande, ou l'inverse, fausserait son plafond.
+    if (promoCode && discountCents > 0) {
+      await tx
+        .update(promoCodes)
+        .set({ uses: sql`${promoCodes.uses} + 1` })
+        .where(eq(promoCodes.code, promoCode));
     }
 
     return order.id;

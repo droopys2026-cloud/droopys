@@ -7,6 +7,7 @@ import { createPaymentSession, type PaymentSessionResult } from "@/app/actions/c
 import { ContactStep } from "@/components/checkout/contact-step";
 import { DeliveryStep, type SavedAddress } from "@/components/checkout/delivery-step";
 import { OrderSummary } from "@/components/checkout/order-summary";
+import type { CartPromo } from "@/lib/queries/promo";
 import { PaymentStep } from "@/components/checkout/payment-step";
 import {
   EMPTY_DRAFT,
@@ -63,8 +64,14 @@ export function CheckoutWizard({
   prefill,
   savedAddresses,
   publishableKey,
+  promo,
 }: {
   lines: CartLine[];
+  /**
+   * Code saisi au panier, évalué au chargement de la page. Indicatif comme le
+   * reste du récapitulatif : le paiement le revérifie avec l'e-mail saisi.
+   */
+  promo: CartPromo | null;
   /** Franchise de port, `null` si aucune : la cliente paie le tarif réel. */
   freeFromCents: number | null;
   /** Tarifs Sendcloud par pays, pour le poids de ce panier. */
@@ -128,7 +135,11 @@ export function CheckoutWizard({
     (total, line) => total + line.unitPriceCents * line.quantity,
     0,
   );
-  const freeShipping = freeFromCents !== null && itemsCents >= freeFromCents;
+  const discountCents = promo?.ok ? promo.discountCents : 0;
+  // Livraison offerte sur ce qui est réellement payé pour les articles : une
+  // remise qui fait passer sous le seuil fait payer le port. Même règle qu'au
+  // serveur (`createPaymentSession`).
+  const freeShipping = freeFromCents !== null && itemsCents - discountCents >= freeFromCents;
 
   const contactErrors = validateContact(draft);
   const deliveryErrors = validateDelivery(draft);
@@ -337,7 +348,7 @@ export function CheckoutWizard({
         )}
       </div>
 
-      <OrderSummary lines={lines} shippingCents={shippingShown} />
+      <OrderSummary lines={lines} shippingCents={shippingShown} promo={promo} />
     </div>
   );
 }

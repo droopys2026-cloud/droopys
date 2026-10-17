@@ -9,6 +9,7 @@ import { OrderStatusBadge } from "@/components/admin/order-status-badge";
 import { OrderStatusChips } from "@/components/admin/order-status-chips";
 import { requireAdmin } from "@/lib/auth";
 import { serverEnv } from "@/lib/env";
+import { orderTotalCents } from "@/lib/orders/total";
 import { SERVICES } from "@/lib/shipping/services";
 import { formatPrice } from "@/lib/format";
 import { getOrder } from "@/lib/queries/orders";
@@ -31,11 +32,7 @@ export default async function AdminCommandePage({ params }: PageProps) {
 
   // Le total se recalcule depuis les lignes figées : elles portent le prix
   // payé, pas le prix d'aujourd'hui.
-  const itemsCents = order.lines.reduce(
-    (total, line) => total + line.unitPriceCents * line.quantity,
-    0,
-  );
-  const totalCents = itemsCents + order.shippingCents;
+  const totalCents = orderTotalCents(order);
 
   return (
     <div className="admin-page">
@@ -116,6 +113,16 @@ export default async function AdminCommandePage({ params }: PageProps) {
                   <td>{formatPrice(line.unitPriceCents * line.quantity)}</td>
                 </tr>
               ))}
+              {order.discountCents > 0 && (
+                <tr>
+                  <td className="admin-stock__size">
+                    Code promo{order.promoCode ? ` ${order.promoCode}` : ""}
+                  </td>
+                  <td />
+                  <td />
+                  <td>−{formatPrice(order.discountCents)}</td>
+                </tr>
+              )}
               <tr>
                 <td className="admin-stock__size">Livraison</td>
                 <td />

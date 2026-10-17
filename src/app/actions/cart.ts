@@ -8,6 +8,7 @@ import { db } from "@/db";
 import { productVariants, products } from "@/db/schema";
 import { readCart, writeCart } from "@/lib/cart/cookie";
 import { MAX_QUANTITY } from "@/lib/cart/limits";
+import { writePromoCode } from "@/lib/promo/cookie";
 
 /**
  * Gestes du panier.
@@ -130,5 +131,7 @@ export async function removeCartLine(formData: FormData) {
 /** Vide le panier. Appelé après un paiement abouti. */
 export async function clearCart() {
   await writeCart([]);
+  // Le code a servi : le garder l'appliquerait d'office à la commande suivante.
+  await writePromoCode(null);
   revalidateCart();
 }

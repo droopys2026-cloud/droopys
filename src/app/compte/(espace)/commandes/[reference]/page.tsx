@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { CUSTOMER_STATUS_LABELS } from "@/components/account/order-status";
 import { requireCustomer } from "@/lib/auth";
 import { formatDate, formatPrice } from "@/lib/format";
+import { orderTotalCents } from "@/lib/orders/total";
 import { inlineVariantLabel } from "@/lib/products/variants";
 import { getCustomerOrder } from "@/lib/queries/customer-orders";
 
@@ -26,10 +27,6 @@ export default async function CustomerOrderPage({ params }: PageProps) {
   const order = await getCustomerOrder(user, reference);
   if (!order) notFound();
 
-  const itemsCents = order.lines.reduce(
-    (total, line) => total + line.unitPriceCents * line.quantity,
-    0,
-  );
 
   return (
     <>
@@ -78,6 +75,12 @@ export default async function CustomerOrderPage({ params }: PageProps) {
               </span>
             </li>
           ))}
+          {order.discountCents > 0 && (
+            <li className="account-order__line">
+              <span>Code promo{order.promoCode ? ` ${order.promoCode}` : ""}</span>
+              <span>−{formatPrice(order.discountCents)}</span>
+            </li>
+          )}
           <li className="account-order__line">
             <span>Livraison</span>
             <span>
@@ -87,7 +90,7 @@ export default async function CustomerOrderPage({ params }: PageProps) {
           <li className="account-order__line">
             <span className="text-strong">Total</span>
             <span className="text-strong">
-              {formatPrice(itemsCents + order.shippingCents)}
+              {formatPrice(orderTotalCents(order))}
             </span>
           </li>
         </ul>

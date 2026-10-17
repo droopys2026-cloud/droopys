@@ -3,7 +3,10 @@ import { SiteAnnouncement } from "@/components/layout/site-announcement";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { CartDetail } from "@/components/sections/cart-detail";
+import { promoLines } from "@/lib/cart/totals";
 import { getCart } from "@/lib/queries/cart";
+import { getCartPromo } from "@/lib/queries/promo";
+import { getCurrentUser } from "@/lib/supabase/server";
 import { Newsletter } from "@/components/sections/newsletter";
 
 export const metadata: Metadata = {
@@ -13,13 +16,16 @@ export const metadata: Metadata = {
 };
 
 export default async function CartPage() {
+  const [lines, user] = await Promise.all([getCart(), getCurrentUser()]);
+  const promo = lines.length > 0 ? await getCartPromo(promoLines(lines), user?.email ?? null) : null;
+
   return (
     <>
       <SiteAnnouncement />
       <SiteHeader />
 
       <main className="section-main">
-        <CartDetail lines={await getCart()} />
+        <CartDetail lines={lines} promo={promo} />
         <Newsletter />
       </main>
 

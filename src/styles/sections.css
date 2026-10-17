@@ -730,6 +730,38 @@
     text-transform: uppercase;
   }
 
+  /* ---- code promo du panier -------------------------------------------- */
+
+  .promo-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-3);
+    padding-top: var(--spacing-7);
+    border-top: 1px solid var(--color-border-muted);
+  }
+
+  .promo-field__row {
+    display: flex;
+    gap: var(--spacing-3);
+  }
+
+  .promo-field__input {
+    flex: 1;
+    min-width: 0;
+    text-transform: uppercase;
+  }
+
+  .promo-field__apply {
+    width: auto;
+    padding-inline: var(--spacing-7);
+  }
+
+  .promo-field__applied {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+  }
+
   /* ---- couleurs de la fiche -------------------------------------------- */
 
   .color-picker {

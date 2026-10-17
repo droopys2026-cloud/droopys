@@ -9,6 +9,7 @@ import { orders } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
 import { sendRefundNotice } from "@/lib/email/send-refund-notice";
 import { publicEnv } from "@/lib/env";
+import { orderTotalCents } from "@/lib/orders/total";
 import { stripe } from "@/lib/stripe";
 
 /**
@@ -59,8 +60,8 @@ export async function refundOrder(_state: RefundState, formData: FormData): Prom
     };
   }
 
-  const paidCents =
-    order.lines.reduce((total, line) => total + line.unitPriceCents * line.quantity, 0) + order.shippingCents;
+  // Remise du code promo comprise : on ne rembourse jamais plus que payé.
+  const paidCents = orderTotalCents(order);
   const remainingCents = paidCents - order.refundedCents;
   if (remainingCents <= 0) return { status: "error", message: "Cette commande est déjà entièrement remboursée." };
   if (amountCents > remainingCents) {

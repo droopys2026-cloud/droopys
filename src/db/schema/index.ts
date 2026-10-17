@@ -14,5 +14,6 @@ export * from "./generated-photos";
 export * from "./navigation";
 export * from "./orders";
 export * from "./placements";
+export * from "./promo";
 export * from "./shop";
 export * from "./withdrawals";

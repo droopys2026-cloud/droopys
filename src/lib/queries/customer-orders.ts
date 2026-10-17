@@ -44,7 +44,7 @@ export async function listCustomerOrders(
         coalesce((
           select sum(l.unit_price_cents * l.quantity)
           from order_lines l where l.order_id = "orders"."id"
-        ), 0) + "orders"."shipping_cents"
+        ), 0) - "orders"."discount_cents" + "orders"."shipping_cents"
       )::int`,
       lineCount: sql<number>`(
         select coalesce(sum(l.quantity), 0) from order_lines l where l.order_id = "orders"."id"

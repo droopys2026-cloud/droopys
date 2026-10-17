@@ -45,14 +45,6 @@ export const ORDER_STATUSES: { id: OrderStatus; label: string }[] = [
   { id: "remboursee", label: "Remboursée" },
 ];
 
-export function orderTotalCents(order: Order): number {
-  const items = order.lines.reduce(
-    (total, line) => total + line.unitPriceCents * line.quantity,
-    0,
-  );
-  return items + order.shippingCents;
-}
-
 export function statusLabel(status: OrderStatus): string {
   return ORDER_STATUSES.find((entry) => entry.id === status)?.label ?? status;
 }

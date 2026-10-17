@@ -1,4 +1,5 @@
 import { formatPrice } from "@/lib/format";
+import { orderItemsCents, orderTotalCents } from "@/lib/orders/total";
 import { inlineVariantLabel, variantLabel } from "@/lib/products/variants";
 
 /**
@@ -18,6 +19,9 @@ export type ConfirmationOrder = {
   serviceLabel: string;
   shippingAddress: string[];
   shippingCents: number;
+  /** Code promo utilisé, et sa remise en centimes (0 sans code). */
+  promoCode: string | null;
+  discountCents: number;
   lines: {
     brand: string | null;
     productName: string;
@@ -59,11 +63,9 @@ export function renderOrderConfirmation(order: ConfirmationOrder): {
   html: string;
   text: string;
 } {
-  const itemsCents = order.lines.reduce(
-    (total, line) => total + line.unitPriceCents * line.quantity,
-    0,
-  );
-  const totalCents = itemsCents + order.shippingCents;
+  const itemsCents = orderItemsCents(order.lines);
+  const totalCents = orderTotalCents(order);
+  const discountLabel = `Code promo${order.promoCode ? ` ${order.promoCode}` : ""}`;
   const shippingLabel =
     order.shippingCents === 0 ? "Offerte" : formatPrice(order.shippingCents);
   const firstName = order.customerName.split(" ")[0] ?? order.customerName;
@@ -96,6 +98,7 @@ export function renderOrderConfirmation(order: ConfirmationOrder): {
     ),
     "",
     `Sous-total : ${formatPrice(itemsCents)}`,
+    ...(order.discountCents > 0 ? [`${discountLabel} : −${formatPrice(order.discountCents)}`] : []),
     `Livraison : ${shippingLabel}`,
     `Total payé : ${formatPrice(totalCents)}`,
     "",
@@ -148,6 +151,7 @@ export function renderOrderConfirmation(order: ConfirmationOrder): {
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
               ${rows}
               <tr><td></td><td style="padding-top:12px;font-size:14px;padding-left:12px;">Sous-total</td><td style="padding-top:12px;font-size:14px;text-align:right;">${formatPrice(itemsCents)}</td></tr>
+              ${order.discountCents > 0 ? `<tr><td></td><td style="padding-top:4px;font-size:14px;padding-left:12px;">${escapeHtml(discountLabel)}</td><td style="padding-top:4px;font-size:14px;text-align:right;">−${formatPrice(order.discountCents)}</td></tr>` : ""}
               <tr><td></td><td style="padding-top:4px;font-size:14px;padding-left:12px;">Livraison</td><td style="padding-top:4px;font-size:14px;text-align:right;">${shippingLabel}</td></tr>
               <tr><td></td><td style="padding-top:12px;font-size:18px;font-weight:600;padding-left:12px;">Total payé</td><td style="padding-top:12px;font-size:18px;font-weight:600;text-align:right;">${formatPrice(totalCents)}</td></tr>
             </table>

@@ -15,6 +15,7 @@ import {
   IconMessage,
   IconOrders,
   IconPages,
+  IconPercent,
   IconSettings,
   IconStorefront,
   IconTag,
@@ -45,6 +46,7 @@ const SECTIONS = [
     links: [
       { href: "/admin/commandes", label: "Commandes", Icon: IconOrders },
       { href: "/admin/paiements", label: "Paiements", Icon: IconWallet },
+      { href: "/admin/codes-promo", label: "Codes promo", Icon: IconPercent },
       { href: "/admin/clients", label: "Clients", Icon: IconUsers },
       { href: "/admin/messages", label: "Messages clients", Icon: IconMessage },
       { href: "/admin/newsletter", label: "Newsletter", Icon: IconMail },

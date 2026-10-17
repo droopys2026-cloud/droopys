@@ -8,6 +8,7 @@ import { orders, withdrawals } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
 import { sendShippingNotification } from "@/lib/email/send-shipping-notification";
 import { publicEnv } from "@/lib/env";
+import { orderTotalCents } from "@/lib/orders/total";
 import { getShopSettings } from "@/lib/queries/settings";
 import { createLabel, type CreatedLabel } from "@/lib/shipping/labels";
 import { SERVICES } from "@/lib/shipping/services";
@@ -153,10 +154,6 @@ export async function createShippingLabel(
     })),
     livraison.weights,
   );
-  const itemsCents = order.lines.reduce(
-    (total, line) => total + line.unitPriceCents * line.quantity,
-    0,
-  );
 
   let label: CreatedLabel;
   try {
@@ -169,7 +166,7 @@ export async function createShippingLabel(
       shippingService,
       servicePointId: order.servicePointId,
       shippingAddress: order.shippingAddress,
-      totalCents: itemsCents + order.shippingCents,
+      totalCents: orderTotalCents(order),
       weightGrams,
     });
   } catch (error) {

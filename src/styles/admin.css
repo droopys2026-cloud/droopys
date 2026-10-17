@@ -992,6 +992,81 @@
   cursor: not-allowed;
 }
 
+/* ---- codes promo ---------------------------------------------------------- */
+
+.admin-promo__code {
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.admin-promo__choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.admin-promo__picker {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-promo__picker-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-promo__picker-head .admin-field__input {
+  flex: 1 1 260px;
+}
+
+/* Liste déroulante : un catalogue de cent pièces ne doit pas allonger la page
+   d'autant. */
+.admin-promo__products {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 8px;
+  max-height: 480px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.admin-promo__product {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border: 1px solid rgb(232, 232, 232);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.admin-promo__product[data-selected="true"] {
+  border-color: rgb(24, 24, 24);
+}
+
+.admin-promo__product-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* Aperçu de la bande noire, aux couleurs de la vraie. */
+.admin-promo__preview {
+  margin: 0;
+  padding: 10px 16px;
+  border-radius: 8px;
+  background-color: rgb(0, 0, 0);
+  font-size: 13px;
+  text-align: center;
+  color: rgb(255, 255, 255);
+}
+
 /* ---- couleurs ------------------------------------------------------------ */
 
 .admin-colors {

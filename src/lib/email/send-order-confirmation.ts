@@ -85,6 +85,8 @@ export async function sendOrderConfirmation(orderId: string): Promise<void> {
     serviceLabel: SERVICES.find((service) => service.key === order.shippingService)?.label ?? "",
     shippingAddress: order.shippingAddress,
     shippingCents: order.shippingCents,
+    promoCode: order.promoCode,
+    discountCents: order.discountCents,
     lines: order.lines.map((line) => ({
       ...line,
       imageUrl: lineImage(line),

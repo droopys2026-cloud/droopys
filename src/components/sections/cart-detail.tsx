@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CartLineControls } from "@/components/sections/cart-line-controls";
 import { CheckoutButton } from "@/components/sections/checkout-button";
+import { PromoField } from "@/components/sections/promo-field";
 import { FrameImage } from "@/components/ui/frame-image";
 import { formatPrice } from "@/lib/format";
 import { variantLabel } from "@/lib/products/variants";
@@ -8,6 +9,7 @@ import {
   cartItemCount,
   cartSubtotalCents,
 } from "@/lib/cart/totals";
+import type { CartPromo } from "@/lib/queries/promo";
 import type { CartLine } from "@/types/cart";
 
 /**
@@ -16,9 +18,17 @@ import type { CartLine } from "@/types/cart";
  * Les quantités affichées sont déjà bornées au stock réel par la lecture du
  * panier : ce qui est montré ici est ce qui peut être commandé.
  */
-export function CartDetail({ lines }: { lines: CartLine[] }) {
+export function CartDetail({
+  lines,
+  promo,
+}: {
+  lines: CartLine[];
+  /** Code saisi et sa remise, recalculée à chaque affichage. */
+  promo: CartPromo | null;
+}) {
   const count = cartItemCount(lines);
   const subtotalCents = cartSubtotalCents(lines);
+  const discountCents = promo?.ok ? promo.discountCents : 0;
 
   if (lines.length === 0) {
     return (
@@ -94,6 +104,15 @@ export function CartDetail({ lines }: { lines: CartLine[] }) {
             <span className="text-strong">{formatPrice(subtotalCents)}</span>
           </p>
 
+          {/* La remise elle-même s'affiche avec son code, sous le champ :
+              ici, seulement ce qu'il reste à payer pour les articles. */}
+          {discountCents > 0 && (
+            <p className="m-0 flex items-baseline justify-between">
+              <span className="text-caption-muted">Après remise</span>
+              <span className="text-strong">{formatPrice(subtotalCents - discountCents)}</span>
+            </p>
+          )}
+
           <p className="m-0 flex items-baseline justify-between">
             <span className="text-caption-muted">Livraison</span>
             <span className="text-strong">
@@ -107,6 +126,8 @@ export function CartDetail({ lines }: { lines: CartLine[] }) {
             Colissimo, Mondial Relay ou Chronopost, à domicile ou en point
             relais — ou retrait gratuit en boutique.
           </p>
+
+          <PromoField promo={promo} />
 
           <CheckoutButton />
 

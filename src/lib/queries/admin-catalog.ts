@@ -260,3 +260,20 @@ export const listPlacements = cache(async (subcategoryId: string) =>
     .where(eq(productPlacements.subcategoryId, subcategoryId))
     .orderBy(asc(productPlacements.position)),
 );
+
+/**
+ * Produits proposés au choix d'un code promo : photo, nom, marque, prix, et
+ * s'ils sont soldés — la remise ne s'y appliquera pas, l'admin doit le voir.
+ */
+export async function listPromoProductOptions() {
+  const rows = await listAdminProducts();
+  return rows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    brand: row.brandName,
+    imageUrl: row.imageUrl,
+    priceCents: row.priceCents,
+    onSale: row.compareAtPriceCents !== null && row.compareAtPriceCents > row.priceCents,
+    published: row.published,
+  }));
+}

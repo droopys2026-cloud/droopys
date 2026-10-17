@@ -1,6 +1,7 @@
 import { FrameImage } from "@/components/ui/frame-image";
 import { formatPrice } from "@/lib/format";
 import { variantLabel } from "@/lib/products/variants";
+import type { CartPromo } from "@/lib/queries/promo";
 import type { CartLine } from "@/types/cart";
 
 /**
@@ -11,11 +12,14 @@ import type { CartLine } from "@/types/cart";
 export function OrderSummary({
   lines,
   shippingCents,
+  promo,
 }: {
   lines: CartLine[];
   /** `null` tant que le mode de livraison n'est pas choisi. */
   shippingCents: number | null;
+  promo: CartPromo | null;
 }) {
+  const discountCents = promo?.ok ? promo.discountCents : 0;
   const itemsCents = lines.reduce(
     (total, line) => total + line.unitPriceCents * line.quantity,
     0,
@@ -55,6 +59,17 @@ export function OrderSummary({
           <span>Sous-total</span>
           <span>{formatPrice(itemsCents)}</span>
         </div>
+        {promo && (
+          <div className="checkout-summary__row">
+            <span>Code {promo.code}</span>
+            <span>{promo.ok ? `−${formatPrice(promo.discountCents)}` : "non valable"}</span>
+          </div>
+        )}
+        {promo && !promo.ok && (
+          <span className="account-card__muted">
+            {promo.message} Retirez-le depuis le panier.
+          </span>
+        )}
         <div className="checkout-summary__row">
           <span>Livraison</span>
           <span>
@@ -67,7 +82,7 @@ export function OrderSummary({
         </div>
         <div className="checkout-summary__row checkout-summary__total">
           <span>Total</span>
-          <span>{formatPrice(itemsCents + (shippingCents ?? 0))}</span>
+          <span>{formatPrice(itemsCents - discountCents + (shippingCents ?? 0))}</span>
         </div>
         <span className="account-card__muted">TVA incluse</span>
       </div>

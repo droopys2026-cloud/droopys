@@ -93,7 +93,7 @@ export const listOrders = cache(
           coalesce((
             select sum(l.unit_price_cents * l.quantity)
             from order_lines l where l.order_id = "orders"."id"
-          ), 0) + "orders"."shipping_cents"
+          ), 0) - "orders"."discount_cents" + "orders"."shipping_cents"
         )::int`,
         lineCount: sql<number>`(
           select count(*) from order_lines l where l.order_id = "orders"."id"
@@ -156,7 +156,7 @@ export const listCustomers = cache(async (): Promise<CustomerRow[]> => {
       spentCents: sql<number>`coalesce(sum(coalesce((
         select sum(l.unit_price_cents * l.quantity)
         from order_lines l where l.order_id = "orders"."id"
-      ), 0) + "orders"."shipping_cents"), 0)::int`,
+      ), 0) - "orders"."discount_cents" + "orders"."shipping_cents"), 0)::int`,
       lastOrderAt: sql<Date>`max(${orders.placedAt})`,
     })
     .from(orders)

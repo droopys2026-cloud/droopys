@@ -11,6 +11,12 @@ import {
 import { readableInk } from "@/lib/products/color";
 import type { ColorDraft } from "@/lib/products/stock-grid";
 
+/** Case affichée pendant la génération, là où la photo va apparaître. */
+type Tile =
+  | { label: string; state: "loading" }
+  | { label: string; state: "ready"; previewUrl: string }
+  | { label: string; state: "failed" };
+
 type Status =
   | { kind: "idle" }
   | { kind: "busy"; colorName: string; total: number; ready: number }
@@ -47,6 +53,9 @@ export function PhotoRecolor({
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<Status>({ kind: "idle" });
+  // Une case par photo en cours, comme le générateur principal : sans elles,
+  // rien ne bouge à l'écran pendant la minute que prend l'IA.
+  const [tiles, setTiles] = useState<Tile[]>([]);
   const busy = status.kind === "busy";
 
   async function recolor(target: ColorDraft) {
@@ -61,9 +70,15 @@ export function PhotoRecolor({
     const colorName = target.name.trim() || "nouvelle couleur";
 
     setStatus({ kind: "busy", colorName, total: sources.length, ready: 0 });
+    setTiles(
+      sources.map((reference) => ({ label: `${reference.label} en ${colorName}`, state: "loading" })),
+    );
+    const settle = (index: number, tile: Tile) =>
+      setTiles((current) => current.map((entry, i) => (i === index ? tile : entry)));
     try {
       const results = await Promise.all(
-        sources.map(async (reference) => {
+        sources.map(async (reference, index) => {
+          const label = `${reference.label} en ${colorName}`;
           const data = new FormData();
           data.append("reference", await referenceFile(reference));
           data.set("mode", "recolor");
@@ -75,9 +90,13 @@ export function PhotoRecolor({
           setStatus((current) =>
             current.kind === "busy" ? { ...current, ready: current.ready + 1 } : current,
           );
-          return result.status === "ok"
-            ? toUploadedImage(result.photo, "recolor", `Photo IA — ${colorName}`)
-            : null;
+          if (result.status !== "ok") {
+            settle(index, { label, state: "failed" });
+            return null;
+          }
+          const image = await toUploadedImage(result.photo, "recolor", `Photo IA — ${colorName}`);
+          settle(index, { label, state: "ready", previewUrl: image.previewUrl });
+          return image;
         }),
       );
       const made = results.filter((image): image is UploadedImage => image !== null);
@@ -123,6 +142,36 @@ export function PhotoRecolor({
           </button>
         ))}
       </div>
+
+      {tiles.length > 0 && (
+        <ul className="admin-generate__tiles" aria-label="Photos en cours de génération">
+          {tiles.map((tile, index) => (
+            <li key={index} className="admin-generate__tile">
+              {tile.state === "ready" ? (
+                // Aperçu local (blob:) : `next/image` n'a rien à optimiser.
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={tile.previewUrl} alt={tile.label} className="admin-generate__tile-image" />
+              ) : (
+                <div className="admin-generate__tile-wait">
+                  <span className="admin-generate__tile-text">
+                    {tile.state === "loading" ? "Génération…" : "Échec"}
+                  </span>
+                  {tile.state === "loading" && (
+                    <span
+                      className="admin-generate__bar"
+                      role="progressbar"
+                      aria-label={`Génération : ${tile.label}`}
+                    >
+                      <span className="admin-generate__bar-fill" />
+                    </span>
+                  )}
+                </div>
+              )}
+              <span className="admin-generate__tile-label">{tile.label}</span>
+            </li>
+          ))}
+        </ul>
+      )}
 
       <p className="admin-field__hint" role="status">
         {status.kind === "busy"

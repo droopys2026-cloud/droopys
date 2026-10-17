@@ -58,6 +58,7 @@ export function PromoField({ promo }: { promo: CartPromo | null }) {
           autoCapitalize="characters"
           spellCheck={false}
           className="content-field__input promo-field__input"
+          placeholder="Ex. BLACK20"
           aria-invalid={state.error ? true : undefined}
           aria-describedby={state.error ? "code-promo-erreur" : undefined}
         />

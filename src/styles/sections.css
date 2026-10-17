@@ -746,14 +746,18 @@
   }
 
   .promo-field__input {
-    flex: 1;
+    flex: 1 1 auto;
     min-width: 0;
     text-transform: uppercase;
   }
 
-  .promo-field__apply {
+  /* Le bouton reprend l'aspect de `account-button-outline`, mais pas sa
+     largeur pleine : sans ce sélecteur plus précis, il prenait toute la
+     ligne et le champ de saisie s'écrasait en un carré vide. */
+  .promo-field__row .promo-field__apply {
+    flex: 0 0 auto;
     width: auto;
-    padding-inline: var(--spacing-7);
+    padding-inline: var(--spacing-9);
   }
 
   .promo-field__applied {

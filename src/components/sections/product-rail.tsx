@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import Link from "next/link";
 import { ProductCard } from "@/components/product/product-card";
+import { cardKey, colorCards } from "@/lib/products/color-cards";
 import { IconArrowLeft, IconArrowRight } from "@/components/ui/icons";
 import type { ProductRail as Rail } from "@/types/product";
 
@@ -46,9 +47,9 @@ export function ProductRail({ rail }: { rail: Rail }) {
         // pile : à un quart de la largeur plus l'écart, la 4e était coupée.
         className="flex snap-x snap-mandatory gap-5 overflow-x-auto scroll-smooth pb-9 [scrollbar-width:none] md:gap-7"
       >
-        {rail.products.map((product) => (
+        {colorCards(rail.products).map((product) => (
           <li
-            key={product.id}
+            key={cardKey(product)}
             className="w-[calc((100%-var(--spacing-5))/2)] shrink-0 snap-start md:w-[calc((100%-3*var(--spacing-7))/4)]"
           >
             <ProductCard product={product} />

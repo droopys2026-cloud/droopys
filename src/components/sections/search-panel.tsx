@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ProductCard } from "@/components/product/product-card";
+import { cardKey, colorCards } from "@/lib/products/color-cards";
 import { IconSearch } from "@/components/ui/icons";
 import type { Product } from "@/types/product";
 
@@ -80,8 +81,8 @@ export function SearchPanel({
             {query} »
           </p>
           <ul className="grid grid-cols-2 gap-x-5 gap-y-9 md:gap-x-7 md:gap-y-11 lg:grid-cols-4">
-            {results.map((product) => (
-              <li key={product.id}>
+            {colorCards(results).map((product) => (
+              <li key={cardKey(product)}>
                 <ProductCard product={product} />
               </li>
             ))}

@@ -25,6 +25,12 @@ export type Product = {
    */
   colors?: ProductColor[];
   /**
+   * Carte d'une seule couleur (voir `colorCards`) : les listes montrent un
+   * article en couleurs une fois par couleur, chaque carte menant à la fiche
+   * ouverte sur la sienne. Absent : carte de l'article entier.
+   */
+  cardColor?: { id: string; slug: string; name: string };
+  /**
    * Déclinaisons proposées (taille, et couleur s'il y en a) et stock de
    * chacune. `variantId` est ce que le panier enregistre : il porte à la fois
    * le produit, la couleur et la taille, là où le triplet de libellés

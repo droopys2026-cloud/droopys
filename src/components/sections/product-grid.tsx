@@ -1,4 +1,5 @@
 import { ProductCard } from "@/components/product/product-card";
+import { cardKey, colorCards } from "@/lib/products/color-cards";
 import type { Product } from "@/types/product";
 
 /**
@@ -17,8 +18,8 @@ export function ProductGrid({
     <section className="container-page py-14">
       <h2 className="heading-h2 pt-0">{title}</h2>
       <ul className="grid grid-cols-2 gap-x-5 gap-y-9 md:gap-x-7 md:gap-y-11 lg:grid-cols-4">
-        {products.map((product) => (
-          <li key={product.id}>
+        {colorCards(products).map((product) => (
+          <li key={cardKey(product)}>
             <ProductCard product={product} />
           </li>
         ))}

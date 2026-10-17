@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { FrameImage } from "@/components/ui/frame-image";
 import { WishlistButton } from "@/components/product/wishlist-button";
 import { formatPrice } from "@/lib/format";
+import { cardHref } from "@/lib/products/color-cards";
 import { displayPrice } from "@/lib/products/variants";
 import type { Product } from "@/types/product";
 
@@ -18,6 +19,7 @@ const MAX_SWATCHES = 5;
 export function ProductCard({ product }: { product: Product }) {
   const price = displayPrice(product, product.sizes ?? []);
   const colors = product.colors ?? [];
+  const href = cardHref(product);
 
   // Le stock se dit sur la carte, pas seulement sur la fiche : découvrir
   // qu'un article est épuisé après avoir cliqué est la petite déception qui
@@ -31,11 +33,11 @@ export function ProductCard({ product }: { product: Product }) {
   return (
     <article className="group relative">
       <div className="relative overflow-hidden">
-        <Link href={`/produits/${product.slug}`} className="block">
+        <Link href={href} className="block">
           <FrameImage
             src={product.imageUrl}
             hoverSrc={product.hoverImageUrl}
-            alt={`${product.brand} — ${product.name}`}
+            alt={`${product.brand} — ${product.name}${product.cardColor ? `, ${product.cardColor.name}` : ""}`}
             sizes="(max-width: 768px) 50vw, 25vw"
             className="instance-style-image-zoom"
           />
@@ -58,9 +60,12 @@ export function ProductCard({ product }: { product: Product }) {
 
       <div className="flex flex-col items-center gap-1 pt-7 text-center">
         <span className="text-caption-muted">{product.brand}</span>
-        <Link href={`/produits/${product.slug}`} className="link-underline-sm">
+        <Link href={href} className="link-underline-sm">
           <span className="text-brand-label">{product.name}</span>
         </Link>
+        {product.cardColor && (
+          <span className="text-caption-muted">{product.cardColor.name}</span>
+        )}
         <p className="text-strong m-0">
           {price.from && "dès "}
           {formatPrice(price.cents)}
@@ -83,6 +88,9 @@ export function ProductCard({ product }: { product: Product }) {
                 key={color.id}
                 aria-hidden
                 className="product-card__swatch"
+                // La couleur de la carte est cerclée : on voit laquelle est
+                // montrée, et qu'il en existe d'autres.
+                data-current={color.id === product.cardColor?.id ? "true" : undefined}
                 style={{ backgroundColor: color.hex }}
               />
             ))}
